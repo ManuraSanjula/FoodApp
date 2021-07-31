@@ -1,4 +1,4 @@
-package com.manura.foodapp.UI.controller.Model.Req;
+package com.manura.foodapp.Ui.controller.Models.Req;
 
 import java.io.Serializable;
 

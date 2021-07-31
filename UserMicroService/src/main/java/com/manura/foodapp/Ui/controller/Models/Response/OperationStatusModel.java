@@ -1,4 +1,4 @@
-package com.manura.foodapp.UI.controller.Model.Res;
+package com.manura.foodapp.Ui.controller.Models.Res;
 
 public class OperationStatusModel {
 	private String operationResult;

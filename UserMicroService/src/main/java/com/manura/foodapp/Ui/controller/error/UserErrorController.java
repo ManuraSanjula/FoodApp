@@ -1,4 +1,4 @@
-package com.manura.foodapp.UI.controller.errors;
+package com.manura.foodapp.Ui.controller.errors;
 
 import org.springframework.boot.autoconfigure.web.servlet.error.AbstractErrorController;
 import org.springframework.boot.web.servlet.error.ErrorAttributes;

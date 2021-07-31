@@ -1,4 +1,4 @@
-package com.manura.foodapp.UI.controller.Model;
+package com.manura.foodapp.Ui.controller.Model;
 
 public enum RequestOperationName {
 	DELETE,
