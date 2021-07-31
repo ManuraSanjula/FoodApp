@@ -1,0 +1,34 @@
+package com.manura.foodapp.security.filter;
+
+import com.manura.foodapp.Service.impl.UserServiceImpl;
+import com.manura.foodapp.security.WebSecurity;
+import com.manura.foodapp.shared.Utils.JWT.security.property.JwtConfiguration;
+import com.manura.foodapp.shared.Utils.JWT.security.token.converter.TokenConverter;
+import com.manura.foodapp.shared.Utils.JWT.security.token.creator.TokenCreator;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+@EnableWebSecurity
+@EnableGlobalMethodSecurity(securedEnabled=true, prePostEnabled=true)
+public class SecurityCredentialsConfig extends WebSecurity {
+    
+    private final TokenConverter tokenConverter;
+    private final JwtConfiguration jwtConfiguration;
+
+    public SecurityCredentialsConfig(JwtConfiguration jwtConfiguration, TokenConverter tokenConverter, UserServiceImpl userDetailsService, BCryptPasswordEncoder bCryptPasswordEncoder, TokenCreator tokenCreator) {
+        super(userDetailsService,bCryptPasswordEncoder,tokenCreator);
+        this.tokenConverter = tokenConverter;
+        this.jwtConfiguration = jwtConfiguration;
+    }
+
+
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        http.addFilterAfter(new JwtTokenAuthorizationFilter(jwtConfiguration, tokenConverter), UsernamePasswordAuthenticationFilter.class);
+        super.configure(http);
+    }
+
+}

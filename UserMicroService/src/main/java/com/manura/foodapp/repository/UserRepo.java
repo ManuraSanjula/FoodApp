@@ -1,0 +1,29 @@
+package com.manura.foodapp.repository;
+
+import java.util.List;
+
+import com.manura.foodapp.entity.UserEntity;
+
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface UserRepo extends CrudRepository<UserEntity, Long> {
+   UserEntity findByEmail(String email);
+
+   UserEntity findByPublicId(String userId);
+
+   UserEntity findUserByEmailVerificationToken(String token);
+
+   UserEntity findByEmailAndEmailVerificationToken(String email, String token);
+
+   UserEntity findByEmailAndPasswordResetToken(String email, String token);
+
+   @Query(value = "select * from User.users where User.users.password_reset_token=:passwordresettoken", nativeQuery = true)
+   List<UserEntity> findByPasswordResetToken(@Param("passwordresettoken") String passwordresettoken);
+
+   // @Query(value = "SELECT * FROM User.users where User.users.password_reset_token=eyJjdHkiOiJKV1QiLCJlbmMiOiJBMTI4Q0JDLUhTMjU2IiwiYWxnIjoiZGlyIn0..nJ_H9cOqWdcAc2TTjlh7qA.39dY3t9GhOLAJqFPJH0K5NXyVDmNY_Iqs-FhMwdjRi0-dBM0-MmKQ0zZJLs2NboRboHUl-jmn0mI0Np-chJnJ5WjOiUCISrTFVLksEizLMPiytE7GsnGSX9dTMXP98PhNkFxqIvp9V_xhoF6G3tH_fjeFBwZYB8o2cWPf1zX2pCk9vBd38KSSagk05lCtc6BuTZs1_NfY3ix_ZZU5kX9ODQuUvkKcbpk4uvlwxOAOszdHLh8MeGgglD4ke_JkAqR0PSj7dRaf6WjsQFA4Qm6gmD9IxCjvPVE_cuiw6vhFNnhbOnQ67HcqfRaaZfAIuSnuUk1exlcCM0Xbo1EFShii6JrVPSGgAJhhT-ECIsCX5Oj4c1ZMjoaBpL8MKv-WIHHtBGLTMVQVsWevHgB37cp4pWxiF2Fn7zcyRz0RGxaZvLgdlVWh3xu3tmnkiBrz0-rPnfhnV94Rqg5yi83ljJ8bV1fsYw__x_Gmm7AsZvvZx59nfy1RlGkES5rS-IaSEL-HG0ovttYGOXJPr0E1S-lyrZtlVMyDC4yeA_1jD8fBvowgwueoGWYSwpY7Ae978Ha4gGxV-2THwK7iud8IfgpxuMrpd8bFy_hWDvHRaC7q5BeR0DOTINQVTCUHZkUdzJe3guWsdG08jUVCT3S0aXyTQYxi27mIiHlWtIg0j5FFUjFWy3kQ3Oz2LPYz7o5djMBtyOazVfDWvHSUbwUG5_aXvVxgk8Q7vHZBi8b8PJ4O9PSTthnWRaJaQSfrEYTb44nuiQ0EsUqQd0dz9-VsEUDt3qGDQlXjwHbYohj3dk2XoY0dUkcApXjcnXR7BKD5ZLBLggCbyMQ2ThIpDo_e9NLL8qfk5ouyteVjO0-XQ5kESQ87nC195zIT5YG1VVwEP2uu3KfJysEE4rS9NaDRRoZgEngcYChgtUlpw2HojFl2Vr58vbtmwICxzB6wCdn_4M-PaOB8Vpooue3myq91yIum_6kYtxveICKDcx3mzhqtaMhpUTXr1GJGcPYdLmTD71Wgj0AP36jXBxSMs0s0fvmeu0_wwqBz6xWxhhxMA9Z4NRtXksau2AtoWbOh0rTkYqaVir0gVPNY4uDeyCWk3BV46hF6subpREUD80dPCob4Fdf36E2PPWp3U1ZebqRhLlrF7mC-U7ioOIPxmc4sMlePeKydem7U5VDJgZt08sd7YKVZnqdcEufErgv8OMI4d1Y3uRJKZd2MiMzNBrM3MSqNlmBZtbYJqS0YfqegpxIqeZV3f9MlgGBiX6w_gr3oU2diAx_KWfoqfgIbV4ZpFa0SnxJnfn0GNe0dj-Huh6CG-AZhzQs2craPplDtAXKFFW5QJeX58xO69Jrs_8EDhA9wm0boIGVkICHh9FcqqsWfWzgwrUzf0v5h71MoxVuSoWGtvuN_kHRAzfx4D6ScIZtfVo2OJdXYi2rBHiTJUGlP-U.E8PzRUqh4R7mXD2VxuaGgg", nativeQuery = true)
+   // UserEntity findByPasswordResetToken(@Param("passwordResetToken") String passwordResetToken);
+}
