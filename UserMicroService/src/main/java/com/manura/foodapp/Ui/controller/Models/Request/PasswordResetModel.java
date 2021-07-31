@@ -1,4 +1,4 @@
-package com.manura.foodapp.Ui.controller.Models.Req;
+package com.manura.foodapp.Ui.controller.Models.Request;
 
 public class PasswordResetModel {
 	private String token;

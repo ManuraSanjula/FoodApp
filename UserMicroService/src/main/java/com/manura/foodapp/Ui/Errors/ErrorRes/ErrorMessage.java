@@ -1,4 +1,4 @@
-package com.manura.foodapp.Ui.Error.ErrorRes;
+package com.manura.foodapp.Ui.Errors.ErrorRes;
 
 import java.util.Date;
 

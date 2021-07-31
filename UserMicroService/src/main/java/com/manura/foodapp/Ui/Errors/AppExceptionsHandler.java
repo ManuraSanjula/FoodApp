@@ -1,8 +1,8 @@
-package com.manura.foodapp.Ui.Error;
+package com.manura.foodapp.Ui.Errors;
 
-import com.manura.foodapp.Ui.Error.ErrorRes.ErrorMessage;
-import com.manura.foodapp.Ui.Error.Exception.UserServiceNotFoundException;
-import com.manura.foodapp.Ui.Error.Exception.UserServiceException;
+import com.manura.foodapp.Ui.Errors.ErrorRes.ErrorMessage;
+import com.manura.foodapp.Ui.Errors.Exception.UserServiceNotFoundException;
+import com.manura.foodapp.Ui.Errors.Exception.UserServiceException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

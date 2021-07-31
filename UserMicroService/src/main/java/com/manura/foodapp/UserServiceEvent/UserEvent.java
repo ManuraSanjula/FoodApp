@@ -1,4 +1,4 @@
-package com.manura.foodapp.Event;
+package com.manura.foodapp.UserServiceEvent;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.manura.foodapp.shared.DTO.UserDto;

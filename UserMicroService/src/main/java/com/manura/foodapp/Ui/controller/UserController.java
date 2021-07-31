@@ -1,22 +1,21 @@
-package com.manura.foodapp.UI.controller;
+package com.manura.foodapp.Ui.controller;
 
 import java.io.IOException;
 import javax.servlet.http.HttpServletResponse;
-import com.manura.foodapp.Event.UserCreateEvent;
-import com.manura.foodapp.Event.UserEmailVerification;
-import com.manura.foodapp.Event.UserUpdatedEvent;
+import com.manura.foodapp.UserServiceEvent.UserEvent;
+import com.manura.foodapp.UserServiceEvent.UserEmailVerification;
 import com.manura.foodapp.Service.impl.UserServiceImpl;
-import com.manura.foodapp.UI.Error.ErrorMessages;
-import com.manura.foodapp.UI.Error.Exception.UserServiceException;
-import com.manura.foodapp.UI.Error.Exception.UserServiceNotFoundException;
-import com.manura.foodapp.UI.controller.Model.RequestOperationName;
-import com.manura.foodapp.UI.controller.Model.Req.PasswordResetModel;
-import com.manura.foodapp.UI.controller.Model.Req.PasswordResetRequestModel;
-import com.manura.foodapp.UI.controller.Model.Req.UserSignupReq;
-import com.manura.foodapp.UI.controller.Model.Req.UserUpdateReq;
-import com.manura.foodapp.UI.controller.Model.Res.OperationStatusModel;
-import com.manura.foodapp.UI.controller.Model.Res.RequestOperationStatus;
-import com.manura.foodapp.UI.controller.Model.Res.UserRes;
+import com.manura.foodapp.Ui.Errors.ErrorMessages;
+import com.manura.foodapp.Ui.Errors.Exception.UserServiceException;
+import com.manura.foodapp.Ui.Errors.Exception.UserServiceNotFoundException;
+import com.manura.foodapp.Ui.controller.Models.RequestOperationName;
+import com.manura.foodapp.Ui.controller.Models.Request.PasswordResetModel;
+import com.manura.foodapp.Ui.controller.Models.Request.PasswordResetRequestModel;
+import com.manura.foodapp.Ui.controller.Models.Request.UserSignupReq;
+import com.manura.foodapp.Ui.controller.Models.Request.UserUpdateReq;
+import com.manura.foodapp.Ui.controller.Models.Response.OperationStatusModel;
+import com.manura.foodapp.Ui.controller.Models.Response.RequestOperationStatus;
+import com.manura.foodapp.Ui.controller.Models.Response.UserRes;
 import com.manura.foodapp.entity.UserEntity;
 import com.manura.foodapp.repository.UserRepo;
 import com.manura.foodapp.shared.AmazonSES;
@@ -28,6 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -38,6 +38,21 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+
+@Controller
+@RequestMapping("/users")
+class UserAccountManage{
+
+    @GetMapping(path = "emailVerify-WebPage")
+    public String emailVerifyWebPage() {
+        return "EmailConfrim";
+    }
+
+    @GetMapping(path = "passwordReset-WebPage")
+    public String passwordResetWebPage() {
+        return "PasswordReset";
+    }
+}
 
 @RestController
 @RequestMapping("/users")
@@ -63,7 +78,6 @@ public class UserController {
         ModelMapper modelMapper = new ModelMapper();
         UserDto userDto = userService.getUserByUserId(id);
         res.addHeader("UserID", userDto.getPublicId());
-
         UserRes userRes = modelMapper.map(userDto, UserRes.class);
         return userRes;
     }
@@ -105,8 +119,9 @@ public class UserController {
 
         UserRes userRes = modelMapper.map(createdUser, UserRes.class);
 
-        UserCreateEvent userCreateEvent = new UserCreateEvent(createdUser, rabbitTemplate);
-        userCreateEvent.run();
+        UserEvent userEvent = new UserEvent(createdUser, rabbitTemplate, "userCreated");
+        Thread thread = new Thread(userEvent);
+        thread.start();
 
         return userRes;
 
@@ -131,8 +146,9 @@ public class UserController {
         UserDto updateUser = userService.updateUser(id, userDto);
         UserRes returnValue = modelMapper.map(updateUser, UserRes.class);
 
-        UserUpdatedEvent userCreateEvent = new UserUpdatedEvent(updateUser, rabbitTemplate);
-        userCreateEvent.run();
+        UserEvent userEvent = new UserEvent(updateUser, rabbitTemplate, "userUpdated");
+        Thread thread = new Thread(userEvent);
+        thread.start();
 
         return returnValue;
     }
@@ -149,12 +165,13 @@ public class UserController {
             if (isVerified) {
                 returnValue.setOperationResult(RequestOperationStatus.SUCCESS.name());
             } else {
-                throw new UserServiceNotFoundException("No User Found given token");
+                returnValue.setOperationResult(RequestOperationStatus.ERROR.name());
             }
 
             return returnValue;
         } catch (Exception e) {
-            throw new UserServiceException("Invalid Token");
+            returnValue.setOperationResult(RequestOperationStatus.ERROR.name());
+            return returnValue;
         }
 
     }
@@ -199,10 +216,7 @@ public class UserController {
 
         if (operationResult) {
             returnValue.setOperationResult(RequestOperationStatus.SUCCESS.name());
-        } else {
-            throw new UserServiceException("Token Invalid");
         }
-
         return returnValue;
     }
 

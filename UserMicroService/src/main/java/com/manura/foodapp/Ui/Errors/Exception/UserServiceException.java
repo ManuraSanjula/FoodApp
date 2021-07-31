@@ -1,4 +1,4 @@
-package com.manura.foodapp.Ui.Error.Exception;
+package com.manura.foodapp.Ui.Errors.Exception;
 
 public class UserServiceException extends RuntimeException {
 

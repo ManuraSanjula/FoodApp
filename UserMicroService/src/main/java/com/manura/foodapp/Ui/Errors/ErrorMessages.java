@@ -1,4 +1,4 @@
-package com.manura.foodapp.Ui.Error;
+package com.manura.foodapp.Ui.Errors;
 
 public enum ErrorMessages {
     MISSING_REQUIRED_FIELD("Missing required field. Please check documentation for required fields"),

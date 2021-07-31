@@ -1,4 +1,4 @@
-package com.manura.foodapp.Event;
+package com.manura.foodapp.UserServiceEvent;
 
 import com.manura.foodapp.shared.AmazonSES;
 

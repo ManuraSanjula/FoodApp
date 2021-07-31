@@ -1,11 +1,11 @@
 package com.manura.foodapp.Service.impl;
 
-import com.manura.foodapp.Event.UserEmailVerification;
-import com.manura.foodapp.Event.UserPasswordReset;
+import com.manura.foodapp.UserServiceEvent.UserEmailVerification;
 import com.manura.foodapp.Service.UserService;
-import com.manura.foodapp.UI.Error.ErrorMessages;
-import com.manura.foodapp.UI.Error.Exception.UserServiceException;
-import com.manura.foodapp.UI.Error.Exception.UserServiceNotFoundException;
+
+import com.manura.foodapp.Ui.Errors.ErrorMessages;
+import com.manura.foodapp.Ui.Errors.Exception.UserServiceException;
+import com.manura.foodapp.Ui.Errors.Exception.UserServiceNotFoundException;
 import com.manura.foodapp.entity.AuthorityEntity;
 import com.manura.foodapp.entity.RoleEntity;
 import com.manura.foodapp.entity.UserEntity;
@@ -231,14 +231,6 @@ public class UserServiceImpl implements UserService {
 
         if (updatedUserDetails == null)
             return false;
-
-        try {
-            UserPasswordReset userPassword = new UserPasswordReset(userEntity.getEmail(), amazonSES, encryptToken,
-                    userEntity.getFirstName());
-            userPassword.run();
-        } catch (Exception e) {
-            return false;
-        }
         return true;
     }
 

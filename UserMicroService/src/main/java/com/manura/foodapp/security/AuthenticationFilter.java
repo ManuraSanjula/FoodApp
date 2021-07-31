@@ -9,7 +9,7 @@ import javax.servlet.http.HttpServletResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.manura.foodapp.SpringApplicationContext;
 import com.manura.foodapp.Service.impl.UserServiceImpl;
-import com.manura.foodapp.UI.controller.Model.Req.UserLoginReq;
+import com.manura.foodapp.Ui.controller.Models.Request.UserLoginReq;
 import com.manura.foodapp.shared.DTO.UserDto;
 import com.manura.foodapp.shared.Utils.JWT.security.token.creator.TokenCreator;
 import com.nimbusds.jwt.SignedJWT;
