@@ -5,8 +5,17 @@ public class UserRes {
     private String firstName;
     private String lastName;
     private String email;
+    private String pic;
 
-    public String getFirstName() {
+    public String getPic() {
+		return pic;
+	}
+
+	public void setPic(String pic) {
+		this.pic = pic;
+	}
+
+	public String getFirstName() {
         return firstName;
     }
 

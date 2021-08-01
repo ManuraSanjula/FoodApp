@@ -86,9 +86,11 @@ public class UserController {
     }
     
     @PutMapping(path = "/{email}/profilePic")
-    public UserDto uploadUserPic(@PathVariable String email,@RequestParam("pic") MultipartFile file) {
+    public String uploadUserPic(@PathVariable String email,@RequestParam("pic") MultipartFile file) {
     	return userService.uploadUserImage(email, file);
     }
+    
+    
 
     @PostMapping("/signup")
     @ResponseStatus(HttpStatus.CREATED)

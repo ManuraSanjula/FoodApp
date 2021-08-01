@@ -330,21 +330,21 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public UserDto uploadUserImage(String email, MultipartFile image) {
+	public String uploadUserImage(String email, MultipartFile image) {
 		UserEntity userEntity = userRepo.findByEmail(email);
 		ModelMapper modelMapper = new ModelMapper();
-		if(userEntity == null) {
-			Flux<DataBuffer> data = DataBufferUtils.read(image.getResource(), new DefaultDataBufferFactory(), 4096)
+		if(userEntity != null) {
+			Flux<DataBuffer> data = DataBufferUtils.read(image.getResource(), new DefaultDataBufferFactory(), 70000)
 	                .doOnNext(s -> System.out.println("Sent"));
-			this.requester.route("file.upload.user") .data(data).retrieveFlux(String.class).take(1)
+			this.requester.route("file.upload.user") .data(data).retrieveFlux(String.class).distinct()
 			 .subscribe(i->{
-				if(i != null) {
-					userEntity.setPic(i);
-				}
+				 UserEntity updatedUserDetails = userRepo.save(userEntity);
+				userEntity.setPic(i);
 			});
-	     UserEntity updatedUserDetails = userRepo.save(userEntity);
-	     return modelMapper.map(updatedUserDetails, UserDto.class);
+	     
+	     return "Done";
 		}else {
+			
 			  throw new UsernameNotFoundException(ErrorMessages.NO_RECORD_FOUND.getErrorMessage());
 		}
 	
