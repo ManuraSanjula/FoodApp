@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 import com.manura.foodapp.Service.UserService;
 import com.manura.foodapp.Ui.Errors.ErrorMessages;
 import com.manura.foodapp.Ui.Errors.Exception.UserServiceException;
-import com.manura.foodapp.UserServiceEvent.UserEmailVerification;
+import com.manura.foodapp.UserServiceEvent.UserAccountSecurityOperationEvent;
 import com.manura.foodapp.entity.AuthorityEntity;
 import com.manura.foodapp.entity.RoleEntity;
 import com.manura.foodapp.entity.UserEntity;
@@ -31,7 +31,6 @@ import com.manura.foodapp.shared.Utils.JWT.security.token.creator.TokenCreator;
 import com.nimbusds.jwt.SignedJWT;
 
 import io.jsonwebtoken.Jwts;
-import lombok.SneakyThrows;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -66,7 +65,8 @@ public class UserServiceImpl implements UserService {
     private	HashOperations<String, String, UserEntity> hashOps;
 	
 
-    @Override
+    @SuppressWarnings("static-access")
+	@Override
     public UserDto createUser(UserDto user) {
 
         if (userRepo.findByEmail(user.getEmail()) != null) {
@@ -96,11 +96,10 @@ public class UserServiceImpl implements UserService {
         userEntity.setPassword(passwordEncoder.encode(user.getPassword()));
 
         try {
-            UserEmailVerification emailVerification = new UserEmailVerification(user.getEmail(), amazonSES,
-                    util.generatePasswordResetToken(user.getEmail()));
-
-            userEntity.setEmailVerificationToken(emailVerification.getToken());
-            emailVerification.run();
+        	UserAccountSecurityOperationEvent emailVerification = new UserAccountSecurityOperationEvent(user.getEmail(), amazonSES);
+            String verification = emailVerification.emailVerification(util.generateVerificationToken(user.getEmail()));
+            userEntity.setEmailVerificationToken(verification);
+            
         } catch (Exception e) {
 
         }
@@ -235,30 +234,39 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @SneakyThrows
     public boolean requestPasswordReset(String email) {
+        try {
+        	UserEntity userEntity = userRepo.findByEmail(email);
+        	
+            if (userEntity == null) return false;
+          
+            SignedJWT token = tokenCreator.createSignedJWT(email);
 
-        UserEntity userEntity = userRepo.findByEmail(email);
-        if (userEntity == null)
-            throw new UsernameNotFoundException(ErrorMessages.NO_RECORD_FOUND.getErrorMessage());
+            if (token == null)
+                return false;
 
-        SignedJWT token = tokenCreator.createSignedJWT(email);
+            String encryptToken = tokenCreator.encryptToken(token);
 
-        if (token == null)
-            return false;
+            if (encryptToken == null)
+                return false;
+            
+            try {
+            	UserAccountSecurityOperationEvent passwordReset = new UserAccountSecurityOperationEvent(userEntity.getEmail(), amazonSES);
+                passwordReset.passwordReset(encryptToken, userEntity.getEmail());
+                userEntity.setPasswordResetToken(encryptToken);
 
-        String encryptToken = tokenCreator.encryptToken(token);
+                UserEntity updatedUserDetails = userRepo.save(userEntity);
 
-        if (encryptToken == null)
-            return false;
-
-        userEntity.setPasswordResetToken(encryptToken);
-
-        UserEntity updatedUserDetails = userRepo.save(userEntity);
-
-        if (updatedUserDetails == null)
-            return false;
-        return true;
+                if (updatedUserDetails == null)
+                    return false;
+               
+                return true;
+            } catch (Exception e) {
+            	 return false;
+            }
+        }catch (Exception e) {
+        	return false;
+		}
     }
 
     @Override

@@ -1,26 +1,9 @@
 package com.manura.foodapp.Ui.controller;
 
 import java.io.IOException;
+
 import javax.servlet.http.HttpServletResponse;
-import com.manura.foodapp.UserServiceEvent.UserEvent;
-import com.manura.foodapp.UserServiceEvent.UserEmailVerification;
-import com.manura.foodapp.Service.impl.UserServiceImpl;
-import com.manura.foodapp.Ui.Errors.ErrorMessages;
-import com.manura.foodapp.Ui.Errors.Exception.UserServiceException;
-import com.manura.foodapp.Ui.Errors.Exception.UserServiceNotFoundException;
-import com.manura.foodapp.Ui.controller.Models.RequestOperationName;
-import com.manura.foodapp.Ui.controller.Models.Request.PasswordResetModel;
-import com.manura.foodapp.Ui.controller.Models.Request.PasswordResetRequestModel;
-import com.manura.foodapp.Ui.controller.Models.Request.UserSignupReq;
-import com.manura.foodapp.Ui.controller.Models.Request.UserUpdateReq;
-import com.manura.foodapp.Ui.controller.Models.Response.OperationStatusModel;
-import com.manura.foodapp.Ui.controller.Models.Response.RequestOperationStatus;
-import com.manura.foodapp.Ui.controller.Models.Response.UserRes;
-import com.manura.foodapp.entity.UserEntity;
-import com.manura.foodapp.repository.UserRepo;
-import com.manura.foodapp.shared.AmazonSES;
-import com.manura.foodapp.shared.DTO.UserDto;
-import com.manura.foodapp.shared.Utils.Utils;
+
 import org.modelmapper.ModelMapper;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +21,25 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.manura.foodapp.Service.impl.UserServiceImpl;
+import com.manura.foodapp.Ui.Errors.ErrorMessages;
+import com.manura.foodapp.Ui.Errors.Exception.UserServiceException;
+import com.manura.foodapp.Ui.controller.Models.RequestOperationName;
+import com.manura.foodapp.Ui.controller.Models.Request.PasswordResetModel;
+import com.manura.foodapp.Ui.controller.Models.Request.PasswordResetRequestModel;
+import com.manura.foodapp.Ui.controller.Models.Request.UserSignupReq;
+import com.manura.foodapp.Ui.controller.Models.Request.UserUpdateReq;
+import com.manura.foodapp.Ui.controller.Models.Response.OperationStatusModel;
+import com.manura.foodapp.Ui.controller.Models.Response.RequestOperationStatus;
+import com.manura.foodapp.Ui.controller.Models.Response.UserRes;
+import com.manura.foodapp.UserServiceEvent.UserAccountSecurityOperationEvent;
+import com.manura.foodapp.UserServiceEvent.UserEvent;
+import com.manura.foodapp.entity.UserEntity;
+import com.manura.foodapp.repository.UserRepo;
+import com.manura.foodapp.shared.AmazonSES;
+import com.manura.foodapp.shared.DTO.UserDto;
+import com.manura.foodapp.shared.Utils.Utils;
 
 @Controller
 @RequestMapping("/users")
@@ -177,23 +179,17 @@ public class UserController {
     }
 
     @PostMapping(path = "/password-reset-request")
-    public OperationStatusModel requestResetPassword(
-            @RequestBody(required = false) PasswordResetRequestModel passwordResetRequestModel) {
+    public OperationStatusModel requestResetPassword(@RequestBody(required = false) PasswordResetRequestModel passwordResetRequestModel) {
 
-        if (passwordResetRequestModel == null)
-            throw new UserServiceException(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage());
-
-        OperationStatusModel returnValue = new OperationStatusModel();
-
+    	OperationStatusModel returnValue = new OperationStatusModel();
+    	 
         boolean operationResult = userService.requestPasswordReset(passwordResetRequestModel.getEmail());
-
-        if (!operationResult)
-            throw new UserServiceNotFoundException(ErrorMessages.NO_RECORD_FOUND.getErrorMessage());
-
+        
         returnValue.setOperationName(RequestOperationName.REQUEST_PASSWORD_RESET.name());
         returnValue.setOperationResult(RequestOperationStatus.ERROR.name());
-
-        if (operationResult) {
+ 
+        if(operationResult)
+        {
             returnValue.setOperationResult(RequestOperationStatus.SUCCESS.name());
         }
 
@@ -202,36 +198,38 @@ public class UserController {
 
     @PostMapping(path = "/password-reset")
     public OperationStatusModel resetPassword(@RequestBody(required = false) PasswordResetModel passwordResetModel) {
-        ;
-        if (passwordResetModel == null)
-            throw new UserServiceException(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage());
-
-        OperationStatusModel returnValue = new OperationStatusModel();
-
-        boolean operationResult = userService.resetPassword(passwordResetModel.getToken(),
+        
+    	OperationStatusModel returnValue = new OperationStatusModel();
+    	 
+        boolean operationResult = userService.resetPassword(
+                passwordResetModel.getToken(),
                 passwordResetModel.getPassword());
-
+        
         returnValue.setOperationName(RequestOperationName.PASSWORD_RESET.name());
         returnValue.setOperationResult(RequestOperationStatus.ERROR.name());
-
-        if (operationResult) {
+ 
+        if(operationResult)
+        {
             returnValue.setOperationResult(RequestOperationStatus.SUCCESS.name());
         }
         return returnValue;
     }
 
-    @GetMapping("/email-verification-request/{email}")
+    @SuppressWarnings("static-access")
+	@GetMapping("/email-verification-request/{email}")
     public ResponseEntity<String> emailVerificationRequest(@PathVariable String email) {
         try {
-            UserEmailVerification emailVerification = new UserEmailVerification(email, amazonSES,
-                    util.generatePasswordResetToken(email));
-
+          
             UserEntity userEntity = userRepo.findByEmail(email);
             if (userEntity == null)
                 throw new UserServiceException("User Not Found");
-                
-            userEntity.setEmailVerificationToken(emailVerification.getToken());
-            emailVerification.run();
+            
+            @SuppressWarnings("static-access")
+            UserAccountSecurityOperationEvent emailVerification = new UserAccountSecurityOperationEvent(email, amazonSES);
+            
+            String verification = emailVerification.emailVerification(util.generateVerificationToken(email)); 
+            userEntity.setEmailVerificationToken(verification);
+           
             UserEntity resultEntity = userRepo.save(userEntity);
             if (resultEntity == null) {
                 return new ResponseEntity<>("failure", HttpStatus.BAD_REQUEST);
