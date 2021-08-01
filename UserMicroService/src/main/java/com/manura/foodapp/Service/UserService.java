@@ -1,6 +1,7 @@
 package com.manura.foodapp.Service;
 
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.manura.foodapp.entity.UserEntity;
 import com.manura.foodapp.shared.DTO.UserDto;
@@ -9,6 +10,8 @@ public interface UserService extends UserDetailsService {
 	UserDto createUser(UserDto user);
 
 	UserDto getUser(String email);
+	
+	UserDto uploadUserImage(String email,MultipartFile image);
 
 	UserDto updateUser(String userId, UserDto user);
 

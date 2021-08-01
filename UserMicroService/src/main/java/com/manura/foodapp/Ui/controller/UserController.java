@@ -129,9 +129,9 @@ public class UserController {
 
     }
 
-    @PutMapping(path = "/{id}")
+    @PutMapping(path = "/{enail}")
     @Secured({ "ROLE_ADMIN", "ROLE_USER", "ROLE_CHEF" })
-    public UserRes updateUser(@PathVariable String id, @RequestBody(required = false) UserUpdateReq userUpdateReq) {
+    public UserRes updateUser(@PathVariable String enail, @RequestBody(required = false) UserUpdateReq userUpdateReq) {
 
         ModelMapper modelMapper = new ModelMapper();
 
@@ -145,7 +145,7 @@ public class UserController {
 
         UserDto userDto = modelMapper.map(userUpdateReq, UserDto.class);
 
-        UserDto updateUser = userService.updateUser(id, userDto);
+        UserDto updateUser = userService.updateUser(enail, userDto);
         UserRes returnValue = modelMapper.map(updateUser, UserRes.class);
 
         UserEvent userEvent = new UserEvent(updateUser, rabbitTemplate, "userUpdated");

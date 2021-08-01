@@ -5,11 +5,15 @@ import java.util.Date;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.HashOperations;
+import org.springframework.messaging.rsocket.RSocketConnectorConfigurer;
+import org.springframework.messaging.rsocket.RSocketRequester;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.manura.foodapp.Service.UserService;
 import com.manura.foodapp.Ui.Errors.ErrorMessages;
@@ -31,12 +35,22 @@ import com.manura.foodapp.shared.Utils.JWT.security.token.creator.TokenCreator;
 import com.nimbusds.jwt.SignedJWT;
 
 import io.jsonwebtoken.Jwts;
-
+import io.rsocket.transport.netty.client.TcpClientTransport;
 @Service
 public class UserServiceImpl implements UserService {
 
     @Autowired
     private  UserRepo userRepo;
+    
+    private final RSocketRequester requester;
+    
+    public UserServiceImpl(RSocketRequester.Builder builder,RSocketConnectorConfigurer connectorConfigurer
+    		,@Value("${stock.service.host}") String host,
+            @Value("${stock.service.port}") int port) {
+    	
+    	this.requester = builder.rsocketConnector(connectorConfigurer)
+                .transport(TcpClientTransport.create(host, port));
+    }
     
     private final String REDIS_HASH_KEY = "UserHash-UserService";
    
@@ -137,7 +151,7 @@ public class UserServiceImpl implements UserService {
     public UserDto updateUser(String email, UserDto user) {
     	UserEntity userFromCache = getUserFromCache(email);
        if(userFromCache == null) {
-    	   UserEntity userEntity = userRepo.findByPublicId(email);
+    	   UserEntity userEntity = userRepo.findByEmail(email);
     	   saveUserIntoCache(userEntity);
            if (userEntity == null)
                throw new UserServiceException(ErrorMessages.NO_RECORD_FOUND.getErrorMessage());
@@ -307,6 +321,13 @@ public class UserServiceImpl implements UserService {
 		}catch (Exception e) {
 			  return null;
 		}
+	}
+
+	@Override
+	public UserDto uploadUserImage(String email, MultipartFile image) {
+		image.getResource().
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }
