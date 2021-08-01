@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.manura.foodapp.Service.impl.UserServiceImpl;
 import com.manura.foodapp.Ui.Errors.ErrorMessages;
@@ -82,6 +83,11 @@ public class UserController {
         res.addHeader("UserID", userDto.getPublicId());
         UserRes userRes = modelMapper.map(userDto, UserRes.class);
         return userRes;
+    }
+    
+    @PutMapping(path = "/{email}/profilePic")
+    public UserDto uploadUserPic(@PathVariable String email,@RequestParam("pic") MultipartFile file) {
+    	return userService.uploadUserImage(email, file);
     }
 
     @PostMapping("/signup")

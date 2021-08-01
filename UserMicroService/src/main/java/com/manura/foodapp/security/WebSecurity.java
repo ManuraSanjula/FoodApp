@@ -26,12 +26,13 @@ public class WebSecurity extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
+    	http.headers().httpStrictTransportSecurity().disable();
         http
                 .cors().and()
                 .csrf().disable().authorizeRequests()
                 .antMatchers(HttpMethod.POST, SecurityConstants.SIGN_UP_URL)
                 .permitAll()
-                .antMatchers(HttpMethod.GET, "/users/email-verification-request/**")
+                .antMatchers(HttpMethod.GET, "/users/email-verification-request")
                 .permitAll()
                 .antMatchers(HttpMethod.GET, SecurityConstants.VERIFICATION_EMAIL_URL)
                 .permitAll()

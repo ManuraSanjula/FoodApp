@@ -1,6 +1,13 @@
 package com.manura.foodapp.FoodAppFileUploading.FileUploading.Service;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.nio.channels.AsynchronousFileChannel;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -12,34 +19,25 @@ import org.springframework.web.multipart.MultipartFile;
 
 import reactor.core.publisher.Flux;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.nio.channels.AsynchronousFileChannel;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
-
 @Service
 public class FileStorageService {
 
-	
-    private final Path fileStorageLocation;
+	@Value("${user-file.upload-dir}")
+    private  Path fileStorageLocation;
     
-    @Value("${user-file.upload-dir}")
-    private String userImagePath;
-
-    @Autowired
-    public FileStorageService() {
-        this.fileStorageLocation = Paths.get(userImagePath)
-                .toAbsolutePath().normalize();
-        try {
-            Files.createDirectories(this.fileStorageLocation);
-        } catch (Exception ex) {
-        	
-        }
-    }
+//    @Value("${user-file.upload-dir}")
+//    private String userImagePath;
+//
+//    @Autowired
+//    public FileStorageService() {
+//        this.fileStorageLocation = Paths.get(userImagePath)
+//                .toAbsolutePath().normalize();
+//        try {
+//            Files.createDirectories(this.fileStorageLocation);
+//        } catch (Exception ex) {
+//        	
+//        }
+//    }
 
     public String storeFile(MultipartFile file) {
         String fileName = StringUtils.cleanPath(file.getOriginalFilename());

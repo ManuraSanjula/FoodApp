@@ -6,6 +6,9 @@ import java.util.Date;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.core.io.buffer.DataBufferUtils;
+import org.springframework.core.io.buffer.DefaultDataBufferFactory;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.messaging.rsocket.RSocketConnectorConfigurer;
 import org.springframework.messaging.rsocket.RSocketRequester;
@@ -36,6 +39,7 @@ import com.nimbusds.jwt.SignedJWT;
 
 import io.jsonwebtoken.Jwts;
 import io.rsocket.transport.netty.client.TcpClientTransport;
+import reactor.core.publisher.Flux;
 @Service
 public class UserServiceImpl implements UserService {
 
@@ -45,8 +49,8 @@ public class UserServiceImpl implements UserService {
     private final RSocketRequester requester;
     
     public UserServiceImpl(RSocketRequester.Builder builder,RSocketConnectorConfigurer connectorConfigurer
-    		,@Value("${stock.service.host}") String host,
-            @Value("${stock.service.port}") int port) {
+    		,@Value("${user.service.host}") String host,
+            @Value("${user.service.port}") int port) {
     	
     	this.requester = builder.rsocketConnector(connectorConfigurer)
                 .transport(TcpClientTransport.create(host, port));
@@ -137,7 +141,7 @@ public class UserServiceImpl implements UserService {
         if(userFromCache == null) {
         	UserEntity userEntity = userRepo.findByEmail(email);
             if (userEntity == null)
-                throw new UsernameNotFoundException(email);
+            	 throw new UsernameNotFoundException(ErrorMessages.NO_RECORD_FOUND.getErrorMessage());
             saveUserIntoCache(userEntity);
             UserDto returnValue = modelMapper.map(userEntity, UserDto.class);
             return returnValue;
@@ -242,6 +246,8 @@ public class UserServiceImpl implements UserService {
                 userRepo.save(userEntity);
                 returnValue = true;
             }
+        }else {
+        	 throw new UsernameNotFoundException(ErrorMessages.NO_RECORD_FOUND.getErrorMessage());
         }
 
         return returnValue;
@@ -325,9 +331,23 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public UserDto uploadUserImage(String email, MultipartFile image) {
-		image.getResource().
-		// TODO Auto-generated method stub
-		return null;
+		UserEntity userEntity = userRepo.findByEmail(email);
+		ModelMapper modelMapper = new ModelMapper();
+		if(userEntity == null) {
+			Flux<DataBuffer> data = DataBufferUtils.read(image.getResource(), new DefaultDataBufferFactory(), 4096)
+	                .doOnNext(s -> System.out.println("Sent"));
+			this.requester.route("file.upload.user") .data(data).retrieveFlux(String.class).take(1)
+			 .subscribe(i->{
+				if(i != null) {
+					userEntity.setPic(i);
+				}
+			});
+	     UserEntity updatedUserDetails = userRepo.save(userEntity);
+	     return modelMapper.map(updatedUserDetails, UserDto.class);
+		}else {
+			  throw new UsernameNotFoundException(ErrorMessages.NO_RECORD_FOUND.getErrorMessage());
+		}
+	
 	}
 
 }
