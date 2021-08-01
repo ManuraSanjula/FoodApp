@@ -73,10 +73,10 @@ public class UserController {
     @Autowired
     private UserRepo userRepo;
 
-    @GetMapping(path = "/u/{id}")
-    public UserRes getUser(@PathVariable String id, HttpServletResponse res) {
+    @GetMapping(path = "/u/{email}")
+    public UserRes getUser(@PathVariable String email, HttpServletResponse res) {
         ModelMapper modelMapper = new ModelMapper();
-        UserDto userDto = userService.getUserByUserId(id);
+        UserDto userDto = userService.getUser(email);
         res.addHeader("UserID", userDto.getPublicId());
         UserRes userRes = modelMapper.map(userDto, UserRes.class);
         return userRes;

@@ -4,6 +4,8 @@ import java.text.ParseException;
 import java.util.Date;
 
 import javax.servlet.http.HttpServletRequest;
+
+import com.manura.foodapp.Service.impl.UserServiceImpl;
 import com.manura.foodapp.entity.UserEntity;
 import com.manura.foodapp.repository.UserRepo;
 import com.manura.foodapp.shared.Utils.JWT.security.property.JwtConfiguration;
@@ -25,6 +27,7 @@ public class TokenConverter {
 
     private final JwtConfiguration jwtConfiguration;
     private final UserRepo userRepo;
+    private final UserServiceImpl userServiceImpl;
 
     public String decryptToken(String encryptedToken) throws ParseException, JOSEException {
         JWEObject jweObject = JWEObject.parse(encryptedToken);
@@ -78,23 +81,24 @@ public class TokenConverter {
 
     public boolean validateTokenSignature(String signedToken, HttpServletRequest request)
             throws ParseException, JOSEException {
-
         SignedJWT signedJWT = SignedJWT.parse(signedToken);
-
         JWTClaimsSet claimsSet = signedJWT.getJWTClaimsSet();
         final Date expiration = claimsSet.getExpirationTime();
         Date todayDate = new Date();
-
         if (expiration.before(todayDate))
             return false;
-
-        if (!signedJWT.getPayload().toJSONObject().get("sub").equals(request.getHeader("user")))
-            return false;
-
         RSAKey publicKey = RSAKey.parse(signedJWT.getHeader().getJWK().toJSONObject());
         if (!signedJWT.verify(new RSASSAVerifier(publicKey)))
             return false;
-
-        return true;
+        UserEntity userFromCache = userServiceImpl.getUserFromCache(signedJWT.getPayload().toJSONObject().get("sub").toString());
+        if(userFromCache == null) {
+        	UserEntity user = userRepo.findByEmail(signedJWT.getPayload().toJSONObject().get("sub").toString());
+            if (user == null)
+                return false;
+            else
+            	return true;
+        }else {
+        	return true;
+        }
     }
 }

@@ -22,11 +22,11 @@ public class UserEvent implements Runnable {
        if(action == "userCreated"){
            ObjectMapper oMapper = new ObjectMapper();
            String json = oMapper.writeValueAsString(createdUser);
-           rabbitTemplate.convertAndSend("food-app-userCreated",  json);
+           rabbitTemplate.convertAndSend("food-app-userCreated", "" ,json);
        }else if(action == "userUpdated"){
            ObjectMapper oMapper = new ObjectMapper();
            String json = oMapper.writeValueAsString(createdUser);
-           rabbitTemplate.convertAndSend("food-app-userUpdated",  json);
+           rabbitTemplate.convertAndSend("food-app-userUpdated", "" ,json);
        }
     }
 
