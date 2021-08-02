@@ -26,7 +26,7 @@ public class RSocketController {
    
    @MessageMapping("file.upload.user")
    public Flux<String> upload(@Payload Flux<DataBuffer> content) throws IOException {
-	   String fileName = ("user" + utils.generateName(30));
+	   String fileName = ("User" + utils.generateName(30));
 	   var path = Paths.get(fileName+".jpeg");
 	   return Flux.concat(fileStorageService.uploadFile(path, content,fileName), Mono.just(fileName));
    }

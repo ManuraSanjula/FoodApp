@@ -86,7 +86,7 @@ public class UserController {
     }
     
     @PutMapping(path = "/{email}/profilePic")
-    public String uploadUserPic(@PathVariable String email,@RequestParam("pic") MultipartFile file) {
+    public UserRes uploadUserPic(@PathVariable String email,@RequestParam("pic") MultipartFile file) {
     	return userService.uploadUserImage(email, file);
     }
     
