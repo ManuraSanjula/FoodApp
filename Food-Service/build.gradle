@@ -1,0 +1,31 @@
+plugins {
+	id 'org.springframework.boot' version '2.5.3'
+	id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+	id 'java'
+}
+
+group = 'com.manura.foodapp.Food-Service'
+version = '1.0'
+sourceCompatibility = '11'
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+    implementation group: 'org.modelmapper', name: 'modelmapper', version: '0.7.5'
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+	implementation 'org.springframework.boot:spring-boot-starter-amqp'
+	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb-reactive'
+	implementation 'org.springframework.boot:spring-boot-starter-rsocket'
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'io.projectreactor:reactor-test'
+	testImplementation 'org.springframework.amqp:spring-rabbit-test'
+}
+
+test {
+	useJUnitPlatform()
+}
