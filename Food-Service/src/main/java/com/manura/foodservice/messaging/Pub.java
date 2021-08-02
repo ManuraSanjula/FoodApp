@@ -1,0 +1,37 @@
+package com.manura.foodservice.messaging;
+
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import reactor.core.publisher.Mono;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.manura.foodservice.entity.FoodEntity;
+
+@Service
+public class Pub {
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    public void pubFood(Mono<FoodEntity> food, String action) {
+        food.subscribe(data -> {
+            try {
+                if (action == "created") {
+                    var json = objectMapper.writeValueAsString(data);
+
+                    rabbitTemplate.convertAndSend("foods_ex_app", "fc", json);
+                }
+                if (action == "update") {
+                    var json = objectMapper.writeValueAsString(data);
+
+                    rabbitTemplate.convertAndSend("foods_ex_app", "fu", json);
+                }
+            } catch (Exception e) {
+
+            }
+        });
+    }
+}
