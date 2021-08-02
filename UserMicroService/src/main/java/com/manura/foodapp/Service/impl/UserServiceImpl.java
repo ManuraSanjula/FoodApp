@@ -3,8 +3,9 @@ package com.manura.foodapp.Service.impl;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Date;
 
@@ -20,6 +21,7 @@ import org.springframework.core.io.buffer.DefaultDataBufferFactory;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.messaging.rsocket.RSocketConnectorConfigurer;
 import org.springframework.messaging.rsocket.RSocketRequester;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -49,6 +51,69 @@ import com.nimbusds.jwt.SignedJWT;
 import io.jsonwebtoken.Jwts;
 import io.rsocket.transport.netty.client.TcpClientTransport;
 import reactor.core.publisher.Flux;
+
+
+
+class MultipartImage implements MultipartFile {
+
+	private byte[] bytes;
+	String name;
+	String originalFilename;
+	String contentType;
+	boolean isEmpty;
+	long size;
+
+	public MultipartImage(byte[] bytes, String name, String originalFilename, String contentType, long size) {
+		this.bytes = bytes;
+		this.name = name;
+		this.originalFilename = originalFilename;
+		this.contentType = contentType;
+		this.size = size;
+		this.isEmpty = false;
+	}
+
+	@Override
+	public String getName() {
+		return name;
+	}
+
+	@Override
+	public String getOriginalFilename() {
+		return originalFilename;
+	}
+
+	@Override
+	public String getContentType() {
+		return contentType;
+	}
+
+	@Override
+	public boolean isEmpty() {
+		return isEmpty;
+	}
+
+	@Override
+	public long getSize() {
+		return size;
+	}
+
+	@Override
+	public byte[] getBytes() throws IOException {
+		return bytes;
+	}
+
+	@Override
+	public InputStream getInputStream() throws IOException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void transferTo(File dest) throws IOException, IllegalStateException {
+		// TODO Auto-generated method stub
+
+	}
+}
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -339,19 +404,22 @@ public class UserServiceImpl implements UserService {
 		}
 	}
 
-	private BufferedImage resizeImage(MultipartFile image, int targetWidth, int targetHeight) {// 192x192
+	private MultipartFile resizeImage(MultipartFile image, int targetWidth, int targetHeight,long size) {// 192x192
 		try {
 			BufferedImage imBuff = ImageIO.read(image.getInputStream());
 			ByteArrayOutputStream stream = new ByteArrayOutputStream(); // your output
-			Scalr.resize(imBuff, Scalr.Method.AUTOMATIC, Scalr.Mode.AUTOMATIC, targetWidth, targetHeight, Scalr.OP_ANTIALIAS);
+			BufferedImage bufferedImage = Scalr.resize(imBuff, Scalr.Method.AUTOMATIC, Scalr.Mode.AUTOMATIC, targetWidth, targetHeight,
+					Scalr.OP_ANTIALIAS);
+	//		BufferedImage bufferedImage =  Scalr.resize(imBuff, targetWidth);
 			try {
-				ImageIO.write(imBuff, "jpeg", stream);
+				ImageIO.write(bufferedImage, "jpeg", stream);
 				InputStream inputStream = new ByteArrayInputStream(stream.toByteArray());
 				MultipartFile multipartFile = new MockMultipartFile("temp.jpg","temp.jpg","", inputStream);
-			}catch (Exception e) {
+				//MultipartFile multipartFile =  new MultipartImage(stream.toByteArray(), "UserPic", "UserPic", "jpeg", size);
+				return multipartFile;
+			} catch (Exception e) {
 				return null;
 			}
-			return Scalr.resize(imBuff, targetWidth);
 		} catch (Exception e) {
 			return null;
 		}
@@ -362,14 +430,22 @@ public class UserServiceImpl implements UserService {
 		ModelMapper modelMapper = new ModelMapper();
 		UserEntity userEntity = userRepo.findByEmail(email);
 		if (userEntity != null) {
-			    System.out.println(resizeImage(image, 0, 0) == null);
-				Flux<DataBuffer> data = DataBufferUtils.read(image.getResource(), new DefaultDataBufferFactory(), 1000000)
-						.doOnNext(s -> System.out.println("Sent"));
+			MultipartFile resizeImage = resizeImage(image, 192, 192,image.getSize());
+			if(resizeImage == null) {
+				Flux<DataBuffer> data = DataBufferUtils.read(image.getResource(), new DefaultDataBufferFactory(), 1000000);
 				String img = ("user-image/" + this.requester.route("file.upload.user").data(data).retrieveFlux(String.class)
 						.distinct().blockFirst());
 				userEntity.setPic(img);
 				userRepo.save(userEntity);
 				return modelMapper.map(userEntity, UserRes.class);
+			}else {
+				Flux<DataBuffer> data = DataBufferUtils.read(resizeImage.getResource(), new DefaultDataBufferFactory(), 1000000);
+				String img = ("/user-image/" + this.requester.route("file.upload.user").data(data).retrieveFlux(String.class)
+						.distinct().blockFirst());
+				userEntity.setPic(img);
+				userRepo.save(userEntity);
+				return modelMapper.map(userEntity, UserRes.class);
+			}
 		} else {
 
 			throw new UsernameNotFoundException(ErrorMessages.NO_RECORD_FOUND.getErrorMessage());
