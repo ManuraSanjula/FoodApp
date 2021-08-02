@@ -14,7 +14,5 @@ public interface FoodRepo extends ReactiveCrudRepository<FoodEntity, String> {
 
     Flux<FoodEntity> findByType(String type);
 
-    //findByEmailAndPasswordResetToken
-
     Flux<FoodEntity> findByTypeAndName(String type, String name);
 }

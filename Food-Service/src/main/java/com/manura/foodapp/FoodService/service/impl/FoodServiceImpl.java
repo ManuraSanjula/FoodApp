@@ -104,31 +104,30 @@ public class FoodServiceImpl implements FoodService {
         List<String> foodIDs = new ArrayList<String>();
 
         return foodDto.publishOn(Schedulers.boundedElastic())
-
-                .subscribeOn(Schedulers.boundedElastic()).map(i -> modelMapper.map(i, FoodEntity.class)).map(i -> {
+             .subscribeOn(Schedulers.boundedElastic()).map(i -> modelMapper.map(i, FoodEntity.class)).map(i -> {
 
                     i.setPublicId(util.generateId(20));
-
+                 
                     foodHutIds.forEach(id -> {
 
                         FoodHutEntity foodHutEntity = foodHutRepo.findById(id).publishOn(Schedulers.boundedElastic())
                                 .subscribeOn(Schedulers.boundedElastic()).block();
+                        if(foodHutEntity !=null) {
+                        	 foodIDs.addAll(foodHutEntity.getFoodIds());
 
-                        foodIDs.addAll(foodHutEntity.getFoodIds());
+                             if (foodIDs.isEmpty())
+                                 foodIDs.add(i.getPublicId());
 
-                        if (foodIDs.isEmpty())
-                            foodIDs.add(i.getPublicId());
+                             if (!foodIDs.contains(i.getPublicId())) {
+                                 foodIDs.add(i.getPublicId());
+                             }
 
-                        if (!foodIDs.contains(i.getPublicId())) {
-                            foodIDs.add(i.getPublicId());
+                             foodHutEntity.setFoodIds(foodIDs);
+                             foodHutRepo.save(foodHutEntity);
+
+                             if (foodHutEntity != null)
+                                 foodHutEntities.add(foodHutEntity);
                         }
-
-                        foodHutEntity.setFoodIds(foodIDs);
-                        foodHutRepo.save(foodHutEntity);
-
-                        if (foodHutEntity != null)
-                            foodHutEntities.add(foodHutEntity);
-
                     });
 
                     if (foodHutEntities.isEmpty())
@@ -137,7 +136,7 @@ public class FoodServiceImpl implements FoodService {
                     return i;
 
                 }).flatMap(foodRepo::save).map(i -> {
-                    pub.pubFood(Mono.just(i), "created");
+//                    pub.pubFood(Mono.just(i), "created");
                     return modelMapper.map(i, FoodDto.class);
                 });
     }
