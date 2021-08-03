@@ -15,6 +15,7 @@ import org.springframework.web.reactive.function.server.*;
 import reactor.core.publisher.Mono;
 import java.util.Map;
 
+@SuppressWarnings("deprecation")
 @Component
 @Order(-2)
 public class GlobalErrorWebExceptionHandler extends AbstractErrorWebExceptionHandler {
@@ -46,25 +47,16 @@ public class GlobalErrorWebExceptionHandler extends AbstractErrorWebExceptionHan
             return ServerResponse.status(HttpStatus.NOT_FOUND)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(BodyInserters.fromValue(errorPropertiesMap));
+        }else if(errorPropertiesMap.get("error") == "Unauthorized"){
+        	return ServerResponse.status(HttpStatus.UNAUTHORIZED)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(BodyInserters.fromValue(errorPropertiesMap));
         }
-        return ServerResponse.status(HttpStatus.BAD_REQUEST)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(BodyInserters.fromValue(errorPropertiesMap));
+        else {
+        	 return ServerResponse.status(HttpStatus.BAD_REQUEST)
+                     .contentType(MediaType.APPLICATION_JSON)
+                     .body(BodyInserters.fromValue(errorPropertiesMap));
+        }
     }
-
-//    @Override
-//    protected RouterFunction<ServerResponse> getRoutingFunction(final ErrorAttributes errorAttributes) {
-//        return RouterFunctions.route(RequestPredicates.all(), this::renderErrorResponse);
-//    }
-//
-//    private Mono<ServerResponse> renderErrorResponse(final ServerRequest request) {
-//
-//        final Map<String, Object> errorPropertiesMap = getErrorAttributes(request, true);
-//
-//        return ServerResponse.status(HttpStatus.OK)
-//                .contentType(MediaType.APPLICATION_JSON_UTF8)
-//                .body(BodyInserters.fromObject(errorPropertiesMap));
-//    }
-
 
 }

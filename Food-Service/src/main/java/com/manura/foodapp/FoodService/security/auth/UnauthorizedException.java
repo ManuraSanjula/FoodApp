@@ -5,11 +5,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 
 import com.manura.foodapp.FoodService.Error.Model.ApiException;
 
-/**
- * UnauthorizedException class
- *
- * @author Erik Amaru Ortiz
- */
+
 @ResponseStatus(value = HttpStatus.UNAUTHORIZED)
 public class UnauthorizedException extends ApiException {
     /**

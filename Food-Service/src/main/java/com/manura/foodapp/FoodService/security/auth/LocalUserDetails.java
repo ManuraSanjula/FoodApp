@@ -12,16 +12,16 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * LocalUserDetails class
- *
- * @author Erik Amaru Ortiz
- */
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class LocalUserDetails implements UserDetails {
-    private int id;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -7219781890810923302L;
+	private int id;
     private String username;
     @JsonIgnore
     private String password;

@@ -23,4 +23,6 @@ public interface FoodService {
     Mono<FoodHutDto> saveFoodHut( Mono<FoodHutDto> foodHut);
     Mono<FoodHutDto> updateFoodHut(Mono<FoodHutDto> foodHut,String id);
     Mono<UserDto> getUser(Long id);
+    Mono<UserDto> saveUser(Mono<UserDto> user);
+    Mono<UserDto> updateUser(String id,Mono<UserDto> user);
 }

@@ -18,6 +18,7 @@ import com.manura.foodapp.FoodService.dto.UserDto;
 import com.manura.foodapp.FoodService.entity.CommentsEntity;
 import com.manura.foodapp.FoodService.entity.FoodEntity;
 import com.manura.foodapp.FoodService.entity.FoodHutEntity;
+import com.manura.foodapp.FoodService.entity.UserEntity;
 import com.manura.foodapp.FoodService.messaging.Pub;
 import com.manura.foodapp.FoodService.repo.CommentRepo;
 import com.manura.foodapp.FoodService.repo.FoodHutRepo;
@@ -257,8 +258,33 @@ public class FoodServiceImpl implements FoodService {
 
 	@Override
 	public Mono<UserDto> getUser(Long id) {
-		return userRepo.findById(id).publishOn(Schedulers.boundedElastic())
-		.subscribeOn(Schedulers.boundedElastic()).map(i->modelMapper.map(id, UserDto.class));
-		 
+		return userRepo.findById(id).publishOn(Schedulers.boundedElastic()).switchIfEmpty(Mono.empty())
+				.subscribeOn(Schedulers.boundedElastic()).map(i -> modelMapper.map(id, UserDto.class));
+
+	}
+
+	@Override
+	public Mono<UserDto> saveUser(Mono<UserDto> user) {
+		return user.flatMap(u -> {
+			return userRepo.save(modelMapper.map(u, UserEntity.class));
+		}).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
+				.map(i -> modelMapper.map(i, UserDto.class));
+	}
+
+	@Override
+	public Mono<UserDto> updateUser(String id, Mono<UserDto> userDto) {
+		return userRepo.findByPublicId(id).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
+				.switchIfEmpty(Mono.empty()).map(i -> {
+					return userDto.map(user->{
+						i.setFirstName(user.getFirstName());
+						i.setLastName(user.getLastName());
+						i.setEmail(user.getEmail());
+						i.setAddress(user.getAddress());
+						i.setPic(user.getPic());
+						return userRepo.save(i);
+					});
+				}).map(i -> modelMapper.map(i, UserDto.class));
+
+		
 	}
 }

@@ -2,6 +2,7 @@ package com.manura.foodapp.FoodService.security;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,25 +15,26 @@ import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.authentication.AuthenticationWebFilter;
 import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatchers;
 
+import com.manura.foodapp.FoodService.repo.UserRepo;
 import com.manura.foodapp.FoodService.security.support.ServerHttpBearerAuthenticationConverter;
+import com.manura.foodapp.FoodService.util.JwtConfiguration;
+import com.manura.foodapp.FoodService.util.TokenConverter;
 
+import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Mono;
 
 @Configuration
 @EnableReactiveMethodSecurity
+@RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class WebSecurityConfig {
 	private final Logger logger = LoggerFactory.getLogger(WebSecurityConfig.class);
-
-//	@Value("${jwt.secret}")
-//	private String jwtSecret;
-//
-//	@Value("${app.public_routes}")
-//	private String[] publicRoutes;
-
+	private final TokenConverter tokenConverter;
+	@Value("${app.public_routes}")
+    private String[] publicRoutes;
 	@Bean
 	public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http, AuthenticationManager authManager) {
 		return http.authorizeExchange().pathMatchers(HttpMethod.OPTIONS).permitAll()
-				//.pathMatchers(publicRoutes).permitAll()
+				.pathMatchers(publicRoutes).permitAll()
 				.pathMatchers("/favicon.ico").permitAll().anyExchange().authenticated().and().csrf()
 				.disable().httpBasic().disable().formLogin().disable().exceptionHandling()
 				.authenticationEntryPoint((swe, e) -> {
@@ -44,13 +46,12 @@ public class WebSecurityConfig {
 
 					return Mono.fromRunnable(() -> swe.getResponse().setStatusCode(HttpStatus.FORBIDDEN));
 				}).and().addFilterAt(bearerAuthenticationFilter(authManager), SecurityWebFiltersOrder.AUTHENTICATION)
-//				.addFilterAt(cookieAuthenticationFilter(authManager), SecurityWebFiltersOrder.AUTHENTICATION)
 				.build();
 	}
 
 	AuthenticationWebFilter bearerAuthenticationFilter(AuthenticationManager authManager) {
 		AuthenticationWebFilter bearerAuthenticationFilter = new AuthenticationWebFilter(authManager);
-		bearerAuthenticationFilter.setAuthenticationConverter(new ServerHttpBearerAuthenticationConverter());
+		bearerAuthenticationFilter.setAuthenticationConverter(new ServerHttpBearerAuthenticationConverter(tokenConverter));
 		bearerAuthenticationFilter.setRequiresAuthenticationMatcher(ServerWebExchangeMatchers.pathMatchers("/**"));
 
 		return bearerAuthenticationFilter;

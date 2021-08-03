@@ -5,13 +5,13 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.web.server.ServerWebExchange;
+
 import com.manura.foodapp.FoodService.security.auth.UserPrincipal;
 import com.manura.foodapp.FoodService.util.TokenConverter;
 
@@ -23,8 +23,13 @@ public class ServerHttpBearerAuthenticationConverter implements Function<ServerW
 	private static final Predicate<String> matchBearerLength = authValue -> authValue.length() > BEARER.length();
 	private static final Function<String, Mono<String>> isolateBearerValue = authValue -> Mono
 			.justOrEmpty(authValue.substring(BEARER.length()));
-	@Autowired
-	private TokenConverter tokenConverter;
+	
+	private final TokenConverter tokenConverter;
+
+	public ServerHttpBearerAuthenticationConverter(TokenConverter tokenConverter) {
+		super();
+		this.tokenConverter = tokenConverter;
+	}
 
 	@Override
 	public Mono<Authentication> apply(ServerWebExchange serverWebExchange) {
