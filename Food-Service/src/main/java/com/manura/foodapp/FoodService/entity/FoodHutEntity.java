@@ -1,35 +1,35 @@
 package com.manura.foodapp.FoodService.entity;
 
-import lombok.Data;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.util.List;
-import java.util.Objects;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 @Data
 @Document
-public class FoodHutEntity {
+@EqualsAndHashCode
+public class FoodHutEntity implements Serializable {
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        FoodHutEntity that = (FoodHutEntity) o;
-        return Objects.equals(id, that.id) && Objects.equals(name, that.name) && Objects.equals(address, that.address) && Objects.equals(open, that.open) && Objects.equals(phoneNumbers, that.phoneNumbers) && Objects.equals(foodIds, that.foodIds) && Objects.equals(image, that.image);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id, name, address, open, phoneNumbers, foodIds, image);
-    }
-
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 4303115012939347345L;
+	
     @Id
     String id;
     String name;
     String address;
     Boolean open;
     List<String> phoneNumbers;
-    List<String> foodIds;
+   
     String image;
+    
+    @DBRef
+    List<FoodEntity> foods =  new ArrayList<FoodEntity>();
 }

@@ -13,9 +13,10 @@ repositories {
 }
 
 dependencies {
-    // https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-devtools
-implementation group: 'org.springframework.boot', name: 'spring-boot-devtools', version: '2.5.3'
-
+    // https://mvnrepository.com/artifact/com.nimbusds/nimbus-jose-jwt
+    implementation group: 'com.nimbusds', name: 'nimbus-jose-jwt', version: '9.11.3'
+    implementation group: 'org.springframework.boot', name: 'spring-boot-devtools', version: '2.5.3'
+    implementation group: 'org.springframework.boot', name: 'spring-boot-starter-security', version: '2.5.3'
     implementation group: 'org.modelmapper', name: 'modelmapper', version: '0.7.5'
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'

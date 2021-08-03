@@ -22,12 +22,12 @@ public class Pub {
                 if (action == "created") {
                     var json = objectMapper.writeValueAsString(data);
 
-                    rabbitTemplate.convertAndSend("foods_ex_app", "fc", json);
+                    rabbitTemplate.convertAndSend("food-app-foodCreated", "", json);
                 }
                 if (action == "update") {
                     var json = objectMapper.writeValueAsString(data);
 
-                    rabbitTemplate.convertAndSend("foods_ex_app", "fu", json);
+                    rabbitTemplate.convertAndSend("food-app-foodUpdated", "", json);
                 }
             } catch (Exception e) {
 

@@ -9,7 +9,9 @@ import java.util.Date;
 public class CommentsDto implements Serializable {
     private static final long serialVersionUID = 7L;
     String description;
-    String user;
     String userImage;
     Date createdAt;
+    
+    UserDto user;
+    FoodDto foood;
 }

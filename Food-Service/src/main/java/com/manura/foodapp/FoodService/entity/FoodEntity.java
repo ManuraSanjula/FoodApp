@@ -1,43 +1,49 @@
 package com.manura.foodapp.FoodService.entity;
 
-import lombok.Builder;
-import lombok.Data;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
-
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.DBRef;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import lombok.Data;
+
 @Document
 @Data
-@Builder
-public class FoodEntity {
-    @Id
+public class FoodEntity implements Serializable{
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -3765005311194667388L;
+	@Id
     String id;
     String name;
     String publicId;
     String description;
     String type;
-    @Builder.Default
-    Integer unlikes = 0;
-    @Builder.Default
-    Integer likes = 0;
-    @Builder.Default
-    Integer price = 5;
-    @Builder.Default
-    Integer rating = 3;
-    Map<String, Integer> nutrition;
-    @Builder.Default
-    String coverImage = "FoodCoverImage";
-    @Builder.Default
-    List<String> images = new ArrayList<String>();
-    @Builder.Default
-    Boolean offered = true;
     
-    @Builder.Default
+    
+    Integer unlikes = 0;
+    
+    Integer likes = 0;
+    
+    Integer price = 5;
+    
+    Integer rating = 3;
+    
+    Map<String, Integer> nutrition;
+    
+    String coverImage = "FoodCoverImage";
+    
+    List<String> images = new ArrayList<String>();
+    
+    Boolean offered = true;
+    @DBRef
     List<CommentsEntity> comments = new ArrayList<CommentsEntity>();
     
-    @Builder.Default
+    @DBRef
     List<FoodHutEntity> foodHuts =  new ArrayList<FoodHutEntity>();
 }

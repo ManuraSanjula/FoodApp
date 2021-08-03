@@ -25,20 +25,6 @@ public class FileStorageService {
 	@Value("${user-file.upload-dir}")
     private  Path fileStorageLocation;
     
-//    @Value("${user-file.upload-dir}")
-//    private String userImagePath;
-//
-//    @Autowired
-//    public FileStorageService() {
-//        this.fileStorageLocation = Paths.get(userImagePath)
-//                .toAbsolutePath().normalize();
-//        try {
-//            Files.createDirectories(this.fileStorageLocation);
-//        } catch (Exception ex) {
-//        	
-//        }
-//    }
-
     public String storeFile(MultipartFile file) {
         String fileName = StringUtils.cleanPath(file.getOriginalFilename());
         try {

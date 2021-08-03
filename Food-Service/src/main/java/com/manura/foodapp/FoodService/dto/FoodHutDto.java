@@ -12,6 +12,6 @@ public class FoodHutDto implements Serializable {
     String address;
     Boolean open;
     List<String> phoneNumbers;
-    List<String> foodIds;
+    List<FoodDto> foods;
     String image;
 }

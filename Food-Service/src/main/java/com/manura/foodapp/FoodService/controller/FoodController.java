@@ -89,15 +89,15 @@ public class FoodController {
                 .defaultIfEmpty(ResponseEntity.internalServerError().build());
     }
 
-    @PostMapping("/{id}/comments")
-    Mono<ResponseEntity<CommentsDto>> addComment(@PathVariable String id, @RequestBody Mono<CommentReq> commentReq) {
+    @PostMapping("/{id}/{user}/comments")
+    Mono<ResponseEntity<CommentsDto>> addComment(@PathVariable String id,@PathVariable String user ,@RequestBody Mono<CommentReq> commentReq) {
         return commentReq.flatMap(i -> {
 
             if (i.getDescription() == null || i.getUser() == null ) {
                 return Mono.error(new FoodError(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage()));
             }
             
-            return foodServiceImpl.saveComment(id, Mono.just(modelMapper.map(i, CommentsDto.class)));
+            return foodServiceImpl.saveComment(id, Mono.just(modelMapper.map(i, CommentsDto.class)),user);
         }).map(ResponseEntity::ok).subscribeOn(Schedulers.boundedElastic())
                 .defaultIfEmpty(ResponseEntity.internalServerError().build());
     }
