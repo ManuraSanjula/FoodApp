@@ -2,21 +2,16 @@ package com.manura.foodapp.FoodService.security.auth;
 
 import java.security.Principal;
 
-/**
- * UserPrincipal class
- *
- * @author Erik Amaru Ortiz
- */
 public class UserPrincipal implements Principal {
-    private Long id;
+    private String id;
     private String name;
 
-    public UserPrincipal(Long id, String name) {
+    public UserPrincipal(String id, String name) {
         this.id = id;
         this.name = name;
     }
 
-    public Long getId() {
+    public String getId() {
         return id;
     }
 

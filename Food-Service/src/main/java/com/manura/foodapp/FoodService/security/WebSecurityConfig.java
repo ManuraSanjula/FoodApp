@@ -15,9 +15,7 @@ import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.authentication.AuthenticationWebFilter;
 import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatchers;
 
-import com.manura.foodapp.FoodService.repo.UserRepo;
 import com.manura.foodapp.FoodService.security.support.ServerHttpBearerAuthenticationConverter;
-import com.manura.foodapp.FoodService.util.JwtConfiguration;
 import com.manura.foodapp.FoodService.util.TokenConverter;
 
 import lombok.RequiredArgsConstructor;

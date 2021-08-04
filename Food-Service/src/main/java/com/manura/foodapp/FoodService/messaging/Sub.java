@@ -27,9 +27,9 @@ public class Sub {
 		try {
 			var user = objectMapper.readValue(message, UserDto.class);
 			serviceImpl.saveUser(Mono.just(user)).subscribe();
-			LOG.info("Employee is {}", user);
+		
 		} catch (Exception e) {
-			
+			LOG.info("Error is {}", e.getMessage());
 		}
 	}
 	
@@ -40,7 +40,7 @@ public class Sub {
 			serviceImpl.updateUser(user.getPublicId(),Mono.just(user)).subscribe();
 			LOG.info("Employee is {}", user);
 		} catch (Exception e) {
-			
+			LOG.info("Error is {}", e.getMessage());
 		}
 	}
 }

@@ -9,6 +9,8 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import com.manura.foodapp.FoodService.anotation.CascadeSave;
+
 import lombok.Data;
 
 @Document
@@ -41,9 +43,11 @@ public class FoodEntity implements Serializable{
     List<String> images = new ArrayList<String>();
     
     Boolean offered = true;
-    @DBRef
+    @DBRef(lazy = true)
+    @CascadeSave
     List<CommentsEntity> comments = new ArrayList<CommentsEntity>();
     
-    @DBRef
+    @DBRef(lazy = true)
+    @CascadeSave
     List<FoodHutEntity> foodHuts =  new ArrayList<FoodHutEntity>();
 }

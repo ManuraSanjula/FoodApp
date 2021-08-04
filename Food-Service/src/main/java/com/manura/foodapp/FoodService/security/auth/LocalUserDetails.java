@@ -26,7 +26,7 @@ public class LocalUserDetails implements UserDetails {
     @JsonIgnore
     private String password;
     private List<String> roles;
-    private Boolean enabled;
+    private Boolean active;
 
     @Override
     public boolean isAccountNonExpired() {
@@ -45,7 +45,7 @@ public class LocalUserDetails implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return enabled;
+        return active;
     }
 
     @Override

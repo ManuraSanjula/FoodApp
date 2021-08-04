@@ -65,10 +65,11 @@ public class FoodController {
     @PostMapping
     Mono<ResponseEntity<FoodDto>> insertFood(@RequestBody Mono<FoodReq> foodReq) {
         return foodReq.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic()).flatMap(i -> {
-            if (i.getDescription() == null || i.getFoodHutsIds() == null || i.getType() == null || i.getPrice() == null
-                    || i.getType() == null) {
-                return Mono.error(new FoodError(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage()));
-            }
+        	 if (i.getDescription() == null || i.getFoodHutsIds() == null || i.getType() == null || i.getPrice() == null
+                     || i.getType() == null) {
+                 return Mono.error(new FoodError(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage()));
+             }
+
             return foodServiceImpl.save(Mono.just(modelMapper.map(i, FoodDto.class)), i.getFoodHutsIds());
         }).map(ResponseEntity::ok).subscribeOn(Schedulers.boundedElastic())
                 .defaultIfEmpty(ResponseEntity.internalServerError().build());
@@ -79,11 +80,7 @@ public class FoodController {
 
         return foodReq.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic()).flatMap(i -> {
 
-            if (i.getDescription() == null || i.getFoodHutsIds() == null || i.getType() == null || i.getPrice() == null
-                    || i.getType() == null) {
-                return Mono.error(new FoodError(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage()));
-            }
-
+           
             return foodServiceImpl.update(id, Mono.just(modelMapper.map(i, FoodDto.class)), i.getFoodHutsIds());
         }).map(ResponseEntity::ok).subscribeOn(Schedulers.boundedElastic())
                 .defaultIfEmpty(ResponseEntity.internalServerError().build());

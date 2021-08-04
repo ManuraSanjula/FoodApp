@@ -1,6 +1,7 @@
 package com.manura.foodapp.FoodService.service.impl;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -257,24 +258,26 @@ public class FoodServiceImpl implements FoodService {
 	}
 
 	@Override
-	public Mono<UserDto> getUser(Long id) {
-		return userRepo.findById(id).publishOn(Schedulers.boundedElastic()).switchIfEmpty(Mono.empty())
-				.subscribeOn(Schedulers.boundedElastic()).map(i -> modelMapper.map(id, UserDto.class));
+	public Mono<UserEntity> getUser(String id) {
+		return userRepo.findByPublicId(id).publishOn(Schedulers.boundedElastic()).switchIfEmpty(Mono.empty())
+				.subscribeOn(Schedulers.boundedElastic());
 
 	}
 
 	@Override
-	public Mono<UserDto> saveUser(Mono<UserDto> user) {
+	public Mono<UserEntity> saveUser(Mono<UserDto> user) {
 		return user.flatMap(u -> {
+			u.setRoles(Arrays.asList("ROLE_USER"));
+			u.setAuthorities(
+					Arrays.asList("READ_AUTHORITY", "WRITE_AUTHORITY", "DELETE_AUTHORITY", "UPDATE_AUTHORITY"));
 			return userRepo.save(modelMapper.map(u, UserEntity.class));
-		}).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
-				.map(i -> modelMapper.map(i, UserDto.class));
+		}).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
 
 	@Override
-	public Mono<UserDto> updateUser(String id, Mono<UserDto> userDto) {
+	public Mono<UserEntity> updateUser(String id, Mono<UserDto> userDto) {
 		return userRepo.findByPublicId(id).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
-				.switchIfEmpty(Mono.empty()).map(i -> {
+				.switchIfEmpty(saveUser(userDto)).mapNotNull(i -> {
 					return userDto.map(user->{
 						i.setFirstName(user.getFirstName());
 						i.setLastName(user.getLastName());
@@ -282,8 +285,8 @@ public class FoodServiceImpl implements FoodService {
 						i.setAddress(user.getAddress());
 						i.setPic(user.getPic());
 						return userRepo.save(i);
-					});
-				}).map(i -> modelMapper.map(i, UserDto.class));
+					}).flatMap(user->user);
+				}).flatMap(i->i);
 
 		
 	}

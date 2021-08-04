@@ -7,6 +7,8 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import com.manura.foodapp.FoodService.anotation.CascadeSave;
+
 import lombok.Data;
 
 @Data
@@ -20,8 +22,10 @@ public class CommentsEntity implements Serializable {
     String description;
     String userImage;
     Date createdAt;
-    @DBRef
+    @DBRef(lazy = true)
+    @CascadeSave
     UserEntity user;
-    
+    @DBRef(lazy = true)
+    @CascadeSave
     FoodEntity food;
 }

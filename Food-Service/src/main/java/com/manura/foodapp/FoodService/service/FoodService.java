@@ -10,6 +10,7 @@ import com.manura.foodapp.FoodService.dto.CommentsDto;
 import com.manura.foodapp.FoodService.dto.FoodDto;
 import com.manura.foodapp.FoodService.dto.FoodHutDto;
 import com.manura.foodapp.FoodService.dto.UserDto;
+import com.manura.foodapp.FoodService.entity.UserEntity;
 
 public interface FoodService {
     Flux<FoodDto> findAll();
@@ -22,7 +23,7 @@ public interface FoodService {
     Mono<CommentsDto> saveComment(String id,Mono<CommentsDto> comment,String user);
     Mono<FoodHutDto> saveFoodHut( Mono<FoodHutDto> foodHut);
     Mono<FoodHutDto> updateFoodHut(Mono<FoodHutDto> foodHut,String id);
-    Mono<UserDto> getUser(Long id);
-    Mono<UserDto> saveUser(Mono<UserDto> user);
-    Mono<UserDto> updateUser(String id,Mono<UserDto> user);
+    Mono<UserEntity> getUser(String id);
+    Mono<UserEntity> saveUser(Mono<UserDto> user);
+    Mono<UserEntity> updateUser(String id,Mono<UserDto> user);
 }
