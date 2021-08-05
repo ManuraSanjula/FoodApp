@@ -13,13 +13,6 @@ repositories {
 }
 
 dependencies {
-	implementation group: 'org.mongodb', name: 'mongodb-driver-sync', version: '4.3.1'
-	implementation group: 'org.springframework.data', name: 'spring-data-mongodb', version: '3.2.3'
-	implementation group: 'org.mongodb', name: 'mongodb-driver-reactivestreams', version: '4.3.1'
-	//implementation group: 'com.querydsl', name: 'querydsl-mongodb', version: '4.1.4'
-	//implementation group: 'com.querydsl', name: 'querydsl-apt', version: '4.1.0'
-
-    implementation group: 'org.springframework.boot', name: 'spring-boot-starter-actuator', version: '2.5.3'
     implementation group: 'com.nimbusds', name: 'nimbus-jose-jwt', version: '9.11.3'
     implementation group: 'org.springframework.boot', name: 'spring-boot-devtools', version: '2.5.3'
     implementation group: 'org.springframework.boot', name: 'spring-boot-starter-security', version: '2.5.3'
@@ -27,7 +20,7 @@ dependencies {
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 	implementation 'org.springframework.boot:spring-boot-starter-amqp'
-	//implementation 'org.springframework.boot:spring-boot-starter-data-mongodb-reactive'
+	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb-reactive'
 	implementation 'org.springframework.boot:spring-boot-starter-rsocket'
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
 	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
