@@ -4,13 +4,10 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
-
-import com.manura.foodapp.FoodService.anotation.CascadeSave;
-
 import lombok.Data;
 
 @Document
@@ -22,6 +19,7 @@ public class FoodEntity implements Serializable{
 	private static final long serialVersionUID = -3765005311194667388L;
 	@Id
     String id;
+	@Indexed(unique = true)
     String name;
     String publicId;
     String description;
@@ -44,10 +42,8 @@ public class FoodEntity implements Serializable{
     
     Boolean offered = true;
     @DBRef(lazy = true)
-    @CascadeSave
-    List<CommentsEntity> comments = new ArrayList<CommentsEntity>();
+    List<CommentsEntity> comments;
     
     @DBRef(lazy = true)
-    @CascadeSave
-    List<FoodHutEntity> foodHuts =  new ArrayList<FoodHutEntity>();
+    List<FoodHutEntity> foodHuts;
 }

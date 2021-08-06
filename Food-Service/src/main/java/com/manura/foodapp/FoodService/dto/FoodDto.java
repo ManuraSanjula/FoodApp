@@ -8,8 +8,11 @@ import java.util.Map;
 
 @Data
 public class FoodDto implements Serializable {
-    private static final long serialVersionUID = 8L;
-    String id;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -1235802693254425596L;
+	String id;
     String name;
     String description;
     String type;

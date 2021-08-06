@@ -15,7 +15,8 @@ import com.manura.foodapp.FoodService.entity.UserEntity;
 public interface FoodService {
     Flux<FoodDto> findAll();
     Flux<FoodDto> findByTypeAndName(String type, String name);
-    Flux<FoodDto> findByName(String name);
+    Flux<FoodDto> findByNames(String name);
+    Mono<FoodDto> findByName(String name);
     Flux<FoodDto> findByType(String type);
     Mono<FoodDto> findById(String id);
     Mono<FoodDto> save(Mono<FoodDto> foodDto, List<String> foodHutId);

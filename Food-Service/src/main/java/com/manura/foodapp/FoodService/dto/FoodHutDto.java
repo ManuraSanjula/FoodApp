@@ -6,8 +6,11 @@ import java.util.List;
 
 @Data
 public class FoodHutDto implements Serializable {
-    private static final long serialVersionUID = 9L;
-    String id;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 5316571982360725610L;
+	String id;
     String name;
     String address;
     Boolean open;

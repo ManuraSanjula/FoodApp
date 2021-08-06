@@ -1,13 +1,10 @@
 package com.manura.foodapp.FoodService.repo;
 
-
-import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
+import org.springframework.data.mongodb.repository.MongoRepository;
 
 import com.manura.foodapp.FoodService.entity.UserEntity;
 
-import reactor.core.publisher.Mono;
-
-public interface UserRepo extends ReactiveMongoRepository<UserEntity,Long> {
-    Mono<UserEntity> findByPublicId(String publicId);
-    Mono<UserEntity> findByEmail(String publicId);
+public interface UserRepo extends MongoRepository<UserEntity,Long> {
+    UserEntity findByPublicId(String publicId);
+    UserEntity findByEmail(String publicId);
 }

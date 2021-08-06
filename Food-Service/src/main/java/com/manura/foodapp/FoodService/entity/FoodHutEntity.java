@@ -7,9 +7,6 @@ import java.util.List;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
-
-import com.manura.foodapp.FoodService.anotation.CascadeSave;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -30,6 +27,5 @@ public class FoodHutEntity implements Serializable {
     String image;
     
     @DBRef(lazy = true)
-    @CascadeSave
     List<FoodEntity> foods =  new ArrayList<FoodEntity>();
 }

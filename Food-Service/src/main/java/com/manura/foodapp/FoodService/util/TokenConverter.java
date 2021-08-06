@@ -49,7 +49,7 @@ public class TokenConverter {
             if (!signedJWT.verify(new RSASSAVerifier(publicKey)))
                  return Mono.just(userEntity);;
         
-            return userRepo.findByEmail(signedJWT.getPayload().toJSONObject().get("sub").toString())
+            return Mono.just(userRepo.findByEmail(signedJWT.getPayload().toJSONObject().get("sub").toString()))
             		.switchIfEmpty(Mono.just(userEntity));
     	}catch (Exception e) {
     		  return Mono.just(userEntity);

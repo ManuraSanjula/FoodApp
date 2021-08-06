@@ -10,7 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.stereotype.Controller;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -42,216 +42,215 @@ import com.manura.foodapp.shared.AmazonSES;
 import com.manura.foodapp.shared.DTO.UserDto;
 import com.manura.foodapp.shared.Utils.Utils;
 
-@Controller
-@RequestMapping("/users")
-class UserAccountManage{
-
-    @GetMapping(path = "emailVerify-WebPage")
-    public String emailVerifyWebPage() {
-        return "EmailConfrim";
-    }
-
-    @GetMapping(path = "passwordReset-WebPage")
-    public String passwordResetWebPage() {
-        return "PasswordReset";
-    }
-}
-
 @RestController
 @RequestMapping("/users")
 public class UserController {
 
-    @Autowired
-    UserServiceImpl userService;
+	@Autowired
+	UserServiceImpl userService;
 
-    @Autowired
-    Utils util;
+	@Autowired
+	Utils util;
 
-    @Autowired
-    private AmazonSES amazonSES;
+	@Autowired
+	private AmazonSES amazonSES;
 
-    @Autowired
-    private RabbitTemplate rabbitTemplate;
+	@Autowired
+	private RabbitTemplate rabbitTemplate;
 
-    @Autowired
-    private UserRepo userRepo;
+	@Autowired
+	private UserRepo userRepo;
 
-    @GetMapping(path = "/u/{email}")
-    public UserRes getUser(@PathVariable String email, HttpServletResponse res) {
-        ModelMapper modelMapper = new ModelMapper();
-        UserDto userDto = userService.getUser(email);
-        res.addHeader("UserID", userDto.getPublicId());
-        UserRes userRes = modelMapper.map(userDto, UserRes.class);
-        return userRes;
-    }
-    
-    @PutMapping(path = "/{email}/profilePic")
-    public UserRes uploadUserPic(@PathVariable String email,@RequestParam("pic") MultipartFile file) {
-    	return userService.uploadUserImage(email, file);
-    }
-    
-    
+	@GetMapping(path = "/u/{email}")
+	public UserRes getUser(@PathVariable String email, HttpServletResponse res, Authentication authentication) {
+		UserEntity userDetails = (UserEntity) authentication.getPrincipal();
+		ModelMapper modelMapper = new ModelMapper();
+		if (userDetails.getFirstName().equals(email)) {
+			UserDto userDto = userService.getUser(email);
+			UserRes userRes = modelMapper.map(userDto, UserRes.class);
+			return userRes;
+		} else {
+			throw new UserServiceException(ErrorMessages.AUTHENTICATION_FAILED.getErrorMessage());
+		}
 
-    @PostMapping("/signup")
-    @ResponseStatus(HttpStatus.CREATED)
-    public UserRes createUser(@RequestBody(required = false) UserSignupReq userSignupReq, HttpServletResponse res)
-            throws IOException, InterruptedException {
+	}
 
-        ModelMapper modelMapper = new ModelMapper();
+	@PutMapping(path = "/{email}/profilePic")
+	public UserRes uploadUserPic(@PathVariable String email, @RequestParam("pic") MultipartFile file,
+			Authentication authentication) {
+		UserEntity userDetails = (UserEntity) authentication.getPrincipal();
+		if (userDetails.getFirstName().equals(email)) {
+			return userService.uploadUserImage(email, file);
+		} else {
+			throw new UserServiceException(ErrorMessages.AUTHENTICATION_FAILED.getErrorMessage());
 
-        if (userSignupReq == null) {
-            throw new UserServiceException(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage());
-        }
+		}
+	}
 
-        if (userSignupReq.getEmail() == null) {
-            throw new UserServiceException(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage());
-        }
+	@PostMapping("/signup")
+	@ResponseStatus(HttpStatus.CREATED)
+	public UserRes createUser(@RequestBody(required = false) UserSignupReq userSignupReq, HttpServletResponse res)
+			throws IOException, InterruptedException {
 
-        if (userSignupReq.getAddress() == null) {
-            throw new UserServiceException(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage());
-        }
+		ModelMapper modelMapper = new ModelMapper();
 
-        if (userSignupReq.getFirstName() == null) {
-            throw new UserServiceException(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage());
-        }
+		if (userSignupReq == null) {
+			throw new UserServiceException(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage());
+		}
 
-        if (userSignupReq.getLastName() == null) {
-            throw new UserServiceException(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage());
-        }
+		if (userSignupReq.getEmail() == null) {
+			throw new UserServiceException(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage());
+		}
 
-        if (!userSignupReq.getPassword().equals(userSignupReq.getConfirmPassword())) {
-            throw new UserServiceException(ErrorMessages.AUTHENTICATION_FAILED.getErrorMessage());
-        }
+		if (userSignupReq.getAddress() == null) {
+			throw new UserServiceException(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage());
+		}
 
-        UserDto userDto = modelMapper.map(userSignupReq, UserDto.class);
+		if (userSignupReq.getFirstName() == null) {
+			throw new UserServiceException(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage());
+		}
 
-        UserDto createdUser = userService.createUser(userDto);
+		if (userSignupReq.getLastName() == null) {
+			throw new UserServiceException(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage());
+		}
 
-        UserRes userRes = modelMapper.map(createdUser, UserRes.class);
+		if (!userSignupReq.getPassword().equals(userSignupReq.getConfirmPassword())) {
+			throw new UserServiceException(ErrorMessages.AUTHENTICATION_FAILED.getErrorMessage());
+		}
 
-        UserEvent userEvent = new UserEvent(createdUser, rabbitTemplate, "userCreated");
-        Thread thread = new Thread(userEvent);
-        thread.start();
+		UserDto userDto = modelMapper.map(userSignupReq, UserDto.class);
 
-        return userRes;
+		UserDto createdUser = userService.createUser(userDto);
 
-    }
+		UserRes userRes = modelMapper.map(createdUser, UserRes.class);
 
-    @PutMapping(path = "/{enail}")
-    @Secured({ "ROLE_ADMIN", "ROLE_USER", "ROLE_CHEF" })
-    public UserRes updateUser(@PathVariable String enail, @RequestBody(required = false) UserUpdateReq userUpdateReq) {
+		UserEvent userEvent = new UserEvent(createdUser, rabbitTemplate, "userCreated");
+		Thread thread = new Thread(userEvent);
+		thread.start();
 
-        ModelMapper modelMapper = new ModelMapper();
+		return userRes;
 
-        if (userUpdateReq == null) {
-            throw new UserServiceException(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage());
-        }
+	}
 
-        if (userUpdateReq.getEmail() != null) {
-            throw new UserServiceException("Sorry Could not update Email !!");
-        }
+	@PutMapping(path = "/{email}")
+	@Secured({ "ROLE_ADMIN", "ROLE_USER", "ROLE_CHEF" })
+	public UserRes updateUser(@PathVariable String email, @RequestBody(required = false) UserUpdateReq userUpdateReq,
+			Authentication authentication) {
+		UserEntity userDetails = (UserEntity) authentication.getPrincipal();
+		if (userDetails.getFirstName().equals(email)) {
+			ModelMapper modelMapper = new ModelMapper();
 
-        UserDto userDto = modelMapper.map(userUpdateReq, UserDto.class);
+			if (userUpdateReq == null) {
+				throw new UserServiceException(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage());
+			}
 
-        UserDto updateUser = userService.updateUser(enail, userDto);
-        UserRes returnValue = modelMapper.map(updateUser, UserRes.class);
+			if (userUpdateReq.getEmail() != null) {
+				throw new UserServiceException("Sorry Could not update Email !!");
+			}
 
-        UserEvent userEvent = new UserEvent(updateUser, rabbitTemplate, "userUpdated");
-        Thread thread = new Thread(userEvent);
-        thread.start();
+			UserDto userDto = modelMapper.map(userUpdateReq, UserDto.class);
 
-        return returnValue;
-    }
+			UserDto updateUser = userService.updateUser(email, userDto);
+			UserRes returnValue = modelMapper.map(updateUser, UserRes.class);
 
-    @GetMapping(path = "/email-verification")
-    public OperationStatusModel verifyEmailToken(@RequestParam(value = "token") String token) {
+			UserEvent userEvent = new UserEvent(updateUser, rabbitTemplate, "userUpdated");
+			Thread thread = new Thread(userEvent);
+			thread.start();
 
-        OperationStatusModel returnValue = new OperationStatusModel();
-        returnValue.setOperationName(RequestOperationName.VERIFY_EMAIL.name());
+			return returnValue;
+		} else {
+			throw new UserServiceException(ErrorMessages.AUTHENTICATION_FAILED.getErrorMessage());
+		}
+	}
 
-        try {
-            boolean isVerified = userService.verifyEmailToken(token);
+	@GetMapping(path = "/email-verification")
+	public OperationStatusModel verifyEmailToken(@RequestParam(value = "token") String token) {
 
-            if (isVerified) {
-                returnValue.setOperationResult(RequestOperationStatus.SUCCESS.name());
-            } else {
-                returnValue.setOperationResult(RequestOperationStatus.ERROR.name());
-            }
+		OperationStatusModel returnValue = new OperationStatusModel();
+		returnValue.setOperationName(RequestOperationName.VERIFY_EMAIL.name());
 
-            return returnValue;
-        } catch (Exception e) {
-            returnValue.setOperationResult(RequestOperationStatus.ERROR.name());
-            return returnValue;
-        }
+		try {
+			boolean isVerified = userService.verifyEmailToken(token);
 
-    }
+			if (isVerified) {
+				returnValue.setOperationResult(RequestOperationStatus.SUCCESS.name());
+			} else {
+				returnValue.setOperationResult(RequestOperationStatus.ERROR.name());
+			}
 
-    @PostMapping(path = "/password-reset-request")
-    public OperationStatusModel requestResetPassword(@RequestBody(required = false) PasswordResetRequestModel passwordResetRequestModel) {
+			return returnValue;
+		} catch (Exception e) {
+			returnValue.setOperationResult(RequestOperationStatus.ERROR.name());
+			return returnValue;
+		}
 
-    	OperationStatusModel returnValue = new OperationStatusModel();
-    	 
-        boolean operationResult = userService.requestPasswordReset(passwordResetRequestModel.getEmail());
-        
-        returnValue.setOperationName(RequestOperationName.REQUEST_PASSWORD_RESET.name());
-        returnValue.setOperationResult(RequestOperationStatus.ERROR.name());
- 
-        if(operationResult)
-        {
-            returnValue.setOperationResult(RequestOperationStatus.SUCCESS.name());
-        }
+	}
 
-        return returnValue;
-    }
+	@PostMapping(path = "/password-reset-request")
+	public OperationStatusModel requestResetPassword(
+			@RequestBody(required = false) PasswordResetRequestModel passwordResetRequestModel) {
 
-    @PostMapping(path = "/password-reset")
-    public OperationStatusModel resetPassword(@RequestBody(required = false) PasswordResetModel passwordResetModel) {
-        
-    	OperationStatusModel returnValue = new OperationStatusModel();
-    	 
-        boolean operationResult = userService.resetPassword(
-                passwordResetModel.getToken(),
-                passwordResetModel.getPassword());
-        
-        returnValue.setOperationName(RequestOperationName.PASSWORD_RESET.name());
-        returnValue.setOperationResult(RequestOperationStatus.ERROR.name());
- 
-        if(operationResult)
-        {
-            returnValue.setOperationResult(RequestOperationStatus.SUCCESS.name());
-        }
-        return returnValue;
-    }
+		OperationStatusModel returnValue = new OperationStatusModel();
 
-    @SuppressWarnings("static-access")
+		boolean operationResult = userService.requestPasswordReset(passwordResetRequestModel.getEmail());
+
+		returnValue.setOperationName(RequestOperationName.REQUEST_PASSWORD_RESET.name());
+		returnValue.setOperationResult(RequestOperationStatus.ERROR.name());
+
+		if (operationResult) {
+			returnValue.setOperationResult(RequestOperationStatus.SUCCESS.name());
+		}
+
+		return returnValue;
+	}
+
+	@PostMapping(path = "/password-reset")
+	public OperationStatusModel resetPassword(@RequestBody(required = false) PasswordResetModel passwordResetModel) {
+
+		OperationStatusModel returnValue = new OperationStatusModel();
+
+		boolean operationResult = userService.resetPassword(passwordResetModel.getToken(),
+				passwordResetModel.getPassword());
+
+		returnValue.setOperationName(RequestOperationName.PASSWORD_RESET.name());
+		returnValue.setOperationResult(RequestOperationStatus.ERROR.name());
+
+		if (operationResult) {
+			returnValue.setOperationResult(RequestOperationStatus.SUCCESS.name());
+		}
+		return returnValue;
+	}
+
+	@SuppressWarnings("static-access")
 	@GetMapping("/email-verification-request/{email}")
-    public ResponseEntity<String> emailVerificationRequest(@PathVariable String email) {
-        try {
-          
-            UserEntity userEntity = userRepo.findByEmail(email);
-            if (userEntity == null)
-                throw new UserServiceException("User Not Found");
-            
-            @SuppressWarnings("static-access")
-            UserAccountSecurityOperationEvent emailVerification = new UserAccountSecurityOperationEvent(email, amazonSES);
-            
-            String verification = emailVerification.emailVerification(util.generateVerificationToken(email)); 
-            userEntity.setEmailVerificationToken(verification);
-           
-            UserEntity resultEntity = userRepo.save(userEntity);
-            if (resultEntity == null) {
-                return new ResponseEntity<>("failure", HttpStatus.BAD_REQUEST);
-            }
-        } catch (Exception e) {
-            return new ResponseEntity<>("failure", HttpStatus.BAD_REQUEST);
-        }
-        return new ResponseEntity<>("success", HttpStatus.OK);
-    }
+	public ResponseEntity<String> emailVerificationRequest(@PathVariable String email) {
+		try {
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteUser(@PathVariable String id) {
-        userService.deleteUser(id);
-        return new ResponseEntity<>("success", HttpStatus.OK);
-    }
+			UserEntity userEntity = userRepo.findByEmail(email);
+			if (userEntity == null)
+				throw new UserServiceException("User Not Found");
+
+			@SuppressWarnings("static-access")
+			UserAccountSecurityOperationEvent emailVerification = new UserAccountSecurityOperationEvent(email,
+					amazonSES);
+
+			String verification = emailVerification.emailVerification(util.generateVerificationToken(email));
+			userEntity.setEmailVerificationToken(verification);
+
+			UserEntity resultEntity = userRepo.save(userEntity);
+			if (resultEntity == null) {
+				return new ResponseEntity<>("failure", HttpStatus.BAD_REQUEST);
+			}
+		} catch (Exception e) {
+			return new ResponseEntity<>("failure", HttpStatus.BAD_REQUEST);
+		}
+		return new ResponseEntity<>("success", HttpStatus.OK);
+	}
+
+	@DeleteMapping("/{id}")
+	public ResponseEntity<String> deleteUser(@PathVariable String id) {
+		userService.deleteUser(id);
+		return new ResponseEntity<>("success", HttpStatus.OK);
+	}
 
 }
