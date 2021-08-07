@@ -4,6 +4,7 @@ import java.security.Principal;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.manura.foodapp.FoodService.Error.Model.FoodError;
@@ -60,6 +62,13 @@ public class FoodController {
 	@GetMapping("/{id}")
 	Mono<ResponseEntity<FoodDto>> getOneFood(@PathVariable String id) {
 		return foodServiceImpl.findById(id).publishOn(Schedulers.boundedElastic()).map(ResponseEntity::ok)
+				.subscribeOn(Schedulers.boundedElastic()).defaultIfEmpty(ResponseEntity.notFound().build())
+				.switchIfEmpty(Mono.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())));
+	}
+	
+	@PutMapping("/{id}/coverImage")
+	Mono<ResponseEntity<FoodDto>> uploadCoverImage(@PathVariable String id,@RequestPart("coverImg") Flux<FilePart> fileParts) {
+		return foodServiceImpl.uploadCoverImage(id,fileParts).publishOn(Schedulers.boundedElastic()).map(ResponseEntity::ok)
 				.subscribeOn(Schedulers.boundedElastic()).defaultIfEmpty(ResponseEntity.notFound().build())
 				.switchIfEmpty(Mono.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())));
 	}

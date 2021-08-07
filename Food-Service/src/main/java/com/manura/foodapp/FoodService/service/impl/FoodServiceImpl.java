@@ -10,6 +10,9 @@ import java.util.Set;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.core.io.buffer.DataBufferUtils;
+import org.springframework.core.io.buffer.DefaultDataBufferFactory;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.messaging.rsocket.RSocketRequester;
 import org.springframework.stereotype.Service;
@@ -53,10 +56,9 @@ public class FoodServiceImpl implements FoodService {
 
 	@Autowired
 	private Pub pub;
-	
-	@Autowired
-    private Mono<RSocketRequester> rSocketRequester;
 
+	@Autowired
+	private Mono<RSocketRequester> rSocketRequester;
 
 	private ModelMapper modelMapper = new ModelMapper();
 
@@ -309,31 +311,33 @@ public class FoodServiceImpl implements FoodService {
 	public Flux<CommentsDto> findAllComment(String foodId) {
 		Optional<FoodEntity> food = foodRepo.findById(foodId);
 		if (food.isPresent()) {
-			return Flux.fromIterable(food.get().getComments()).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
-					.map(i -> modelMapper.map(i, CommentsDto.class));
+			return Flux.fromIterable(food.get().getComments()).publishOn(Schedulers.boundedElastic())
+					.subscribeOn(Schedulers.boundedElastic()).map(i -> modelMapper.map(i, CommentsDto.class));
 		} else {
 			return Flux.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage()));
 		}
 	}
 
 	@Override
-	public Mono<FoodDto> uploadCoverImage(Flux<FilePart> filePartFlux) {
-		Flux<DataBuffer> readFlux = DataBufferUtils.read(resource, new DefaultDataBufferFactory(), 4096)
-                .doOnNext(s -> System.out.println("Sent"));
+	public Mono<FoodDto> uploadCoverImage(String id, Flux<FilePart> filePartFlux) {
+		Optional<FoodEntity> foodEntity = foodRepo.findById(id);
+		if (foodEntity.isPresent()) {
 
-        // rsocket request
-        this.rSocketRequester
-                .map(r -> r.route("file.upload")
-                        .metadata(metadataSpec -> {
-                            metadataSpec.metadata("pdf", MimeType.valueOf(Constants.MIME_FILE_EXTENSION));
-                            metadataSpec.metadata("output", MimeType.valueOf(Constants.MIME_FILE_NAME));
-                        })
-                        .data(readFlux)
-                )
-                .flatMapMany(r -> r.retrieveFlux(Status.class))
-                .doOnNext(s -> System.out.println("Upload Status : " + s))
-                .subscribe();
-		// TODO Auto-generated method stub
-		return null;
+			return Mono.just(foodEntity.get()).map(food -> {
+	
+				String image = ("/food-image/" + filePartFlux.map(i -> {
+					return this.rSocketRequester.map(rsocket -> rsocket.route("file.upload.food").data(i.content()))
+							.flatMapMany(r -> r.retrieveFlux(String.class))
+							.distinct().blockFirst();
+				}).distinct().blockFirst());
+
+				food.setCoverImage(image);
+				return food;
+			}).map(i -> modelMapper.map(i, FoodDto.class));
+
+		} else {
+			return Mono.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage()));
+		}
+
 	}
 }

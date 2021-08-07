@@ -23,7 +23,10 @@ import reactor.core.publisher.Flux;
 public class FileStorageService {
 
 	@Value("${user-file.upload-dir}")
-    private  Path fileStorageLocation;
+    private  Path userFileStorageLocation;
+	
+	@Value("${food-file.upload-dir}")
+    private  Path foodFileStorageLocation;
     
     public String storeFile(MultipartFile file) {
         String fileName = StringUtils.cleanPath(file.getOriginalFilename());
@@ -31,7 +34,7 @@ public class FileStorageService {
             if(fileName.contains("..")) {
                 return null;
             }
-            Path targetLocation = this.fileStorageLocation.resolve(fileName);
+            Path targetLocation = this.userFileStorageLocation.resolve(fileName);
             Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
             return fileName;
         } catch (IOException ex) {
@@ -39,17 +42,24 @@ public class FileStorageService {
         }
     }
     
-    public Flux<String> uploadFile(Path path, Flux<DataBuffer> bufferFlux,String fileName) throws IOException {
-        Path opPath = fileStorageLocation.resolve(path);
-        AsynchronousFileChannel channel = AsynchronousFileChannel.open(opPath, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
-        return DataBufferUtils.write(bufferFlux, channel)
-                            .map(b -> fileName);
+    public Flux<String> uploadFile(Path path, Flux<DataBuffer> bufferFlux,String fileName,String type) throws IOException {
+        if(type.equals("food")) {
+        	Path opPath = foodFileStorageLocation.resolve(path);
+            AsynchronousFileChannel channel = AsynchronousFileChannel.open(opPath, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+            return DataBufferUtils.write(bufferFlux, channel)
+                                .map(b -> fileName);
+        }else {
+        	Path opPath = userFileStorageLocation.resolve(path);
+            AsynchronousFileChannel channel = AsynchronousFileChannel.open(opPath, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+            return DataBufferUtils.write(bufferFlux, channel)
+                                .map(b -> fileName);
+        }
     }
 
 
     public Resource loadFileAsResource(String fileName) {
         try {
-            Path filePath = this.fileStorageLocation.resolve(fileName).normalize();
+            Path filePath = this.userFileStorageLocation.resolve(fileName).normalize();
             Resource resource = new UrlResource(filePath.toUri());
             if(resource.exists()) {
                 return resource;
