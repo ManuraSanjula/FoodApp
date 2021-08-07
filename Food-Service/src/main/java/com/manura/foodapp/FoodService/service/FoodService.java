@@ -6,6 +6,8 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
+import org.springframework.http.codec.multipart.FilePart;
+
 import com.manura.foodapp.FoodService.dto.CommentsDto;
 import com.manura.foodapp.FoodService.dto.FoodDto;
 import com.manura.foodapp.FoodService.dto.FoodHutDto;
@@ -27,4 +29,5 @@ public interface FoodService {
     Mono<UserEntity> getUser(String id);
     Mono<UserEntity> saveUser(Mono<UserDto> user);
     Mono<UserEntity> updateUser(String id,Mono<UserDto> user);
+    Mono<FoodDto> uploadCoverImage(Flux<FilePart> filePartFlux);
 }

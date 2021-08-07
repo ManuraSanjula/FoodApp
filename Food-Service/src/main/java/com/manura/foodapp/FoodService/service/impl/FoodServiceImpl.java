@@ -10,6 +10,8 @@ import java.util.Set;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.codec.multipart.FilePart;
+import org.springframework.messaging.rsocket.RSocketRequester;
 import org.springframework.stereotype.Service;
 
 import com.manura.foodapp.FoodService.Error.Model.FoodNotFoundError;
@@ -51,6 +53,10 @@ public class FoodServiceImpl implements FoodService {
 
 	@Autowired
 	private Pub pub;
+	
+	@Autowired
+    private Mono<RSocketRequester> rSocketRequester;
+
 
 	private ModelMapper modelMapper = new ModelMapper();
 
@@ -308,5 +314,26 @@ public class FoodServiceImpl implements FoodService {
 		} else {
 			return Flux.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage()));
 		}
+	}
+
+	@Override
+	public Mono<FoodDto> uploadCoverImage(Flux<FilePart> filePartFlux) {
+		Flux<DataBuffer> readFlux = DataBufferUtils.read(resource, new DefaultDataBufferFactory(), 4096)
+                .doOnNext(s -> System.out.println("Sent"));
+
+        // rsocket request
+        this.rSocketRequester
+                .map(r -> r.route("file.upload")
+                        .metadata(metadataSpec -> {
+                            metadataSpec.metadata("pdf", MimeType.valueOf(Constants.MIME_FILE_EXTENSION));
+                            metadataSpec.metadata("output", MimeType.valueOf(Constants.MIME_FILE_NAME));
+                        })
+                        .data(readFlux)
+                )
+                .flatMapMany(r -> r.retrieveFlux(Status.class))
+                .doOnNext(s -> System.out.println("Upload Status : " + s))
+                .subscribe();
+		// TODO Auto-generated method stub
+		return null;
 	}
 }
