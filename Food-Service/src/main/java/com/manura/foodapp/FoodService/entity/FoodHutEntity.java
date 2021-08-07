@@ -14,18 +14,14 @@ import lombok.EqualsAndHashCode;
 @Document
 @EqualsAndHashCode
 public class FoodHutEntity implements Serializable {
-
 	private static final long serialVersionUID = 4303115012939347345L;
-	
     @Id
     String id;
     String name;
     String address;
     Boolean open;
     List<String> phoneNumbers;
-   
     String image;
-    
     @DBRef(lazy = true)
     List<FoodEntity> foods =  new ArrayList<FoodEntity>();
 }

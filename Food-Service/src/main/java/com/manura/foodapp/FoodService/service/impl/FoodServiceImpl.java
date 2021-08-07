@@ -38,31 +38,30 @@ import reactor.core.scheduler.Schedulers;
 public class FoodServiceImpl implements FoodService {
 
 	@Autowired
-	FoodRepo foodRepo;
+	private FoodRepo foodRepo;
 
 	@Autowired
-	FoodHutRepo foodHutRepo;
+	private FoodHutRepo foodHutRepo;
 
 	@Autowired
-	CommentRepo commentRepo;
+	private CommentRepo commentRepo;
 
 	@Autowired
-	UserRepo userRepo;
+	private UserRepo userRepo;
 
 	@Autowired
-	Pub pub;
+	private Pub pub;
 
-	ModelMapper modelMapper = new ModelMapper();
+	private ModelMapper modelMapper = new ModelMapper();
 
 	@Autowired
-	Utils util;
-	
+	private Utils util;
 
 	@Override
 	public Flux<FoodDto> findAll() {
 		return Flux.fromIterable(foodRepo.findAll()).publishOn(Schedulers.boundedElastic())
 				.subscribeOn(Schedulers.boundedElastic()).map(i -> modelMapper.map(i, FoodDto.class));
-					}
+	}
 
 	@Override
 	public Flux<FoodDto> findByType(String type) {
@@ -72,10 +71,15 @@ public class FoodServiceImpl implements FoodService {
 
 	@Override
 	public Mono<FoodDto> findById(String id) {
-		return Mono.just(foodRepo.findByPublicId(id)).publishOn(Schedulers.boundedElastic())
-				.subscribeOn(Schedulers.boundedElastic())
-				.switchIfEmpty(Mono.empty())
-				.map(i->modelMapper.map(i, FoodDto.class));
+		Optional<FoodEntity> food = foodRepo.findById(id);
+		if (food.isPresent()) {
+			return Mono.just(foodRepo.findById(id).isPresent() ? foodRepo.findById(id).get() : null)
+					.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
+					.switchIfEmpty(Mono.empty()).map(i -> modelMapper.map(i, FoodDto.class));
+		} else {
+			return Mono.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage()));
+		}
+
 	}
 
 	@Override
@@ -120,9 +124,9 @@ public class FoodServiceImpl implements FoodService {
 	@Override
 	public Mono<FoodDto> update(String id, Mono<FoodDto> foodDto, List<String> foodHutIds) {
 		Set<FoodHutEntity> foodHutEntities = new HashSet<FoodHutEntity>();
-		FoodEntity food = foodRepo.findByPublicId(id);
-		if (food == null) {
-			return Mono.just(food)
+		Optional<FoodEntity> food = foodRepo.findById(id);
+		if (food.isPresent()) {
+			return Mono.just(food.get())
 					.switchIfEmpty(Mono.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
 					.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic()).map(i -> {
 						foodDto.subscribe(updateReq -> {
@@ -180,17 +184,17 @@ public class FoodServiceImpl implements FoodService {
 
 	@Override
 	public Mono<CommentsDto> saveComment(String id, Mono<CommentsDto> comment, String user) {
-		FoodEntity foundfood = foodRepo.findByPublicId(id);
-		if (foundfood == null) {
+		Optional<FoodEntity> foundfood = foodRepo.findById(id);
+		if (foundfood.isPresent()) {
 			UserEntity userEntity = userRepo.findByEmail(user);
-			if(userEntity == null) {
+			if (userEntity == null) {
 				return Mono.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage()));
-			}else {
-				System.out.println(user);
-				return	Mono.just(userEntity).publishOn(Schedulers.boundedElastic())
-						.switchIfEmpty(Mono.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
+			} else {
+				return Mono.just(userEntity).publishOn(Schedulers.boundedElastic())
+						.switchIfEmpty(
+								Mono.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
 						.subscribeOn(Schedulers.boundedElastic()).map(usr -> {
-							return Mono.just(foundfood).map(food -> {
+							return Mono.just(foundfood.get()).map(food -> {
 								return comment.map(comm -> {
 									CommentsEntity commEntity = new CommentsEntity();
 									commEntity.setUserImage(usr.getPic());
@@ -203,14 +207,14 @@ public class FoodServiceImpl implements FoodService {
 							});
 						}).flatMap(i -> i).flatMap(i -> i).publishOn(Schedulers.boundedElastic())
 						.subscribeOn(Schedulers.boundedElastic()).flatMap(comm -> Mono.just(commentRepo.save(comm)))
-						.map(commEntity->{
-							List<CommentsEntity> commentsEntities = new ArrayList<CommentsEntity>(commEntity.getFood().getComments());
+						.map(commEntity -> {
+							List<CommentsEntity> commentsEntities = new ArrayList<CommentsEntity>(
+									commEntity.getFood().getComments());
 							commentsEntities.add(commEntity);
 							commEntity.getFood().setComments(commentsEntities);
 							foodRepo.save(commEntity.getFood());
 							return commEntity;
-						})
-						.map(i -> modelMapper.map(i, CommentsDto.class));
+						}).map(i -> modelMapper.map(i, CommentsDto.class));
 			}
 		} else {
 			return Mono.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage()));
@@ -255,14 +259,12 @@ public class FoodServiceImpl implements FoodService {
 	@Override
 	public Mono<UserEntity> getUser(String id) {
 		UserEntity userEntity = userRepo.findByPublicId(id);
-		if(userEntity != null) {
+		if (userEntity != null) {
 			return Mono.just(userEntity).publishOn(Schedulers.boundedElastic()).switchIfEmpty(Mono.empty())
 					.subscribeOn(Schedulers.boundedElastic());
-		}else {
+		} else {
 			return Mono.empty();
 		}
-		
-
 	}
 
 	@Override
@@ -277,7 +279,6 @@ public class FoodServiceImpl implements FoodService {
 
 	@Override
 	public Mono<UserEntity> updateUser(String id, Mono<UserDto> userDto) {
-
 		return Mono.just(userRepo.findByPublicId(id)).publishOn(Schedulers.boundedElastic())
 				.subscribeOn(Schedulers.boundedElastic()).switchIfEmpty(saveUser(userDto)).mapNotNull(i -> {
 					return userDto.map(user -> {
@@ -294,14 +295,18 @@ public class FoodServiceImpl implements FoodService {
 
 	@Override
 	public Flux<FoodDto> findByNames(String name) {
-		return  Flux.fromIterable(foodRepo.findByName(name)).publishOn(Schedulers.boundedElastic())
-		.subscribeOn(Schedulers.boundedElastic()).map(i -> modelMapper.map(i, FoodDto.class));
-		 
+		return Flux.fromIterable(foodRepo.findByName(name)).publishOn(Schedulers.boundedElastic())
+				.subscribeOn(Schedulers.boundedElastic()).map(i -> modelMapper.map(i, FoodDto.class));
 	}
 
 	@Override
-	public Mono<FoodDto> findByName(String name) {
-		// TODO Auto-generated method stub
-		return null;
+	public Flux<CommentsDto> findAllComment(String foodId) {
+		Optional<FoodEntity> food = foodRepo.findById(foodId);
+		if (food.isPresent()) {
+			return Flux.fromIterable(food.get().getComments()).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
+					.map(i -> modelMapper.map(i, CommentsDto.class));
+		} else {
+			return Flux.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage()));
+		}
 	}
 }

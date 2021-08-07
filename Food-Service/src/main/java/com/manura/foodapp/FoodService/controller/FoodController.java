@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.manura.foodapp.FoodService.Error.Model.FoodError;
+import com.manura.foodapp.FoodService.Error.Model.FoodNotFoundError;
 import com.manura.foodapp.FoodService.controller.Model.Req.CommentReq;
 import com.manura.foodapp.FoodService.controller.Model.Req.FoodReq;
 import com.manura.foodapp.FoodService.controller.Model.Res.HalfFoodRes;
@@ -59,9 +60,15 @@ public class FoodController {
 	@GetMapping("/{id}")
 	Mono<ResponseEntity<FoodDto>> getOneFood(@PathVariable String id) {
 		return foodServiceImpl.findById(id).publishOn(Schedulers.boundedElastic()).map(ResponseEntity::ok)
-				// .switchIfEmpty(Mono.error(new FoodNotFoundError("The data you seek is not
-				// here.")));
-				.subscribeOn(Schedulers.boundedElastic()).defaultIfEmpty(ResponseEntity.notFound().build());
+				.subscribeOn(Schedulers.boundedElastic()).defaultIfEmpty(ResponseEntity.notFound().build())
+				.switchIfEmpty(Mono.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())));
+	}
+	
+	@GetMapping("/{id}/comments")
+	Flux<CommentsDto> getAllComment(@PathVariable String id) {
+		return foodServiceImpl.findAllComment(id).publishOn(Schedulers.boundedElastic())
+				.subscribeOn(Schedulers.boundedElastic())
+				.switchIfEmpty(Mono.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())));
 	}
 
 	@PostMapping

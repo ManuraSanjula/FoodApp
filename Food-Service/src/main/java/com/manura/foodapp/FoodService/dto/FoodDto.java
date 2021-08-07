@@ -24,6 +24,5 @@ public class FoodDto implements Serializable {
     String coverImage;
     List<String> images;
     Boolean offered;
-    List<CommentsDto> comments;
     List<FoodHutDto> foodHuts;
 }
