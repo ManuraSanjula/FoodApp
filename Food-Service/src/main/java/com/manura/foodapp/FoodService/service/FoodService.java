@@ -1,9 +1,6 @@
 package com.manura.foodapp.FoodService.service;
 
 
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-
 import java.util.List;
 
 import org.springframework.http.codec.multipart.FilePart;
@@ -13,6 +10,9 @@ import com.manura.foodapp.FoodService.dto.FoodDto;
 import com.manura.foodapp.FoodService.dto.FoodHutDto;
 import com.manura.foodapp.FoodService.dto.UserDto;
 import com.manura.foodapp.FoodService.entity.UserEntity;
+
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 public interface FoodService {
     Flux<FoodDto> findAll();
@@ -29,5 +29,5 @@ public interface FoodService {
     Mono<UserEntity> getUser(String id);
     Mono<UserEntity> saveUser(Mono<UserDto> user);
     Mono<UserEntity> updateUser(String id,Mono<UserDto> user);
-    Mono<FoodDto> uploadCoverImage(String id,Flux<FilePart> filePartFlux);
+    Mono<FoodDto> uploadCoverImage(String id,Mono<FilePart> filePartFlux);
 }

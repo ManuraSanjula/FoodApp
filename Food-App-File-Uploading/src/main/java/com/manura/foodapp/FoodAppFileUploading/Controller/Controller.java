@@ -22,8 +22,20 @@ public class Controller {
 	FileStorageService fileStorageService;
 
 	@GetMapping(value = "/user-image/{fileName:.+}", produces = MediaType.IMAGE_JPEG_VALUE)
-	public Mono<ResponseEntity<Resource>> getImage(@PathVariable String fileName) {
-		Resource fileAsResource = fileStorageService.loadFileAsResource(fileName);
+	public Mono<ResponseEntity<Resource>> getUserImage(@PathVariable String fileName) {
+		Resource fileAsResource = fileStorageService.loadFileAsResourceUser(fileName);
+		if (fileAsResource == null) {
+			return Mono.error(new ImageNotFoundError(""));
+		} else {
+			return Mono.just(fileAsResource).switchIfEmpty(Mono.error(new ImageNotFoundError("")))
+					.map(ResponseEntity::ok);
+		}
+
+	}
+	
+	@GetMapping(value = "/food-image/{fileName:.+}", produces = MediaType.IMAGE_JPEG_VALUE)
+	public Mono<ResponseEntity<Resource>> getFoodImage(@PathVariable String fileName) {
+		Resource fileAsResource = fileStorageService.loadFileAsResourceFood((fileName+".jpeg"));
 		if (fileAsResource == null) {
 			return Mono.error(new ImageNotFoundError(""));
 		} else {

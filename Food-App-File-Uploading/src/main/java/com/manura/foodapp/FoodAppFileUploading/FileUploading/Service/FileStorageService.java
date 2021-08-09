@@ -42,24 +42,42 @@ public class FileStorageService {
         }
     }
     
-    public Flux<String> uploadFile(Path path, Flux<DataBuffer> bufferFlux,String fileName,String type) throws IOException {
-        if(type.equals("food")) {
-        	Path opPath = foodFileStorageLocation.resolve(path);
-            AsynchronousFileChannel channel = AsynchronousFileChannel.open(opPath, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
-            return DataBufferUtils.write(bufferFlux, channel)
-                                .map(b -> fileName);
-        }else {
+    public Flux<String> uploadFileUser(Path path, Flux<DataBuffer> bufferFlux,String fileName) throws IOException {
+       
         	Path opPath = userFileStorageLocation.resolve(path);
             AsynchronousFileChannel channel = AsynchronousFileChannel.open(opPath, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
             return DataBufferUtils.write(bufferFlux, channel)
                                 .map(b -> fileName);
-        }
+        
+    }
+    
+    public Flux<String> uploadFileFood(Path path, Flux<DataBuffer> bufferFlux,String fileName) throws IOException {
+    	Path opPath = foodFileStorageLocation.resolve(path);
+        AsynchronousFileChannel channel = AsynchronousFileChannel.open(opPath, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+        return DataBufferUtils.write(bufferFlux, channel)
+                            .map(b -> fileName);
     }
 
 
-    public Resource loadFileAsResource(String fileName) {
+
+    public Resource loadFileAsResourceUser(String fileName) {
         try {
             Path filePath = this.userFileStorageLocation.resolve(fileName).normalize();
+            Resource resource = new UrlResource(filePath.toUri());
+            if(resource.exists()) {
+                return resource;
+            } else {
+            	return null;
+            }
+        } catch (MalformedURLException ex) {
+        	return null;
+        }
+
+    }
+    
+    public Resource loadFileAsResourceFood(String fileName) {
+        try {
+            Path filePath = this.foodFileStorageLocation.resolve(fileName).normalize();
             Resource resource = new UrlResource(filePath.toUri());
             if(resource.exists()) {
                 return resource;

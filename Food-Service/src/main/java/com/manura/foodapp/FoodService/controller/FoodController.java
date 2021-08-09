@@ -67,7 +67,7 @@ public class FoodController {
 	}
 	
 	@PutMapping("/{id}/coverImage")
-	Mono<ResponseEntity<FoodDto>> uploadCoverImage(@PathVariable String id,@RequestPart("coverImg") Flux<FilePart> fileParts) {
+	Mono<ResponseEntity<FoodDto>> uploadCoverImage(@PathVariable String id,@RequestPart("coverImg") Mono<FilePart> fileParts) {
 		return foodServiceImpl.uploadCoverImage(id,fileParts).publishOn(Schedulers.boundedElastic()).map(ResponseEntity::ok)
 				.subscribeOn(Schedulers.boundedElastic()).defaultIfEmpty(ResponseEntity.notFound().build())
 				.switchIfEmpty(Mono.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())));

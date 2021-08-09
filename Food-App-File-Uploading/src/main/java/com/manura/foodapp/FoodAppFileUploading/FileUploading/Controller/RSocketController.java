@@ -26,15 +26,15 @@ public class RSocketController {
    
    @MessageMapping("file.upload.user")
    public Flux<String> userUpload(@Payload Flux<DataBuffer> content) throws IOException {
-	   String fileName = ("User" + utils.generateName(30));
+	   String fileName = ("User" + utils.generateName(30)+".jpeg");
 	   var path = Paths.get(fileName+".jpeg");
-	   return Flux.concat(fileStorageService.uploadFile(path, content,fileName,"user"), Mono.just(fileName));
+	   return Flux.concat(fileStorageService.uploadFileUser(path, content,fileName), Mono.just(fileName));
    }
    
    @MessageMapping("file.upload.food")
-   public Flux<String> foodUpload(@Payload Flux<DataBuffer> content) throws IOException {
+   public Flux<String> foodUploadCoverImage(@Payload Flux<DataBuffer> content) throws IOException {
 	   String fileName = ("Food" + utils.generateName(30));
 	   var path = Paths.get(fileName+".jpeg");
-	   return Flux.concat(fileStorageService.uploadFile(path, content,fileName,"food"), Mono.just(fileName));
+	   return Flux.concat(fileStorageService.uploadFileFood(path, content,fileName), Mono.just(fileName));
    }
 }

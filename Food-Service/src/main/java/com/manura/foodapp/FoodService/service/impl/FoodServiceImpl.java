@@ -10,9 +10,6 @@ import java.util.Set;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.buffer.DataBuffer;
-import org.springframework.core.io.buffer.DataBufferUtils;
-import org.springframework.core.io.buffer.DefaultDataBufferFactory;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.messaging.rsocket.RSocketRequester;
 import org.springframework.stereotype.Service;
@@ -319,25 +316,24 @@ public class FoodServiceImpl implements FoodService {
 	}
 
 	@Override
-	public Mono<FoodDto> uploadCoverImage(String id, Flux<FilePart> filePartFlux) {
+	public Mono<FoodDto> uploadCoverImage(String id, Mono<FilePart> filePartFlux) {
 		Optional<FoodEntity> foodEntity = foodRepo.findById(id);
 		if (foodEntity.isPresent()) {
-
 			return Mono.just(foodEntity.get()).map(food -> {
-	
-				String image = ("/food-image/" + filePartFlux.map(i -> {
-					return this.rSocketRequester.map(rsocket -> rsocket.route("file.upload.food").data(i.content()))
-							.flatMapMany(r -> r.retrieveFlux(String.class))
-							.distinct().blockFirst();
-				}).distinct().blockFirst());
-
+				
+				String name = 	filePartFlux.map(part->{
+					return	this.rSocketRequester
+					.map(rsocket -> rsocket.route("file.upload.food").data(part.content()))
+					.map(r -> r.retrieveFlux(String.class)).flatMapMany(s->s);
+				}).flatMapMany(s->s).blockLast();
+				
+				String image = ("/food-image/" + name);
 				food.setCoverImage(image);
-				return food;
+				return foodRepo.save(food); 
+				
 			}).map(i -> modelMapper.map(i, FoodDto.class));
-
 		} else {
 			return Mono.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage()));
 		}
-
 	}
 }
