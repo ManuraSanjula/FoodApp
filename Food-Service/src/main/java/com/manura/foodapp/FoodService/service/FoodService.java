@@ -30,4 +30,5 @@ public interface FoodService {
     Mono<UserEntity> saveUser(Mono<UserDto> user);
     Mono<UserEntity> updateUser(String id,Mono<UserDto> user);
     Mono<FoodDto> uploadCoverImage(String id,Mono<FilePart> filePartFlux);
+    Mono<FoodDto> uploadImages(String id,Flux<FilePart> filePartFlux);
 }

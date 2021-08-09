@@ -73,6 +73,13 @@ public class FoodController {
 				.switchIfEmpty(Mono.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())));
 	}
 	
+	@PutMapping("/{id}/images")
+	Mono<ResponseEntity<FoodDto>> uploadImages(@PathVariable String id,@RequestPart("images") Flux<FilePart> fileParts) {
+		return foodServiceImpl.uploadImages(id,fileParts).publishOn(Schedulers.boundedElastic()).map(ResponseEntity::ok)
+				.subscribeOn(Schedulers.boundedElastic()).defaultIfEmpty(ResponseEntity.notFound().build())
+				.switchIfEmpty(Mono.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())));
+	}
+	
 	@GetMapping("/{id}/comments")
 	Flux<CommentsDto> getAllComment(@PathVariable String id) {
 		return foodServiceImpl.findAllComment(id).publishOn(Schedulers.boundedElastic())

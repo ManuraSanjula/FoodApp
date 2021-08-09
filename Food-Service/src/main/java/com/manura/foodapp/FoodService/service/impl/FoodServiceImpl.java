@@ -320,18 +320,50 @@ public class FoodServiceImpl implements FoodService {
 		Optional<FoodEntity> foodEntity = foodRepo.findById(id);
 		if (foodEntity.isPresent()) {
 			return Mono.just(foodEntity.get()).map(food -> {
-				
-				String name = 	filePartFlux.map(part->{
-					return	this.rSocketRequester
-					.map(rsocket -> rsocket.route("file.upload.food").data(part.content()))
-					.map(r -> r.retrieveFlux(String.class)).flatMapMany(s->s);
-				}).flatMapMany(s->s).blockLast();
-				
+
+				String name = filePartFlux.map(part -> {
+					return this.rSocketRequester.map(rsocket -> rsocket.route("file.upload.food").data(part.content()))
+							.map(r -> r.retrieveFlux(String.class)).flatMapMany(s -> s);
+				}).flatMapMany(s -> s).blockLast();
+
 				String image = ("/food-image/" + name);
 				food.setCoverImage(image);
-				return foodRepo.save(food); 
-				
+				return foodRepo.save(food);
+
 			}).map(i -> modelMapper.map(i, FoodDto.class));
+		} else {
+			return Mono.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage()));
+		}
+	}
+
+	@Override
+	public Mono<FoodDto> uploadImages(String id, Flux<FilePart> filePartFlux) {
+		Optional<FoodEntity> foodEntity = foodRepo.findById(id);
+		if (foodEntity.isPresent()) {
+
+			return Mono.just(foodEntity.get()).map(food -> {
+				
+				List<String> urls = new ArrayList<String>();
+				
+				return filePartFlux.map(file -> {
+					this.rSocketRequester
+							.map(rsocket -> rsocket.route("file.upload.food").data(file.content()))
+							.map(r -> r.retrieveFlux(String.class)).flatMapMany(s -> s).distinct().subscribe(uri->{
+								String image = ("/food-image/" + uri);
+								urls.add(image);
+							});
+				
+					return urls;
+				}).map(names -> {
+					foodEntity.get().setImages(names);
+					return foodEntity;
+				}).blockLast().map(g -> {
+					return foodRepo.save(g);
+				}).get();
+
+			}).map(i -> modelMapper.map(i, FoodDto.class));
+
+			
 		} else {
 			return Mono.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage()));
 		}
