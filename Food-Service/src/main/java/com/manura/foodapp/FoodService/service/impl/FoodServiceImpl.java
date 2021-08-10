@@ -177,7 +177,8 @@ public class FoodServiceImpl implements FoodService {
 						};
 						new Thread(event).start();
 						return i;
-					}).flatMap(fo -> Mono.just(foodRepo.save(fo))).map(i -> {
+					}).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
+					.flatMap(fo -> Mono.just(foodRepo.save(fo))).map(i -> {
 						return modelMapper.map(i, FoodDto.class);
 					});
 
@@ -219,7 +220,8 @@ public class FoodServiceImpl implements FoodService {
 							commEntity.getFood().setComments(commentsEntities);
 							foodRepo.save(commEntity.getFood());
 							return commEntity;
-						}).map(i -> modelMapper.map(i, CommentsDto.class));
+						}).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
+						.map(i -> modelMapper.map(i, CommentsDto.class));
 			}
 		} else {
 			return Mono.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage()));
@@ -319,18 +321,22 @@ public class FoodServiceImpl implements FoodService {
 	public Mono<FoodDto> uploadCoverImage(String id, Mono<FilePart> filePartFlux) {
 		Optional<FoodEntity> foodEntity = foodRepo.findById(id);
 		if (foodEntity.isPresent()) {
-			return Mono.just(foodEntity.get()).map(food -> {
+			return Mono.just(foodEntity.get()).publishOn(Schedulers.boundedElastic())
+					.subscribeOn(Schedulers.boundedElastic()).map(food -> {
 
-				String name = filePartFlux.map(part -> {
-					return this.rSocketRequester.map(rsocket -> rsocket.route("file.upload.food").data(part.content()))
-							.map(r -> r.retrieveFlux(String.class)).flatMapMany(s -> s);
-				}).flatMapMany(s -> s).blockLast();
+						String name = filePartFlux.publishOn(Schedulers.boundedElastic())
+								.subscribeOn(Schedulers.boundedElastic()).map(part -> {
+									return this.rSocketRequester.publishOn(Schedulers.boundedElastic())
+											.subscribeOn(Schedulers.boundedElastic())
+											.map(rsocket -> rsocket.route("file.upload.food").data(part.content()))
+											.map(r -> r.retrieveFlux(String.class)).flatMapMany(s -> s);
+								}).flatMapMany(s -> s).blockLast();
 
-				String image = ("/food-image/" + name);
-				food.setCoverImage(image);
-				return foodRepo.save(food);
+						String image = ("/food-image/" + name);
+						food.setCoverImage(image);
+						return foodRepo.save(food);
 
-			}).map(i -> modelMapper.map(i, FoodDto.class));
+					}).map(i -> modelMapper.map(i, FoodDto.class));
 		} else {
 			return Mono.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage()));
 		}
@@ -340,30 +346,31 @@ public class FoodServiceImpl implements FoodService {
 	public Mono<FoodDto> uploadImages(String id, Flux<FilePart> filePartFlux) {
 		Optional<FoodEntity> foodEntity = foodRepo.findById(id);
 		if (foodEntity.isPresent()) {
-
-			return Mono.just(foodEntity.get()).map(food -> {
-				
-				List<String> urls = new ArrayList<String>();
-				
-				return filePartFlux.map(file -> {
-					this.rSocketRequester
-							.map(rsocket -> rsocket.route("file.upload.food").data(file.content()))
-							.map(r -> r.retrieveFlux(String.class)).flatMapMany(s -> s).distinct().subscribe(uri->{
-								String image = ("/food-image/" + uri);
-								urls.add(image);
-							});
-				
-					return urls;
-				}).map(names -> {
-					foodEntity.get().setImages(names);
-					return foodEntity;
-				}).blockLast().map(g -> {
-					return foodRepo.save(g);
-				}).get();
-
-			}).map(i -> modelMapper.map(i, FoodDto.class));
-
-			
+			List<String> urls = new ArrayList<String>();
+			return Mono.just(foodEntity.get()).publishOn(Schedulers.boundedElastic())
+					.subscribeOn(Schedulers.boundedElastic()).map(food -> {
+						
+						return filePartFlux.publishOn(Schedulers.boundedElastic())
+								.subscribeOn(Schedulers.boundedElastic()).map(file -> {
+									this.rSocketRequester
+										.map(rsocket -> rsocket.route("file.upload.food").data(file.content()))
+										.map(r -> r.retrieveFlux(String.class)).flatMapMany(s -> s).distinct()
+										.publishOn(Schedulers.boundedElastic())
+										.subscribeOn(Schedulers.boundedElastic()).subscribe(uri -> {
+												String image = ("/food-image/" + uri);
+												urls.add(image);
+											});
+									return urls;
+								}).map(url -> {
+									foodEntity.get().setImages(url);
+									return foodEntity;
+								}).blockLast().map(g -> {
+									return foodRepo.save(g);
+								}).get();
+						
+						
+					}).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
+					.map(i -> foodRepo.save(i)).map(i -> modelMapper.map(i, FoodDto.class));
 		} else {
 			return Mono.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage()));
 		}

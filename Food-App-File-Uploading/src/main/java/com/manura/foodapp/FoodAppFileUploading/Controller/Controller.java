@@ -14,6 +14,7 @@ import com.manura.foodapp.FoodAppFileUploading.Error.ImageNotFoundError;
 import com.manura.foodapp.FoodAppFileUploading.FileUploading.Service.FileStorageService;
 
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 @org.springframework.stereotype.Controller
 public class Controller {
@@ -27,7 +28,7 @@ public class Controller {
 		if (fileAsResource == null) {
 			return Mono.error(new ImageNotFoundError(""));
 		} else {
-			return Mono.just(fileAsResource).switchIfEmpty(Mono.error(new ImageNotFoundError("")))
+			return Mono.just(fileAsResource).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic()).switchIfEmpty(Mono.error(new ImageNotFoundError("")))
 					.map(ResponseEntity::ok);
 		}
 
@@ -39,7 +40,9 @@ public class Controller {
 		if (fileAsResource == null) {
 			return Mono.error(new ImageNotFoundError(""));
 		} else {
-			return Mono.just(fileAsResource).switchIfEmpty(Mono.error(new ImageNotFoundError("")))
+			return Mono.just(fileAsResource)
+					.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
+					.switchIfEmpty(Mono.error(new ImageNotFoundError("")))
 					.map(ResponseEntity::ok);
 		}
 
@@ -47,7 +50,8 @@ public class Controller {
 
 	@RequestMapping("/**")
 	Mono<String> notFound() {
-		return Mono.just("notFound");
+		return Mono.just("notFound")
+				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
 }
 
@@ -55,6 +59,7 @@ public class Controller {
 class ErrorController {
 	@ExceptionHandler(ImageNotFoundError.class)
 	Mono<String> notFound(ImageNotFoundError ex) {
-		return Mono.just("notFound");
+		return Mono.just("notFound")
+				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
 }
