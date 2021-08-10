@@ -61,9 +61,9 @@ public class FoodController {
 	}
 
 	@GetMapping("/{id}")
-	Mono<ResponseEntity<FoodDto>> getOneFood(@PathVariable String id) {
-		return foodServiceImpl.findById(id).publishOn(Schedulers.boundedElastic()).map(ResponseEntity::ok)
-				.subscribeOn(Schedulers.boundedElastic()).defaultIfEmpty(ResponseEntity.notFound().build())
+	Mono<FoodDto> getOneFood(@PathVariable String id) {
+		return foodServiceImpl.findById(id).publishOn(Schedulers.boundedElastic())
+				.subscribeOn(Schedulers.boundedElastic())
 				.switchIfEmpty(Mono.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())));
 	}
 	

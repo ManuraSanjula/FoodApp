@@ -22,6 +22,6 @@ public class FoodHutEntity implements Serializable {
     Boolean open;
     List<String> phoneNumbers;
     String image;
-    @DBRef(lazy = true)
+    @DBRef
     List<FoodEntity> foods =  new ArrayList<FoodEntity>();
 }

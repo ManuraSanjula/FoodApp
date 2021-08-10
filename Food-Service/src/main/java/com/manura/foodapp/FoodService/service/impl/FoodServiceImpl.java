@@ -15,6 +15,7 @@ import org.springframework.messaging.rsocket.RSocketRequester;
 import org.springframework.stereotype.Service;
 
 import com.manura.foodapp.FoodService.Error.Model.FoodNotFoundError;
+import com.manura.foodapp.FoodService.Redis.Model.FoodCachingRedis;
 import com.manura.foodapp.FoodService.controller.Model.Res.ImageUploadingRes;
 import com.manura.foodapp.FoodService.dto.CommentsDto;
 import com.manura.foodapp.FoodService.dto.FoodDto;
@@ -63,6 +64,28 @@ public class FoodServiceImpl implements FoodService {
 	@Autowired
 	private Utils util;
 
+	@Autowired
+	private RedisServiceImpl redisServiceImpl;
+
+	private Mono<FoodEntity> ifFoodAbsentInCache(String id) {
+		Optional<FoodEntity> food = foodRepo.findById(id);
+		if (food.isPresent()) {
+			List<FoodHutEntity> foodHuts = new ArrayList<FoodHutEntity>();
+			foodHuts.addAll(food.get().getFoodHuts());					
+			return Mono.just(food.get()).map(i -> {
+				i.setComments(null);
+				i.setFoodHuts(foodHuts);
+				FoodCachingRedis obj = new FoodCachingRedis();
+				obj.setName(id);
+				obj.setFood(i);
+				redisServiceImpl.ifCacheEmpty(obj);
+				return i;
+			});
+		} else {
+			return Mono.empty();
+		}
+	}
+
 	@Override
 	public Flux<FoodDto> findAll() {
 		return Flux.fromIterable(foodRepo.findAll()).publishOn(Schedulers.boundedElastic())
@@ -77,15 +100,9 @@ public class FoodServiceImpl implements FoodService {
 
 	@Override
 	public Mono<FoodDto> findById(String id) {
-		Optional<FoodEntity> food = foodRepo.findById(id);
-		if (food.isPresent()) {
-			return Mono.just(foodRepo.findById(id).isPresent() ? foodRepo.findById(id).get() : null)
-					.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
-					.switchIfEmpty(Mono.empty()).map(i -> modelMapper.map(i, FoodDto.class));
-		} else {
-			return Mono.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage()));
-		}
-
+		return redisServiceImpl.getFood(id).switchIfEmpty(ifFoodAbsentInCache(id))
+				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
+				.map(i -> modelMapper.map(i, FoodDto.class));
 	}
 
 	@Override
@@ -121,6 +138,10 @@ public class FoodServiceImpl implements FoodService {
 					});
 					Runnable event = () -> {
 						pub.pubFood(Mono.just(i), "created");
+						FoodCachingRedis obj = new FoodCachingRedis();
+						obj.setName(i.getId());
+						obj.setFood(i);
+						redisServiceImpl.save(obj);
 					};
 					new Thread(event).start();
 					return modelMapper.map(i, FoodDto.class);
@@ -175,6 +196,10 @@ public class FoodServiceImpl implements FoodService {
 						});
 						Runnable event = () -> {
 							pub.pubFood(Mono.just(i), "update");
+							FoodCachingRedis obj = new FoodCachingRedis();
+							obj.setName(i.getId());
+							obj.setFood(i);
+							redisServiceImpl.save(obj);
 						};
 						new Thread(event).start();
 						return i;
@@ -367,7 +392,7 @@ public class FoodServiceImpl implements FoodService {
 											.map(r -> r.retrieveFlux(String.class)).flatMapMany(s -> s).distinct()
 											.publishOn(Schedulers.boundedElastic()).blockFirst();
 
-									if(image != null) {
+									if (image != null) {
 										String fullImageUril = ("/food-image/" + image);
 										urls.add(fullImageUril);
 									}

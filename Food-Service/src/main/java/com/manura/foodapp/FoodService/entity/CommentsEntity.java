@@ -11,14 +11,17 @@ import lombok.Data;
 @Data
 @Document
 public class CommentsEntity implements Serializable {
-    private static final long serialVersionUID = 1999887L;
-    @Id
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -5831567259692945543L;
+	@Id
     String id;
     String description;
     String userImage;
     Date createdAt;
-    @DBRef(lazy = true)
+    @DBRef
     UserEntity user;
-    @DBRef(lazy = true)
+    @DBRef
     FoodEntity food;
 }
