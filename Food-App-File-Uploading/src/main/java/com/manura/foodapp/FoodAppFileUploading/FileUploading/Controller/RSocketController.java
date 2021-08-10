@@ -8,7 +8,7 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Controller;
 
-import com.manura.foodapp.FoodAppFileUploading.FileUploading.Service.FileStorageService;
+import com.manura.foodapp.FoodAppFileUploading.FileUploading.Service.Impl.FileStorageServiceImpl;
 import com.manura.foodapp.FoodAppFileUploading.Utils.Utils;
 
 import reactor.core.publisher.Flux;
@@ -19,7 +19,7 @@ import reactor.core.scheduler.Schedulers;
 public class RSocketController {
 
 	@Autowired
-	private FileStorageService fileStorageService;
+	private FileStorageServiceImpl fileStorageService;
 
 	@Autowired
 	private Utils utils;

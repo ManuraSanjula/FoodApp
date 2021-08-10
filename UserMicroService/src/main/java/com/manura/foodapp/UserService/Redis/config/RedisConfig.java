@@ -1,4 +1,4 @@
-package com.manura.foodapp.UserService;
+package com.manura.foodapp.UserService.Redis.config;
 
 import com.manura.foodapp.UserService.entity.UserEntity;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;

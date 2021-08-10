@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.manura.foodapp.FoodAppFileUploading.Error.ImageNotFoundError;
-import com.manura.foodapp.FoodAppFileUploading.FileUploading.Service.FileStorageService;
+import com.manura.foodapp.FoodAppFileUploading.FileUploading.Service.Impl.FileStorageServiceImpl;
 
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -20,11 +20,11 @@ import reactor.core.scheduler.Schedulers;
 public class Controller {
 
 	@Autowired
-	FileStorageService fileStorageService;
+	FileStorageServiceImpl fileStorageService;
 
 	@GetMapping(value = "/user-image/{fileName:.+}", produces = MediaType.IMAGE_JPEG_VALUE)
 	public Mono<ResponseEntity<Resource>> getUserImage(@PathVariable String fileName) {
-		return fileStorageService.loadFileAsResourceUser(fileName+".jpeg").
+		return fileStorageService.loadFileAsResource(fileName+".jpeg","User").
 			publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
 			.switchIfEmpty(Mono.error(new ImageNotFoundError("")))
 			.map(ResponseEntity::ok);
@@ -32,7 +32,7 @@ public class Controller {
 	
 	@GetMapping(value = "/food-image/{fileName:.+}", produces = MediaType.IMAGE_JPEG_VALUE)
 	public Mono<ResponseEntity<Resource>> getFoodImage(@PathVariable String fileName) {		
-		return fileStorageService.loadFileAsResourceFood(fileName+".jpeg").
+		return fileStorageService.loadFileAsResource(fileName+".jpeg","Food").
 				publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
 				.switchIfEmpty(Mono.error(new ImageNotFoundError("")))
 				.map(ResponseEntity::ok);

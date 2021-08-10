@@ -367,8 +367,10 @@ public class FoodServiceImpl implements FoodService {
 											.map(r -> r.retrieveFlux(String.class)).flatMapMany(s -> s).distinct()
 											.publishOn(Schedulers.boundedElastic()).blockFirst();
 
-									String fullImageUril = ("/food-image/" + image);
-									urls.add(fullImageUril);
+									if(image != null) {
+										String fullImageUril = ("/food-image/" + image);
+										urls.add(fullImageUril);
+									}
 									return urls;
 								}).map(url -> {
 									foodEntity.get().setImages(url);

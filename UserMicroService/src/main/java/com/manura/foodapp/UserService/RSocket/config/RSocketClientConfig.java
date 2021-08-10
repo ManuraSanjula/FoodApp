@@ -1,4 +1,4 @@
-package com.manura.foodapp.UserService;
+package com.manura.foodapp.UserService.RSocket.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

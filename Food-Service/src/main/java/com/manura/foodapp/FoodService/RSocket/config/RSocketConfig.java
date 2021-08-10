@@ -1,4 +1,4 @@
-package com.manura.foodapp.FoodService;
+package com.manura.foodapp.FoodService.RSocket.config;
 
 import java.time.Duration;
 

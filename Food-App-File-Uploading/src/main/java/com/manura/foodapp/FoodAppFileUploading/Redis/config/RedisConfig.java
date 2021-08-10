@@ -1,4 +1,4 @@
-package com.manura.foodapp.FoodAppFileUploading.redis;
+package com.manura.foodapp.FoodAppFileUploading.Redis.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -8,7 +8,7 @@ import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
-import com.manura.foodapp.FoodAppFileUploading.Redis.ImageCachingRedis;
+import com.manura.foodapp.FoodAppFileUploading.Redis.Model.ImageCachingRedis;
 
 @Configuration
 public class RedisConfig {

@@ -13,6 +13,7 @@ repositories {
 }
 
 dependencies {
+    implementation group: 'org.springframework.boot', name: 'spring-boot-starter-data-redis-reactive', version: '2.5.3'
     implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
     implementation group: 'com.nimbusds', name: 'nimbus-jose-jwt', version: '9.11.3'
     implementation group: 'org.springframework.boot', name: 'spring-boot-devtools', version: '2.5.3'

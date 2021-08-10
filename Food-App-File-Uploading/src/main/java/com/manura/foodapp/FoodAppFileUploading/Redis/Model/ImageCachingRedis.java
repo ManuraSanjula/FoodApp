@@ -1,4 +1,4 @@
-package com.manura.foodapp.FoodAppFileUploading.Redis;
+package com.manura.foodapp.FoodAppFileUploading.Redis.Model;
 
 import java.io.Serializable;
 
