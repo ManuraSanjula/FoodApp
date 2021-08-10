@@ -21,7 +21,6 @@ import com.manura.foodapp.FoodService.Error.Model.FoodNotFoundError;
 import com.manura.foodapp.FoodService.controller.Model.Req.CommentReq;
 import com.manura.foodapp.FoodService.controller.Model.Req.FoodReq;
 import com.manura.foodapp.FoodService.controller.Model.Res.HalfFoodRes;
-import com.manura.foodapp.FoodService.controller.Model.Res.ImageUploadingRes;
 import com.manura.foodapp.FoodService.dto.CommentsDto;
 import com.manura.foodapp.FoodService.dto.FoodDto;
 import com.manura.foodapp.FoodService.service.impl.FoodServiceImpl;

@@ -376,7 +376,7 @@ public class UserServiceImpl implements UserService {
 			}else {
 				Flux<DataBuffer> data = DataBufferUtils.read(resizeImage.getResource(), new DefaultDataBufferFactory(), 1000000);
 				String img = ("/user-image/" + this.requester.route("file.upload.user").data(data).retrieveFlux(String.class)
-						.distinct().blockFirst()+".jpeg");
+						.distinct().blockFirst());
 				userEntity.setPic(img);
 				userRepo.save(userEntity);
 				return modelMapper.map(userEntity, UserRes.class);

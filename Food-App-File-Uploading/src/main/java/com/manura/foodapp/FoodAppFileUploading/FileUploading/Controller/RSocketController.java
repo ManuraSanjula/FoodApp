@@ -26,7 +26,7 @@ public class RSocketController {
 
 	@MessageMapping("file.upload.user")
 	public Flux<String> userUpload(@Payload Flux<DataBuffer> content) {
-		String fileName = ("User" + utils.generateName(30) + ".jpeg");
+		String fileName = ("User" + utils.generateName(30));
 		var path = Paths.get(fileName + ".jpeg");
 		return Flux.concat(fileStorageService.uploadFileUser(path, content, fileName), Mono.just(fileName))
 				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());

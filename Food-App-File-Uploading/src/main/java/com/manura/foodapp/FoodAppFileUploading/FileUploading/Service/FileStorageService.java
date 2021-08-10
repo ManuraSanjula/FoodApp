@@ -9,26 +9,23 @@ import java.awt.Image;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.channels.AsynchronousFileChannel;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 
 import javax.imageio.ImageIO;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
-import org.springframework.web.multipart.MultipartFile;
 
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 @Service
@@ -39,21 +36,12 @@ public class FileStorageService {
 
 	@Value("${food-file.upload-dir}")
 	private Path foodFileStorageLocation;
-
-	public String storeFile(MultipartFile file) {
-		String fileName = StringUtils.cleanPath(file.getOriginalFilename());
-		try {
-			if (fileName.contains("..")) {
-				return null;
-			}
-			Path targetLocation = this.userFileStorageLocation.resolve(fileName);
-			Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
-			return fileName;
-		} catch (IOException ex) {
-			return null;
-		}
-	}
 	
+	@Autowired
+	private RedisService redisService;
+
+
+	@SuppressWarnings("unused")
 	private  void addTextWatermark(File watermark, String type, File source, File destination) {
        Runnable imageThread = ()->{
     	   try {
@@ -160,35 +148,62 @@ public class FileStorageService {
 			return Flux.empty();
 		}
 	}
-
-	public Resource loadFileAsResourceUser(String fileName) {
-		try {
+	
+	public Mono<Resource> loadFileAsResourceUser(String fileName) {
+		return redisService.getResource(fileName).switchIfEmpty(loadFileAsResourceUserIfCacheNotPresent(fileName))
+				.publishOn(Schedulers.boundedElastic())
+				.subscribeOn(Schedulers.boundedElastic());
+	}
+	
+	public Mono<Resource> loadFileAsResourceUserIfCacheNotPresent(String fileName){
+		try {			
 			Path filePath = this.userFileStorageLocation.resolve(fileName).normalize();
 			Resource resource = new UrlResource(filePath.toUri());
 			if (resource.exists()) {
-
-				return resource;
+				try {
+					redisService.ifCacheEmpty(fileName, resource.getInputStream().readAllBytes())
+					.publishOn(Schedulers.boundedElastic())
+					.subscribeOn(Schedulers.boundedElastic());
+				}catch (Exception e) {
+					
+				}
+				return Mono.just(resource)
+						.publishOn(Schedulers.boundedElastic())
+						.subscribeOn(Schedulers.boundedElastic());
 			} else {
-				return null;
+				return Mono.empty();
 			}
 		} catch (MalformedURLException ex) {
-			return null;
+			return Mono.empty();
 		}
-
 	}
-
-	public Resource loadFileAsResourceFood(String fileName) {
-		try {
+		
+	public Mono<Resource> loadFileAsResourceFoodIfCacheNotPresent(String fileName){
+		try {			
 			Path filePath = this.foodFileStorageLocation.resolve(fileName).normalize();
 			Resource resource = new UrlResource(filePath.toUri());
 			if (resource.exists()) {
-				return resource;
+				try {
+					redisService.ifCacheEmpty(fileName, resource.getInputStream().readAllBytes())
+					.publishOn(Schedulers.boundedElastic())
+					.subscribeOn(Schedulers.boundedElastic());
+				}catch (Exception e) {
+					
+				}
+				return Mono.just(resource)
+						.publishOn(Schedulers.boundedElastic())
+						.subscribeOn(Schedulers.boundedElastic());
 			} else {
-				return null;
+				return Mono.empty();
 			}
 		} catch (MalformedURLException ex) {
-			return null;
+			return Mono.empty();
 		}
+	}
 
+	public Mono<Resource> loadFileAsResourceFood(String fileName) {
+		return redisService.getResource(fileName).switchIfEmpty(loadFileAsResourceFoodIfCacheNotPresent(fileName))
+				.publishOn(Schedulers.boundedElastic())
+				.subscribeOn(Schedulers.boundedElastic());
 	}
 }

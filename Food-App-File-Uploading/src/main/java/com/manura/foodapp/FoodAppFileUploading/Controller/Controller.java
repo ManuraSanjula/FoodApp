@@ -24,27 +24,18 @@ public class Controller {
 
 	@GetMapping(value = "/user-image/{fileName:.+}", produces = MediaType.IMAGE_JPEG_VALUE)
 	public Mono<ResponseEntity<Resource>> getUserImage(@PathVariable String fileName) {
-		Resource fileAsResource = fileStorageService.loadFileAsResourceUser(fileName);
-		if (fileAsResource == null) {
-			return Mono.error(new ImageNotFoundError(""));
-		} else {
-			return Mono.just(fileAsResource).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic()).switchIfEmpty(Mono.error(new ImageNotFoundError("")))
-					.map(ResponseEntity::ok);
-		}
-
+		return fileStorageService.loadFileAsResourceUser(fileName+".jpeg").
+			publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
+			.switchIfEmpty(Mono.error(new ImageNotFoundError("")))
+			.map(ResponseEntity::ok);
 	}
 	
 	@GetMapping(value = "/food-image/{fileName:.+}", produces = MediaType.IMAGE_JPEG_VALUE)
-	public Mono<ResponseEntity<Resource>> getFoodImage(@PathVariable String fileName) {
-		Resource fileAsResource = fileStorageService.loadFileAsResourceFood((fileName+".jpeg"));
-		if (fileAsResource == null) {
-			return Mono.error(new ImageNotFoundError(""));
-		} else {
-			return Mono.just(fileAsResource)
-					.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
-					.switchIfEmpty(Mono.error(new ImageNotFoundError("")))
-					.map(ResponseEntity::ok);
-		}
+	public Mono<ResponseEntity<Resource>> getFoodImage(@PathVariable String fileName) {		
+		return fileStorageService.loadFileAsResourceFood(fileName+".jpeg").
+				publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
+				.switchIfEmpty(Mono.error(new ImageNotFoundError("")))
+				.map(ResponseEntity::ok);
 
 	}
 
