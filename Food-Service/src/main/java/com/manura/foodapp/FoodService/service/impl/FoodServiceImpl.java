@@ -352,14 +352,23 @@ public class FoodServiceImpl implements FoodService {
 						List<String> urls = new ArrayList<String>();
 						return filePartFlux.publishOn(Schedulers.boundedElastic())
 								.subscribeOn(Schedulers.boundedElastic()).map(file -> {
-									this.rSocketRequester
-										.map(rsocket -> rsocket.route("file.upload.food").data(file.content()))
-										.map(r -> r.retrieveFlux(String.class)).flatMapMany(s -> s).distinct()
-										.publishOn(Schedulers.boundedElastic())
-										.subscribeOn(Schedulers.boundedElastic()).subscribe(uri -> {
-												String image = ("/food-image/" + uri);
-												urls.add(image);
-											});
+
+//									this.rSocketRequester
+//										.map(rsocket -> rsocket.route("file.upload.food").data(file.content()))
+//										.map(r -> r.retrieveFlux(String.class)).flatMapMany(s -> s).distinct()
+//										.publishOn(Schedulers.boundedElastic())
+//										.subscribeOn(Schedulers.boundedElastic()).subscribe(uri -> {
+//												String image = ("/food-image/" + uri);
+//												urls.add(image);
+//											});
+
+									String image = this.rSocketRequester
+											.map(rsocket -> rsocket.route("file.upload.food").data(file.content()))
+											.map(r -> r.retrieveFlux(String.class)).flatMapMany(s -> s).distinct()
+											.publishOn(Schedulers.boundedElastic()).blockFirst();
+
+									String fullImageUril = ("/food-image/" + image);
+									urls.add(fullImageUril);
 									return urls;
 								}).map(url -> {
 									foodEntity.get().setImages(url);
@@ -367,8 +376,6 @@ public class FoodServiceImpl implements FoodService {
 								}).blockLast().map(g -> {
 									return foodRepo.save(g);
 								}).get();
-						
-						
 					}).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
 					.map(i -> foodRepo.save(i)).map(i -> modelMapper.map(i, FoodDto.class));
 		} else {
@@ -380,31 +387,31 @@ public class FoodServiceImpl implements FoodService {
 	public Flux<ImageUploadingRes> uploadImagesMethod2(String id, Flux<FilePart> filePartFlux) {
 		Optional<FoodEntity> foodEntity = foodRepo.findById(id);
 		if (foodEntity.isPresent()) {
-			return filePartFlux.publishOn(Schedulers.boundedElastic())
-			    .subscribeOn(Schedulers.boundedElastic()).map(file->{
-			    	return this.rSocketRequester
-					 .map(rsocket -> rsocket.route("file.upload.food").data(file.content()))
-					 .map(r -> r.retrieveFlux(String.class)).flatMapMany(s -> s).distinct()
-					 .publishOn(Schedulers.boundedElastic())
-					 .subscribeOn(Schedulers.boundedElastic()).map(img->{
-							String image = ("/food-image/" + img);							
-							ImageUploadingRes uploadingRes = new ImageUploadingRes();
-							uploadingRes.setName(img);
-							uploadingRes.setUrl(image);
-							return uploadingRes;
-					 });
-			    }).flatMap(i->i).map(i->{
-		
-			    	return   Mono.just(foodEntity.get()).publishOn(Schedulers.boundedElastic())
-					  .subscribeOn(Schedulers.boundedElastic()).map(food->{
-						  List<String> urls = new ArrayList<String>();
-		                  urls.add(i.getUrl()); 	
-		                  food.setImages(urls);
-		                  foodRepo.save(food);
-		                  return i;  
-					  });
-			    }).flatMap(i->i);
-		}else {
+			return filePartFlux.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
+					.map(file -> {
+						return this.rSocketRequester
+								.map(rsocket -> rsocket.route("file.upload.food").data(file.content()))
+								.map(r -> r.retrieveFlux(String.class)).flatMapMany(s -> s).distinct()
+								.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
+								.map(img -> {
+									String image = ("/food-image/" + img);
+									ImageUploadingRes uploadingRes = new ImageUploadingRes();
+									uploadingRes.setName(img);
+									uploadingRes.setUrl(image);
+									return uploadingRes;
+								});
+					}).flatMap(i -> i).map(i -> {
+
+						return Mono.just(foodEntity.get()).publishOn(Schedulers.boundedElastic())
+								.subscribeOn(Schedulers.boundedElastic()).map(food -> {
+									List<String> urls = new ArrayList<String>();
+									urls.add(i.getUrl());
+									food.setImages(urls);
+									foodRepo.save(food);
+									return i;
+								});
+					}).flatMap(i -> i);
+		} else {
 			return Flux.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage()));
 		}
 	}

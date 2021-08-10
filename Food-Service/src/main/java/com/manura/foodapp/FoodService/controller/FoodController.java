@@ -21,6 +21,7 @@ import com.manura.foodapp.FoodService.Error.Model.FoodNotFoundError;
 import com.manura.foodapp.FoodService.controller.Model.Req.CommentReq;
 import com.manura.foodapp.FoodService.controller.Model.Req.FoodReq;
 import com.manura.foodapp.FoodService.controller.Model.Res.HalfFoodRes;
+import com.manura.foodapp.FoodService.controller.Model.Res.ImageUploadingRes;
 import com.manura.foodapp.FoodService.dto.CommentsDto;
 import com.manura.foodapp.FoodService.dto.FoodDto;
 import com.manura.foodapp.FoodService.service.impl.FoodServiceImpl;
@@ -81,12 +82,6 @@ public class FoodController {
 				.switchIfEmpty(Mono.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())));
 	}
 	
-//	@PutMapping("/{id}/images")
-//	 Flux<ImageUploadingRes> uploadImages(@PathVariable String id,@RequestPart("images") Flux<FilePart> fileParts) {
-//		return foodServiceImpl.uploadImagesMethod2(id,fileParts).publishOn(Schedulers.boundedElastic())
-//				.subscribeOn(Schedulers.boundedElastic());
-//	}
-//	
 	@GetMapping("/{id}/comments")
 	Flux<CommentsDto> getAllComment(@PathVariable String id) {
 		return foodServiceImpl.findAllComment(id).publishOn(Schedulers.boundedElastic())
