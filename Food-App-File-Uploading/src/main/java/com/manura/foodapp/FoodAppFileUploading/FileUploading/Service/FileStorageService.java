@@ -129,33 +129,7 @@ public class FileStorageService {
         new Thread(imageThread).start();
     }
 
-    private	void addTextWatermark(String text, File sourceImageFile, File destImageFile) {
-		Runnable imageThread = ()->{
-			try {
-				BufferedImage sourceImage = ImageIO.read(sourceImageFile);
-				Graphics2D g2d = (Graphics2D) sourceImage.getGraphics();
-
-				AlphaComposite alphaChannel = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.1f);
-				g2d.setComposite(alphaChannel);
-				g2d.setColor(Color.BLUE);
-			
-				FontMetrics fontMetrics = g2d.getFontMetrics();
-				Rectangle2D rect = fontMetrics.getStringBounds(text, g2d);
-
-				int centerX = (sourceImage.getWidth() - (int) rect.getWidth()) / 2;
-				int centerY = sourceImage.getHeight() / 2;
-				int fontSize = ((centerX + centerY) / 10);
-				g2d.setFont(new Font("Arial", Font.BOLD, fontSize));
-				g2d.drawString(text, centerX, centerY);
-
-				ImageIO.write(sourceImage, "jpeg", destImageFile);
-				g2d.dispose();
-			}catch (Exception e) {
-			}
-		};
-		new Thread(imageThread).start();
-	}
-
+   
 	public Flux<String> uploadFileUser(Path path, Flux<DataBuffer> bufferFlux, String fileName) {
         try {
         	Path opPath = userFileStorageLocation.resolve(path);
