@@ -15,6 +15,7 @@ import org.springframework.messaging.rsocket.RSocketRequester;
 import org.springframework.stereotype.Service;
 
 import com.manura.foodapp.FoodService.Error.Model.FoodNotFoundError;
+import com.manura.foodapp.FoodService.controller.Model.Res.ImageUploadingRes;
 import com.manura.foodapp.FoodService.dto.CommentsDto;
 import com.manura.foodapp.FoodService.dto.FoodDto;
 import com.manura.foodapp.FoodService.dto.FoodHutDto;
@@ -346,10 +347,9 @@ public class FoodServiceImpl implements FoodService {
 	public Mono<FoodDto> uploadImages(String id, Flux<FilePart> filePartFlux) {
 		Optional<FoodEntity> foodEntity = foodRepo.findById(id);
 		if (foodEntity.isPresent()) {
-			List<String> urls = new ArrayList<String>();
 			return Mono.just(foodEntity.get()).publishOn(Schedulers.boundedElastic())
 					.subscribeOn(Schedulers.boundedElastic()).map(food -> {
-						
+						List<String> urls = new ArrayList<String>();
 						return filePartFlux.publishOn(Schedulers.boundedElastic())
 								.subscribeOn(Schedulers.boundedElastic()).map(file -> {
 									this.rSocketRequester
@@ -373,6 +373,39 @@ public class FoodServiceImpl implements FoodService {
 					.map(i -> foodRepo.save(i)).map(i -> modelMapper.map(i, FoodDto.class));
 		} else {
 			return Mono.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage()));
+		}
+	}
+
+	@Override
+	public Flux<ImageUploadingRes> uploadImagesMethod2(String id, Flux<FilePart> filePartFlux) {
+		Optional<FoodEntity> foodEntity = foodRepo.findById(id);
+		if (foodEntity.isPresent()) {
+			return filePartFlux.publishOn(Schedulers.boundedElastic())
+			    .subscribeOn(Schedulers.boundedElastic()).map(file->{
+			    	return this.rSocketRequester
+					 .map(rsocket -> rsocket.route("file.upload.food").data(file.content()))
+					 .map(r -> r.retrieveFlux(String.class)).flatMapMany(s -> s).distinct()
+					 .publishOn(Schedulers.boundedElastic())
+					 .subscribeOn(Schedulers.boundedElastic()).map(img->{
+							String image = ("/food-image/" + img);							
+							ImageUploadingRes uploadingRes = new ImageUploadingRes();
+							uploadingRes.setName(img);
+							uploadingRes.setUrl(image);
+							return uploadingRes;
+					 });
+			    }).flatMap(i->i).map(i->{
+		
+			    	return   Mono.just(foodEntity.get()).publishOn(Schedulers.boundedElastic())
+					  .subscribeOn(Schedulers.boundedElastic()).map(food->{
+						  List<String> urls = new ArrayList<String>();
+		                  urls.add(i.getUrl()); 	
+		                  food.setImages(urls);
+		                  foodRepo.save(food);
+		                  return i;  
+					  });
+			    }).flatMap(i->i);
+		}else {
+			return Flux.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage()));
 		}
 	}
 }

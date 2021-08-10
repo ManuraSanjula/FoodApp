@@ -1,6 +1,7 @@
 package com.manura.foodapp.FoodService.controller;
 
 import java.security.Principal;
+
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -80,6 +81,12 @@ public class FoodController {
 				.switchIfEmpty(Mono.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())));
 	}
 	
+//	@PutMapping("/{id}/images")
+//	 Flux<ImageUploadingRes> uploadImages(@PathVariable String id,@RequestPart("images") Flux<FilePart> fileParts) {
+//		return foodServiceImpl.uploadImagesMethod2(id,fileParts).publishOn(Schedulers.boundedElastic())
+//				.subscribeOn(Schedulers.boundedElastic());
+//	}
+//	
 	@GetMapping("/{id}/comments")
 	Flux<CommentsDto> getAllComment(@PathVariable String id) {
 		return foodServiceImpl.findAllComment(id).publishOn(Schedulers.boundedElastic())

@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.http.codec.multipart.FilePart;
 
+import com.manura.foodapp.FoodService.controller.Model.Res.ImageUploadingRes;
 import com.manura.foodapp.FoodService.dto.CommentsDto;
 import com.manura.foodapp.FoodService.dto.FoodDto;
 import com.manura.foodapp.FoodService.dto.FoodHutDto;
@@ -31,4 +32,5 @@ public interface FoodService {
     Mono<UserEntity> updateUser(String id,Mono<UserDto> user);
     Mono<FoodDto> uploadCoverImage(String id,Mono<FilePart> filePartFlux);
     Mono<FoodDto> uploadImages(String id,Flux<FilePart> filePartFlux);
+    Flux<ImageUploadingRes> uploadImagesMethod2(String id,Flux<FilePart> filePartFlux);
 }
