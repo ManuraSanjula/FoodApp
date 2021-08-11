@@ -12,7 +12,6 @@ import com.manura.foodapp.FoodAppFileUploading.FileUploading.Service.Impl.FileSt
 import com.manura.foodapp.FoodAppFileUploading.Utils.Utils;
 
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 @Controller
@@ -28,7 +27,7 @@ public class RSocketController {
 	public Flux<String> userUpload(@Payload Flux<DataBuffer> content) {
 		String fileName = ("User" + utils.generateName(30));
 		var path = Paths.get(fileName + ".jpeg");
-		return Flux.concat(fileStorageService.uploadFileUser(path, content, fileName), Mono.just(fileName))
+		return fileStorageService.uploadFileUser(path, content, fileName)
 				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
 
@@ -36,7 +35,7 @@ public class RSocketController {
 	public Flux<String> foodUploadCoverImage(@Payload Flux<DataBuffer> content)  {
 		String fileName = ("Food" + utils.generateName(30));
 		var path = Paths.get(fileName + ".jpeg");
-		return Flux.concat(fileStorageService.uploadFileFood(path, content, fileName), Mono.just(fileName))
+		return fileStorageService.uploadFileFood(path, content, fileName)
 				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
 }

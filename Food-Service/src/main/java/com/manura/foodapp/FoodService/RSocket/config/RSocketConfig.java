@@ -29,8 +29,13 @@ public class RSocketConfig {
 	public Mono<RSocketRequester> getRSocketRequester(RSocketRequester.Builder builder) {
 		return builder
 				.rsocketConnector(
-						rSocketConnector -> rSocketConnector.reconnect(Retry.fixedDelay(2, Duration.ofSeconds(2))))
+						rSocketConnector -> rSocketConnector.reconnect(retryStrategy()))
 				.connect(TcpClientTransport.create(port));
 	}
+	
+	private Retry retryStrategy(){
+        return Retry.fixedDelay(Long.MAX_VALUE, Duration.ofSeconds(2))
+                    .doBeforeRetry(s -> System.out.println("Lost connection. Retry : " + s.totalRetriesInARow()));
+    }
 
 }

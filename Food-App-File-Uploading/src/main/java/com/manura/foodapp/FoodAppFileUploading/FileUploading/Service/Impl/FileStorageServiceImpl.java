@@ -140,10 +140,18 @@ public class FileStorageServiceImpl implements FileStorageService {
 
 			AsynchronousFileChannel channel = AsynchronousFileChannel.open(opPath, StandardOpenOption.CREATE,
 					StandardOpenOption.WRITE);
-			return DataBufferUtils.write(bufferFlux, channel).map(b -> fileName).doOnComplete(() -> {
+			return DataBufferUtils.write(bufferFlux, channel).mapNotNull(i -> {
+				if (i.capacity() > 100000) {
+					return fileName;
+				} else {
+					File image = new File(opPath.toAbsolutePath().toString());
+					image.delete();
+					return null;
+				}
+				
+			}).doOnComplete(() -> {
 				File image = new File(opPath.toAbsolutePath().toString());
 				addTextWatermark("Food-App", "jpeg", image, image);
-				// addTextWatermark("Food-App", image, image);
 			}).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 		} catch (Exception e) {
 			return Flux.empty();
@@ -151,8 +159,8 @@ public class FileStorageServiceImpl implements FileStorageService {
 	}
 
 	@Override
-	public Mono<Resource> loadFileAsResourceIfCacheNotPresent(String fileName,String type) {
-		if(type.equals("User")) {
+	public Mono<Resource> loadFileAsResourceIfCacheNotPresent(String fileName, String type) {
+		if (type.equals("User")) {
 			try {
 				Path filePath = this.userFileStorageLocation.resolve(fileName).normalize();
 				Resource resource = new UrlResource(filePath.toUri());
@@ -171,20 +179,18 @@ public class FileStorageServiceImpl implements FileStorageService {
 			} catch (MalformedURLException ex) {
 				return Mono.empty();
 			}
-		}else {
-			try {			
+		} else {
+			try {
 				Path filePath = this.foodFileStorageLocation.resolve(fileName).normalize();
 				Resource resource = new UrlResource(filePath.toUri());
 				if (resource.exists()) {
 					try {
 						redisService.ifCacheEmpty(fileName, resource.getInputStream().readAllBytes())
-						.publishOn(Schedulers.boundedElastic())
-						.subscribeOn(Schedulers.boundedElastic());
-					}catch (Exception e) {
-						
+								.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+					} catch (Exception e) {
+
 					}
-					return Mono.just(resource)
-							.publishOn(Schedulers.boundedElastic())
+					return Mono.just(resource).publishOn(Schedulers.boundedElastic())
 							.subscribeOn(Schedulers.boundedElastic());
 				} else {
 					return Mono.empty();
@@ -198,13 +204,12 @@ public class FileStorageServiceImpl implements FileStorageService {
 	@Override
 	public Mono<Resource> loadFileAsResource(String fileName, String type) {
 		if (type.equals("User")) {
-			return redisService.getResource(fileName).switchIfEmpty(loadFileAsResourceIfCacheNotPresent(fileName,type))
+			return redisService.getResource(fileName).switchIfEmpty(loadFileAsResourceIfCacheNotPresent(fileName, type))
 					.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 		} else {
-			return redisService.getResource(fileName).switchIfEmpty(loadFileAsResourceIfCacheNotPresent(fileName,type))
+			return redisService.getResource(fileName).switchIfEmpty(loadFileAsResourceIfCacheNotPresent(fileName, type))
 					.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 		}
 	}
-
 
 }

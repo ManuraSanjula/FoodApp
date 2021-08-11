@@ -408,18 +408,9 @@ public class FoodServiceImpl implements FoodService {
 						return filePartFlux.publishOn(Schedulers.boundedElastic())
 								.subscribeOn(Schedulers.boundedElastic()).map(file -> {
 
-//									this.rSocketRequester
-//										.map(rsocket -> rsocket.route("file.upload.food").data(file.content()))
-//										.map(r -> r.retrieveFlux(String.class)).flatMapMany(s -> s).distinct()
-//										.publishOn(Schedulers.boundedElastic())
-//										.subscribeOn(Schedulers.boundedElastic()).subscribe(uri -> {
-//												String image = ("/food-image/" + uri);
-//												urls.add(image);
-//											});
-
 									String image = this.rSocketRequester
 											.map(rsocket -> rsocket.route("file.upload.food").data(file.content()))
-											.map(r -> r.retrieveFlux(String.class)).flatMapMany(s -> s).distinct()
+											.mapNotNull(r -> r.retrieveFlux(String.class)).flatMapMany(s -> s).distinct()
 											.publishOn(Schedulers.boundedElastic()).blockFirst();
 
 									if (image != null) {
