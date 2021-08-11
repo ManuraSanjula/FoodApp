@@ -19,6 +19,7 @@ import com.manura.foodapp.FoodService.Redis.Model.CommentCachingRedis;
 import com.manura.foodapp.FoodService.Redis.Model.FoodCachingRedis;
 import com.manura.foodapp.FoodService.controller.Model.Res.ImageUploadingRes;
 import com.manura.foodapp.FoodService.dto.CommentsDto;
+import com.manura.foodapp.FoodService.dto.FoodCommentDto;
 import com.manura.foodapp.FoodService.dto.FoodDto;
 import com.manura.foodapp.FoodService.dto.FoodHutDto;
 import com.manura.foodapp.FoodService.dto.UserDto;
@@ -73,7 +74,6 @@ public class FoodServiceImpl implements FoodService {
 		Optional<FoodEntity> food = foodRepo.findById(id);
 		if (food.isPresent()) {
 			return Mono.just(food.get()).map(i -> modelMapper.map(i, FoodDto.class)).map(i -> {
-//				i.setFoodHuts(i.getFoodHuts());
 				FoodCachingRedis obj = new FoodCachingRedis();
 				obj.setName(id);
 				obj.setFood(i);
@@ -203,6 +203,10 @@ public class FoodServiceImpl implements FoodService {
 						new Thread(event).start();
 						return i;
 					}).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
+					.map(i->{
+						redisServiceImpl.updateCommentIFFoodUpdated(id, modelMapper.map(i,FoodCommentDto.class));
+						return i;
+					})
 					.flatMap(fo -> Mono.just(foodRepo.save(fo))).map(i -> {
 						return modelMapper.map(i, FoodDto.class);
 					});
@@ -246,7 +250,10 @@ public class FoodServiceImpl implements FoodService {
 							foodRepo.save(commEntity.getFood());
 							return commEntity;
 						}).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
-						.map(i -> modelMapper.map(i, CommentsDto.class));
+						.map(i -> modelMapper.map(i, CommentsDto.class)).map(i->{
+							redisServiceImpl.addNewComment("Comment" + id, i);
+							return i;
+						});
 			}
 		} else {
 			return Mono.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage()));
@@ -375,6 +382,16 @@ public class FoodServiceImpl implements FoodService {
 						food.setCoverImage(image);
 						return foodRepo.save(food);
 
+					}).map(i->{
+						Runnable event = () -> {
+							pub.pubFood(Mono.just(i), "update");
+							FoodCachingRedis obj = new FoodCachingRedis();
+							obj.setName(i.getId());
+							obj.setFood(modelMapper.map(i, FoodDto.class));
+							redisServiceImpl.save(obj);
+						};
+						new Thread(event).start();
+						return i;
 					}).map(i -> modelMapper.map(i, FoodDto.class));
 		} else {
 			return Mono.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage()));
@@ -417,6 +434,17 @@ public class FoodServiceImpl implements FoodService {
 									return foodRepo.save(g);
 								}).get();
 					}).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
+					.map(i->{
+						Runnable event = () -> {
+							pub.pubFood(Mono.just(i), "update");
+							FoodCachingRedis obj = new FoodCachingRedis();
+							obj.setName(i.getId());
+							obj.setFood(modelMapper.map(i, FoodDto.class));
+							redisServiceImpl.save(obj);
+						};
+						new Thread(event).start();
+						return i;
+					})
 					.map(i -> foodRepo.save(i)).map(i -> modelMapper.map(i, FoodDto.class));
 		} else {
 			return Mono.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage()));
