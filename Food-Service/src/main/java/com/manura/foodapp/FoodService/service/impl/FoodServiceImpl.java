@@ -15,6 +15,7 @@ import org.springframework.messaging.rsocket.RSocketRequester;
 import org.springframework.stereotype.Service;
 
 import com.manura.foodapp.FoodService.Error.Model.FoodNotFoundError;
+import com.manura.foodapp.FoodService.Redis.Model.CommentCachingRedis;
 import com.manura.foodapp.FoodService.Redis.Model.FoodCachingRedis;
 import com.manura.foodapp.FoodService.controller.Model.Res.ImageUploadingRes;
 import com.manura.foodapp.FoodService.dto.CommentsDto;
@@ -67,23 +68,22 @@ public class FoodServiceImpl implements FoodService {
 	@Autowired
 	private RedisServiceImpl redisServiceImpl;
 
-	private Mono<FoodEntity> ifFoodAbsentInCache(String id) {
+	private Mono<FoodDto> ifFoodAbsentInCache(String id) {
+
 		Optional<FoodEntity> food = foodRepo.findById(id);
 		if (food.isPresent()) {
-			List<FoodHutEntity> foodHuts = new ArrayList<FoodHutEntity>();
-			foodHuts.addAll(food.get().getFoodHuts());					
-			return Mono.just(food.get()).map(i -> {
-				i.setComments(null);
-				i.setFoodHuts(foodHuts);
+			return Mono.just(food.get()).map(i -> modelMapper.map(i, FoodDto.class)).map(i -> {
+//				i.setFoodHuts(i.getFoodHuts());
 				FoodCachingRedis obj = new FoodCachingRedis();
 				obj.setName(id);
 				obj.setFood(i);
-				redisServiceImpl.ifCacheEmpty(obj);
+				redisServiceImpl.save(obj);
 				return i;
 			});
 		} else {
 			return Mono.empty();
 		}
+
 	}
 
 	@Override
@@ -101,8 +101,7 @@ public class FoodServiceImpl implements FoodService {
 	@Override
 	public Mono<FoodDto> findById(String id) {
 		return redisServiceImpl.getFood(id).switchIfEmpty(ifFoodAbsentInCache(id))
-				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
-				.map(i -> modelMapper.map(i, FoodDto.class));
+				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
 
 	@Override
@@ -140,7 +139,7 @@ public class FoodServiceImpl implements FoodService {
 						pub.pubFood(Mono.just(i), "created");
 						FoodCachingRedis obj = new FoodCachingRedis();
 						obj.setName(i.getId());
-						obj.setFood(i);
+						obj.setFood(modelMapper.map(i, FoodDto.class));
 						redisServiceImpl.save(obj);
 					};
 					new Thread(event).start();
@@ -198,7 +197,7 @@ public class FoodServiceImpl implements FoodService {
 							pub.pubFood(Mono.just(i), "update");
 							FoodCachingRedis obj = new FoodCachingRedis();
 							obj.setName(i.getId());
-							obj.setFood(i);
+							obj.setFood(modelMapper.map(i, FoodDto.class));
 							redisServiceImpl.save(obj);
 						};
 						new Thread(event).start();
@@ -332,15 +331,29 @@ public class FoodServiceImpl implements FoodService {
 				.subscribeOn(Schedulers.boundedElastic()).map(i -> modelMapper.map(i, FoodDto.class));
 	}
 
-	@Override
-	public Flux<CommentsDto> findAllComment(String foodId) {
-		Optional<FoodEntity> food = foodRepo.findById(foodId);
+	private Flux<CommentsDto> ifCommentAbsentInCache(String id) {
+		Optional<FoodEntity> food = foodRepo.findById(id);
 		if (food.isPresent()) {
 			return Flux.fromIterable(food.get().getComments()).publishOn(Schedulers.boundedElastic())
-					.subscribeOn(Schedulers.boundedElastic()).map(i -> modelMapper.map(i, CommentsDto.class));
+					.switchIfEmpty(Flux.empty()).map(i -> modelMapper.map(i, CommentsDto.class))
+					.subscribeOn(Schedulers.boundedElastic()).doOnNext((i) -> {
+						List<CommentsDto> commentsDtos = new ArrayList<>();
+						commentsDtos.add(i);
+						CommentCachingRedis commentCachingRedis = new CommentCachingRedis();
+						commentCachingRedis.setName("Comment" + id);
+						commentCachingRedis.setComment(commentsDtos);
+						redisServiceImpl.save(commentCachingRedis);
+					});
 		} else {
 			return Flux.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage()));
 		}
+	}
+
+	@Override
+	public Flux<CommentsDto> findAllComment(String foodId) {
+		return redisServiceImpl.findAllComment(foodId).publishOn(Schedulers.boundedElastic())
+				.subscribeOn(Schedulers.boundedElastic())
+				.switchIfEmpty(ifCommentAbsentInCache(foodId));
 	}
 
 	@Override
