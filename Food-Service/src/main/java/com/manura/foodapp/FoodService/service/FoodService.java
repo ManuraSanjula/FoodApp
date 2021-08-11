@@ -3,6 +3,7 @@ package com.manura.foodapp.FoodService.service;
 
 import java.util.List;
 
+import org.springframework.data.geo.Distance;
 import org.springframework.http.codec.multipart.FilePart;
 
 import com.manura.foodapp.FoodService.controller.Model.Res.ImageUploadingRes;
@@ -11,6 +12,7 @@ import com.manura.foodapp.FoodService.dto.FoodDto;
 import com.manura.foodapp.FoodService.dto.FoodHutDto;
 import com.manura.foodapp.FoodService.dto.UserDto;
 import com.manura.foodapp.FoodService.entity.UserEntity;
+import org.springframework.data.geo.Point;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -33,4 +35,5 @@ public interface FoodService {
     Mono<FoodDto> uploadCoverImage(String id,Mono<FilePart> filePartFlux);
     Mono<FoodDto> uploadImages(String id,Flux<FilePart> filePartFlux);
     Flux<ImageUploadingRes> uploadImagesMethod2(String id,Flux<FilePart> filePartFlux);
+    Flux<FoodDto> findByLocationNear(Point p, Distance d);
 }

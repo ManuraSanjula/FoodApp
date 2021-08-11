@@ -10,9 +10,11 @@ import java.util.Set;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.geo.Distance;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.messaging.rsocket.RSocketRequester;
 import org.springframework.stereotype.Service;
+import org.springframework.data.geo.Point;
 
 import com.manura.foodapp.FoodService.Error.Model.FoodNotFoundError;
 import com.manura.foodapp.FoodService.Redis.Model.CommentCachingRedis;
@@ -473,5 +475,13 @@ public class FoodServiceImpl implements FoodService {
 		} else {
 			return Flux.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage()));
 		}
+	}
+
+	@Override
+	public Flux<FoodDto> findByLocationNear(Point p, Distance d) {
+		return Flux.fromIterable(this.foodHutRepo.findByLocationNear(p, d)).map(i->{
+			return Flux.fromIterable(i.getFoods());
+		}).flatMap(i->i).map(i -> modelMapper.map(i, FoodDto.class));
+		
 	}
 }

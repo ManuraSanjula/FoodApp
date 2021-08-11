@@ -4,6 +4,8 @@ import lombok.Data;
 import java.io.Serializable;
 import java.util.List;
 
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
+
 @Data
 public class FoodHutDto implements Serializable {
     /**
@@ -17,4 +19,6 @@ public class FoodHutDto implements Serializable {
     List<String> phoneNumbers;
     List<FoodDto> foods;
     String image;
+    private GeoJsonPoint location;
+
 }

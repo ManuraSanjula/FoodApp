@@ -4,6 +4,9 @@ import java.security.Principal;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.geo.Distance;
+import org.springframework.data.geo.Metrics;
+import org.springframework.data.geo.Point;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -84,6 +87,7 @@ public class FoodController {
 	@GetMapping("/{id}/comments")
 	Flux<CommentsDto> getAllComment(@PathVariable String id) {
 		return foodServiceImpl.findAllComment(id).publishOn(Schedulers.boundedElastic())
+				.publishOn(Schedulers.boundedElastic())
 				.subscribeOn(Schedulers.boundedElastic())
 				.switchIfEmpty(Mono.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())));
 	}
@@ -97,7 +101,8 @@ public class FoodController {
 			}
 
 			return foodServiceImpl.save(Mono.just(modelMapper.map(i, FoodDto.class)), i.getFoodHutsIds());
-		}).map(ResponseEntity::ok).subscribeOn(Schedulers.boundedElastic())
+		}).map(ResponseEntity::ok).publishOn(Schedulers.boundedElastic())
+				.subscribeOn(Schedulers.boundedElastic())
 				.defaultIfEmpty(ResponseEntity.internalServerError().build());
 	}
 
@@ -107,7 +112,8 @@ public class FoodController {
 
 		return foodReq.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic()).flatMap(i -> {
 			return foodServiceImpl.update(id, Mono.just(modelMapper.map(i, FoodDto.class)), i.getFoodHutsIds());
-		}).map(ResponseEntity::ok).subscribeOn(Schedulers.boundedElastic())
+		}).map(ResponseEntity::ok).publishOn(Schedulers.boundedElastic())
+				.subscribeOn(Schedulers.boundedElastic())
 				.defaultIfEmpty(ResponseEntity.internalServerError().build());
 	}
 
@@ -123,7 +129,20 @@ public class FoodController {
 			return principal.map(Principal::getName).map(usr -> {
 				return foodServiceImpl.saveComment(id, Mono.just(modelMapper.map(i, CommentsDto.class)), usr);
 			}).flatMap(u->u);
-		}).map(ResponseEntity::ok).subscribeOn(Schedulers.boundedElastic())
+		}).map(ResponseEntity::ok).publishOn(Schedulers.boundedElastic())
+				.subscribeOn(Schedulers.boundedElastic())
 				.defaultIfEmpty(ResponseEntity.internalServerError().build());
 	}
+	
+	  @GetMapping("/location-near")
+	  public final Flux<FoodDto> getLocations(
+	    @RequestParam("lat") Double latitude,
+	    @RequestParam("long") Double longitude,
+	    @RequestParam("d") double distance) {
+
+	    return foodServiceImpl.findByLocationNear(new Point(longitude, latitude),
+	      new Distance(distance, Metrics.KILOMETERS))
+	    		.publishOn(Schedulers.boundedElastic())
+				.subscribeOn(Schedulers.boundedElastic());
+	  }
 }
