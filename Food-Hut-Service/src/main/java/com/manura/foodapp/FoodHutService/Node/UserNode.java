@@ -10,9 +10,11 @@ import org.neo4j.springframework.data.core.schema.Id;
 import org.neo4j.springframework.data.core.schema.Node;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 @Data
 @Node("User")
+@EqualsAndHashCode
 public class UserNode implements Serializable, Comparable<UserNode> {
 	private static final long serialVersionUID = -3034787297243469089L;
 	

@@ -1,31 +1,34 @@
 package com.manura.foodapp.FoodHutService.dto;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
 @Data
+@EqualsAndHashCode
 public class FoodDto implements Serializable,Comparable<FoodDto> {
     
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 8272833438538995040L;
-	String id;
-    String name;
-    String description;
-    String type;
-    Integer unlikes;
-    Integer likes;
-    Double price;
-    Double rating;
-    Map<String, Integer> nutrition;
-    String coverImage;
-    List<String> images;
-    Boolean offered;
-    List<FoodHutDto> foodHuts;
+	private String id;
+	private String publicId;
+	private String name;
+	private String description;
+	private String type;
+	private Integer unlikes;
+	private Integer likes;
+	private Double price;
+	private Double rating;
+	private Map<String, Integer> nutrition;
+	private String coverImage;
+	private List<String> images;
+	private Boolean offered;
+	private List<FoodHutDto> foodHuts;
 	@Override
 	public int compareTo(FoodDto o) {
 		// TODO Auto-generated method stub

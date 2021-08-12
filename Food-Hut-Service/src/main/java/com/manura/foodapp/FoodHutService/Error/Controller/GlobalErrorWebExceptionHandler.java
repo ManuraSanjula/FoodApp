@@ -1,4 +1,4 @@
-package com.manura.foodapp.FoodService.Error;
+package com.manura.foodapp.FoodHutService.Error.Controller;
 
 import org.springframework.boot.autoconfigure.web.ResourceProperties;
 import org.springframework.boot.autoconfigure.web.reactive.error.AbstractErrorWebExceptionHandler;

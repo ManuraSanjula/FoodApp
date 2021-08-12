@@ -9,17 +9,21 @@ import org.neo4j.springframework.data.core.schema.GeneratedValue;
 import org.neo4j.springframework.data.core.schema.Id;
 import org.neo4j.springframework.data.core.schema.Node;
 import org.neo4j.springframework.data.core.schema.Relationship;
+import org.springframework.data.geo.Point;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 @Node("FoodHut")
 @Data
+@EqualsAndHashCode
 public class FoodHutNode implements Serializable, Comparable<FoodHutNode> {
 	
 	private static final long serialVersionUID = -1269695791365291936L;
 	@Id
 	@GeneratedValue
 	private String id;
+	String publicId;
 	private String name;
 	private Integer groupSizePerTable;
 	private Integer ratingsQuantity;
@@ -34,6 +38,7 @@ public class FoodHutNode implements Serializable, Comparable<FoodHutNode> {
 	
 	@Relationship(type = "FOOD", direction = Relationship.Direction.INCOMING)
     private Set<FoodNode> food = new HashSet<>();
+    private Point location;
 	
 	@Override
 	public int compareTo(FoodHutNode o) {
