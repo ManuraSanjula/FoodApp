@@ -12,7 +12,7 @@ public class FoodReq implements Serializable {
     String name;
     String description;
     String type;
-    Integer price;
+    Double price;
     Map<String, Integer> nutrition;
     List<String> foodHutsIds;
 }

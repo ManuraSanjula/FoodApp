@@ -2,6 +2,7 @@ package com.manura.foodapp.FoodService.repo;
 
 import java.util.List;
 
+import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
@@ -16,4 +17,7 @@ public interface FoodRepo extends MongoRepository<FoodEntity, String> {
     List<FoodEntity> findByTypeAndName(String type, String name);
     
     FoodEntity findByPublicId(String publicId);
+    
+     @Aggregation(pipeline = { "{$group: { _id: $id, total: {$avg: $rating }}}" })
+	 double avg();
 }

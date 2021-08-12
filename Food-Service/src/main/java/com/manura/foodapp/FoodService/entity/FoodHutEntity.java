@@ -14,7 +14,7 @@ import lombok.EqualsAndHashCode;
 @Data
 @Document
 @EqualsAndHashCode
-public class FoodHutEntity implements Serializable {
+public class FoodHutEntity implements Serializable,Comparable<FoodHutEntity> {
 	private static final long serialVersionUID = 4303115012939347345L;
     @Id
     String id;
@@ -26,5 +26,9 @@ public class FoodHutEntity implements Serializable {
     @DBRef
     List<FoodEntity> foods =  new ArrayList<FoodEntity>();
     private GeoJsonPoint location;
+	@Override
+	public int compareTo(FoodHutEntity o) {
+		// TODO Auto-generated method stub
+		return this.id.equals(o.getId()) ? 1 :0;	}
 
 }

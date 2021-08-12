@@ -8,7 +8,7 @@ import java.util.List;
 import lombok.Data;
 
 @Data
-public class UserDto implements Serializable {
+public class UserDto implements Serializable,Comparable<UserDto> {
     /**
 	 * 
 	 */
@@ -25,4 +25,8 @@ public class UserDto implements Serializable {
     private List<String> roles = new ArrayList<>();
     private List<String> authorities = new ArrayList<>();
     private String pic;
+	@Override
+	public int compareTo(UserDto o) {
+		// TODO Auto-generated method stub
+		return this.id.equals(o.getId()) ? 1 :0;	}
 }

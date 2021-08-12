@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 @Data
-public class FoodDto implements Serializable {
+public class FoodDto implements Serializable,Comparable<FoodDto> {
     /**
 	 * 
 	 */
@@ -18,11 +18,16 @@ public class FoodDto implements Serializable {
     String type;
     Integer unlikes;
     Integer likes;
-    Integer price;
-    Integer rating;
+    Double price;
+    Double rating;
     Map<String, Integer> nutrition;
     String coverImage;
     List<String> images;
     Boolean offered;
     List<FoodHutDto> foodHuts;
+	@Override
+	public int compareTo(FoodDto o) {
+		// TODO Auto-generated method stub
+		return this.id.equals(o.getId()) ? 1 :0;
+	}
 }

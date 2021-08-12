@@ -6,7 +6,7 @@ import java.util.List;
 import lombok.Data;
 
 @Data
-public class FoodCommentDto implements Serializable {
+public class FoodCommentDto implements Serializable,Comparable<FoodCommentDto> {
     /**
 	 * 
 	 */
@@ -19,8 +19,13 @@ public class FoodCommentDto implements Serializable {
     String type;
     Integer unlikes;
     Integer likes;
-    Integer price;
-    Integer rating;
+    Double price;
+    Double rating;
     String coverImage;
     List<String> images;
+	@Override
+	public int compareTo(FoodCommentDto o) {
+		// TODO Auto-generated method stub
+		return this.id.equals(o.getId()) ? 1 :0;
+	}
 }

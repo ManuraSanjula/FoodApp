@@ -19,7 +19,6 @@ import org.springframework.data.geo.Point;
 import com.manura.foodapp.FoodService.Error.Model.FoodNotFoundError;
 import com.manura.foodapp.FoodService.Redis.Model.CommentCachingRedis;
 import com.manura.foodapp.FoodService.Redis.Model.FoodCachingRedis;
-import com.manura.foodapp.FoodService.controller.Model.Res.ImageUploadingRes;
 import com.manura.foodapp.FoodService.dto.CommentsDto;
 import com.manura.foodapp.FoodService.dto.FoodCommentDto;
 import com.manura.foodapp.FoodService.dto.FoodDto;
@@ -115,7 +114,7 @@ public class FoodServiceImpl implements FoodService {
 					i.setPublicId(util.generateId(20));
 					i.setUnlikes(0);
 					i.setLikes(0);
-					i.setRating(3);
+					i.setRating(3.0);
 					i.setCoverImage("FoodCoverImage");
 					i.setOffered(true);
 					i.setImages(new ArrayList<String>());
@@ -233,12 +232,24 @@ public class FoodServiceImpl implements FoodService {
 						.subscribeOn(Schedulers.boundedElastic()).map(usr -> {
 							return Mono.just(foundfood.get()).map(food -> {
 								return comment.map(comm -> {
+									food.setRating((food.getRating() + comm.getRating() ));
+									foodRepo.save(food);
+									Double avg = ( (avg() ) / 2);
+									if(avg < 2) {
+										avg = 3.0;
+									}
+									if(avg >= 5) {
+										avg = 5.0;
+									}
+									food.setRating(avg);
+									foodRepo.save(food);
 									CommentsEntity commEntity = new CommentsEntity();
 									commEntity.setUserImage(usr.getPic());
 									commEntity.setCreatedAt(new Date());
 									commEntity.setDescription(comm.getDescription());
 									commEntity.setFood(food);
 									commEntity.setUser(usr);
+									commEntity.setRating(comm.getRating());
 									return commEntity;
 								});
 							});
@@ -444,44 +455,17 @@ public class FoodServiceImpl implements FoodService {
 		}
 	}
 
-	@Override
-	public Flux<ImageUploadingRes> uploadImagesMethod2(String id, Flux<FilePart> filePartFlux) {
-		Optional<FoodEntity> foodEntity = foodRepo.findById(id);
-		if (foodEntity.isPresent()) {
-			return filePartFlux.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
-					.map(file -> {
-						return this.rSocketRequester
-								.map(rsocket -> rsocket.route("file.upload.food").data(file.content()))
-								.map(r -> r.retrieveFlux(String.class)).flatMapMany(s -> s).distinct()
-								.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
-								.map(img -> {
-									String image = ("/food-image/" + img);
-									ImageUploadingRes uploadingRes = new ImageUploadingRes();
-									uploadingRes.setName(img);
-									uploadingRes.setUrl(image);
-									return uploadingRes;
-								});
-					}).flatMap(i -> i).map(i -> {
-
-						return Mono.just(foodEntity.get()).publishOn(Schedulers.boundedElastic())
-								.subscribeOn(Schedulers.boundedElastic()).map(food -> {
-									List<String> urls = new ArrayList<String>();
-									urls.add(i.getUrl());
-									food.setImages(urls);
-									foodRepo.save(food);
-									return i;
-								});
-					}).flatMap(i -> i);
-		} else {
-			return Flux.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage()));
-		}
-	}
-
-	@Override
+		@Override
 	public Flux<FoodDto> findByLocationNear(Point p, Distance d) {
+		
 		return Flux.fromIterable(this.foodHutRepo.findByLocationNear(p, d)).map(i->{
 			return Flux.fromIterable(i.getFoods());
 		}).flatMap(i->i).map(i -> modelMapper.map(i, FoodDto.class));
 		
+	}
+
+	@Override
+	public Double avg() {
+		return foodRepo.avg();
 	}
 }
