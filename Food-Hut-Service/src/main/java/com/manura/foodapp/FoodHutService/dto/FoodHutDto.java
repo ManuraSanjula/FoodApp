@@ -23,6 +23,7 @@ public class FoodHutDto implements Serializable, Comparable<FoodHutDto> {
 	private String description;
 	private String imageCover;
 	private List<String> images;
+	List<String> phoneNumbers;
 	private String opentAt;
 	private Set<CommentsDto> comment = new HashSet<>();
 	private Set<FoodDto> food = new HashSet<>();

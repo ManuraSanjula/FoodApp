@@ -1,12 +1,13 @@
 package com.manura.foodapp.FoodHutService.Node;
 
+
 import java.io.Serializable;
 import java.util.Date;
 
 import org.neo4j.springframework.data.core.schema.GeneratedValue;
+import org.neo4j.springframework.data.core.schema.Id;
 import org.neo4j.springframework.data.core.schema.Node;
 import org.neo4j.springframework.data.core.schema.Relationship;
-import org.springframework.data.annotation.Id;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -24,13 +25,13 @@ public class CommentNode implements Serializable, Comparable<CommentNode> {
 	@GeneratedValue
 	private String id;
 	private String publicId;
-	private String description;
+	private String comment;
 	private String userImage;
 	private Date createdAt;
 
-	@Relationship(type = "CommentHasUser", direction = Relationship.Direction.OUTGOING)
+	@Relationship(type = "CommentHasUser", direction = Relationship.Direction.INCOMING )
 	private UserNode user;
-	@Relationship(type = "CommentHasFoodHut", direction = Relationship.Direction.OUTGOING)
+	@Relationship(type = "CommentHasFoodHut", direction =  Relationship.Direction.INCOMING)
 	private FoodHutNode foodHut;
 	private Double rating;
 

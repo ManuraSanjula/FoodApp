@@ -297,7 +297,7 @@ public class FoodServiceImpl implements FoodService {
 			}).flatMap(i -> Mono.just(foodHutRepo.save(i))).map(i -> modelMapper.map(i, FoodHutDto.class))
 					.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 		} else {
-			return Mono.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage()));
+			return saveFoodHut(foodHut);
 		}
 
 	}

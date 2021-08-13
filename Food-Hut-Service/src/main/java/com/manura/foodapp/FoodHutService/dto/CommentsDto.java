@@ -15,7 +15,7 @@ public class CommentsDto implements Serializable ,Comparable<CommentsDto>{
 	private static final long serialVersionUID = 7238769481312413923L;
 	private String id;
 	private String publicId;
-	private String description;
+	private String comment;
 	private String userImage;
 	private Date createdAt;
 	private UserDto user;

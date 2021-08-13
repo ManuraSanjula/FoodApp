@@ -5,17 +5,25 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.springframework.data.geo.Point;
 import org.neo4j.springframework.data.core.schema.GeneratedValue;
 import org.neo4j.springframework.data.core.schema.Id;
 import org.neo4j.springframework.data.core.schema.Node;
 import org.neo4j.springframework.data.core.schema.Relationship;
-import org.springframework.data.geo.Point;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Node("FoodHut")
 @Data
+@ToString
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @EqualsAndHashCode
 public class FoodHutNode implements Serializable, Comparable<FoodHutNode> {
 	
@@ -31,6 +39,7 @@ public class FoodHutNode implements Serializable, Comparable<FoodHutNode> {
 	private String description;
 	private String imageCover;
 	private List<String> images;
+	private List<String> phoneNumbers;
 	private String opentAt;
 	
 	@Relationship(type = "COMMENT", direction = Relationship.Direction.INCOMING)
