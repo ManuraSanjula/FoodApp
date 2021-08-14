@@ -7,8 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.manura.foodapp.FoodHutService.FoodHutServiceApplication;
 import com.manura.foodapp.FoodHutService.Node.FoodNode;
-import com.manura.foodapp.FoodHutService.Node.UserNode;
 import com.manura.foodapp.FoodHutService.Service.Impl.FoodHutServiceImpl;
 
 import reactor.core.publisher.Mono;
@@ -26,7 +26,7 @@ public class Sub {
 	@RabbitListener(queues = "user_created-foodHut")
 	public void user_created_foodHut(String message) {
 		try {
-			var user = objectMapper.readValue(message, UserNode.class);
+			var user = objectMapper.readValue(message, FoodHutServiceApplication.UserNode.class);
 			foodHutServiceImpl.addUser(Mono.just(user)).subscribe();
 		
 		} catch (Exception e) {
@@ -37,7 +37,7 @@ public class Sub {
 	@RabbitListener(queues = "user_updated-foodHut")
 	public void user_updated_foodHut(String message) {
 		try {
-			var user = objectMapper.readValue(message, UserNode.class);
+			var user = objectMapper.readValue(message, FoodHutServiceApplication.UserNode.class);
 			foodHutServiceImpl.updateUser(user.getPublicId(),Mono.just(user)).subscribe();
 			
 		} catch (Exception e) {

@@ -5,9 +5,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.neo4j.springframework.data.core.schema.GeneratedValue;
-import org.neo4j.springframework.data.core.schema.Id;
-import org.neo4j.springframework.data.core.schema.Node;
+import org.springframework.data.neo4j.core.schema.GeneratedValue;
+import org.springframework.data.neo4j.core.schema.Id;
+import org.springframework.data.neo4j.core.schema.Node;
+
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -16,14 +17,16 @@ import lombok.EqualsAndHashCode;
 @Node("Food")
 @EqualsAndHashCode
 public class FoodNode implements Serializable, Comparable<FoodNode> {
+	
 	/**
 	 * 
 	 */
+
 	private static final long serialVersionUID = 9180316348117018580L;
 
 	@Id
 	@GeneratedValue
-	private String id;
+	private Long id;
 	private String name;
 	private String publicId;
 	private String description;

@@ -6,13 +6,12 @@ import java.util.List;
 import java.util.Set;
 
 import org.springframework.data.geo.Point;
-import org.neo4j.springframework.data.core.schema.GeneratedValue;
-import org.neo4j.springframework.data.core.schema.Id;
-import org.neo4j.springframework.data.core.schema.Node;
-import org.neo4j.springframework.data.core.schema.Relationship;
+import org.springframework.data.neo4j.core.schema.GeneratedValue;
+import org.springframework.data.neo4j.core.schema.Id;
+import org.springframework.data.neo4j.core.schema.Node;
+import org.springframework.data.neo4j.core.schema.Relationship;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -21,16 +20,18 @@ import lombok.ToString;
 @Node("FoodHut")
 @Data
 @ToString
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode
 public class FoodHutNode implements Serializable, Comparable<FoodHutNode> {
-	
+
+	/**
+	 * 
+	 */
 	private static final long serialVersionUID = -1269695791365291936L;
 	@Id
 	@GeneratedValue
-	private String id;
+	private Long id;
 	String publicId;
 	private String name;
 	private Integer groupSizePerTable;
@@ -41,17 +42,17 @@ public class FoodHutNode implements Serializable, Comparable<FoodHutNode> {
 	private List<String> images;
 	private List<String> phoneNumbers;
 	private String opentAt;
-	
+
 	@Relationship(type = "COMMENT", direction = Relationship.Direction.INCOMING)
-    private Set<CommentNode> comment = new HashSet<>();
-	
+	private Set<CommentNode> comment = new HashSet<>();
+
 	@Relationship(type = "FOOD", direction = Relationship.Direction.INCOMING)
-    private Set<FoodNode> food = new HashSet<>();
-    private Point location;
-	
+	private Set<FoodNode> food = new HashSet<>();
+	private Point location;
+
 	@Override
 	public int compareTo(FoodHutNode o) {
 		// TODO Auto-generated method stub
-		return this.id.equals(o.getId()) ? 1 :0;
+		return this.id.equals(o.getId()) ? 1 : 0;
 	}
 }

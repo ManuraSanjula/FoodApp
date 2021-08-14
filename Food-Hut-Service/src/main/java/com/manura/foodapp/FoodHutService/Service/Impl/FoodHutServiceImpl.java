@@ -6,41 +6,47 @@ import java.util.List;
 import java.util.Set;
 
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.geo.Point;
 import org.springframework.stereotype.Service;
 
+import com.manura.foodapp.FoodHutService.FoodHutServiceApplication.CommentRepo;
+import com.manura.foodapp.FoodHutService.FoodHutServiceApplication.FoodHutRepo;
+import com.manura.foodapp.FoodHutService.FoodHutServiceApplication.FoodRepo;
+import com.manura.foodapp.FoodHutService.FoodHutServiceApplication.UserNode;
+import com.manura.foodapp.FoodHutService.FoodHutServiceApplication.UserRepo;
+import com.manura.foodapp.FoodHutService.Node.CommentNode;
+import com.manura.foodapp.FoodHutService.Node.FoodHutNode;
+import com.manura.foodapp.FoodHutService.Node.FoodNode;
 import com.manura.foodapp.FoodHutService.Controller.Req.CommentReq;
 import com.manura.foodapp.FoodHutService.Controller.Req.FoodHutUpdateReq;
 import com.manura.foodapp.FoodHutService.Controller.Res.FoodHutHalfRes;
 import com.manura.foodapp.FoodHutService.Error.Model.FoodHutError;
-import com.manura.foodapp.FoodHutService.Node.CommentNode;
-import com.manura.foodapp.FoodHutService.Node.FoodHutNode;
-import com.manura.foodapp.FoodHutService.Node.FoodNode;
-import com.manura.foodapp.FoodHutService.Node.UserNode;
-import com.manura.foodapp.FoodHutService.Repo.CommentRepo;
-import com.manura.foodapp.FoodHutService.Repo.FoodHutRepo;
-import com.manura.foodapp.FoodHutService.Repo.FoodRepo;
-import com.manura.foodapp.FoodHutService.Repo.UserRepo;
 import com.manura.foodapp.FoodHutService.Service.FoodHutService;
 import com.manura.foodapp.FoodHutService.dto.CommentsDto;
 import com.manura.foodapp.FoodHutService.dto.FoodHutDto;
 import com.manura.foodapp.FoodHutService.utils.ErrorMessages;
 import com.manura.foodapp.FoodHutService.utils.Utils;
 
-import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
-@RequiredArgsConstructor
 @Service
 public class FoodHutServiceImpl implements FoodHutService {
 
-	private final FoodRepo foodRepo;
-	private final FoodHutRepo foodHutRepo;
-	private final CommentRepo commentRepo;
-	private final UserRepo userRepo;
-	private final ModelMapper modelMapper = new ModelMapper();
+	@Autowired
+	private  FoodRepo foodRepo;
+	@Autowired
+	private  FoodHutRepo foodHutRepo;
+	@Autowired
+	private  CommentRepo commentRepo;
+	
+	@Autowired
+	private  UserRepo userRepo;
+	
+	private  ModelMapper modelMapper = new ModelMapper();
+	@Autowired
 	private Utils utils;
 
 	@Override
@@ -177,7 +183,7 @@ public class FoodHutServiceImpl implements FoodHutService {
 
 	@Override
 	public Mono<UserNode> updateUser(String id, Mono<UserNode> user) {
-		return userRepo.findById(id)
+		return userRepo.findByPublicId(id)
 		.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
 		.switchIfEmpty(addUser(user)).mapNotNull(usr -> {
 			return user.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic()).map(i -> {
