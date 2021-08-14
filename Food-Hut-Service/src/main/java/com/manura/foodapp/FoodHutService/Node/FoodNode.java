@@ -18,10 +18,6 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode
 public class FoodNode implements Serializable, Comparable<FoodNode> {
 	
-	/**
-	 * 
-	 */
-
 	private static final long serialVersionUID = 9180316348117018580L;
 
 	@Id

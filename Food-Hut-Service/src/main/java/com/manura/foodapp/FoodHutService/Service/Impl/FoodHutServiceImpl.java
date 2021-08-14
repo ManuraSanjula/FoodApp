@@ -177,7 +177,7 @@ public class FoodHutServiceImpl implements FoodHutService {
 
 	@Override
 	public Mono<UserNode> addUser(Mono<UserNode> user) {
-		return user.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
+		return user.doOnNext(i->i.setId(null)).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
 				.flatMap(userRepo::save);
 	}
 

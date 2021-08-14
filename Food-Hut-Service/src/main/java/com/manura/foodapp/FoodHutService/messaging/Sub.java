@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.manura.foodapp.FoodHutService.FoodHutServiceApplication;
 import com.manura.foodapp.FoodHutService.Node.FoodNode;
 import com.manura.foodapp.FoodHutService.Service.Impl.FoodHutServiceImpl;
+import com.manura.foodapp.FoodHutService.dto.FoodDto;
 
 import reactor.core.publisher.Mono;
 
@@ -48,9 +49,10 @@ public class Sub {
 	@RabbitListener(queues = "food_created-foodHut")
 	public void food_created_foodHut(String message) {
 		try {
+			var foodDto = objectMapper.readValue(message, FoodDto.class);
 			var food = objectMapper.readValue(message, FoodNode.class);
+			food.setPublicId(foodDto.getPublicId());
 			foodHutServiceImpl.addFood(Mono.just(food)).subscribe();
-		
 		} catch (Exception e) {
 			LOG.info("Error is {}", e.getMessage());
 		}
@@ -61,7 +63,6 @@ public class Sub {
 		try {
 			var food = objectMapper.readValue(message, FoodNode.class);
 			foodHutServiceImpl.updateFood(food.getPublicId(),Mono.just(food)).subscribe();
-			
 		} catch (Exception e) {
 			LOG.info("Error is {}", e.getMessage());
 		}
