@@ -13,11 +13,11 @@ import org.springframework.stereotype.Service;
 import com.manura.foodapp.FoodHutService.FoodHutServiceApplication.CommentRepo;
 import com.manura.foodapp.FoodHutService.FoodHutServiceApplication.FoodHutRepo;
 import com.manura.foodapp.FoodHutService.FoodHutServiceApplication.FoodRepo;
-import com.manura.foodapp.FoodHutService.FoodHutServiceApplication.UserNode;
 import com.manura.foodapp.FoodHutService.FoodHutServiceApplication.UserRepo;
 import com.manura.foodapp.FoodHutService.Node.CommentNode;
 import com.manura.foodapp.FoodHutService.Node.FoodHutNode;
 import com.manura.foodapp.FoodHutService.Node.FoodNode;
+import com.manura.foodapp.FoodHutService.Node.UserNode;
 import com.manura.foodapp.FoodHutService.Controller.Req.CommentReq;
 import com.manura.foodapp.FoodHutService.Controller.Req.FoodHutUpdateReq;
 import com.manura.foodapp.FoodHutService.Controller.Res.FoodHutHalfRes;
@@ -177,7 +177,7 @@ public class FoodHutServiceImpl implements FoodHutService {
 
 	@Override
 	public Mono<UserNode> addUser(Mono<UserNode> user) {
-		return user.doOnNext(i->i.setId(null)).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
+		return user.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
 				.flatMap(userRepo::save);
 	}
 

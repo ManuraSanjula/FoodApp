@@ -2,8 +2,8 @@ package com.manura.foodapp.FoodHutService.Service;
 
 import java.util.List;
 
-import com.manura.foodapp.FoodHutService.FoodHutServiceApplication.UserNode;
 import com.manura.foodapp.FoodHutService.Node.FoodNode;
+import com.manura.foodapp.FoodHutService.Node.UserNode;
 import com.manura.foodapp.FoodHutService.Controller.Req.CommentReq;
 import com.manura.foodapp.FoodHutService.Controller.Req.FoodHutUpdateReq;
 import com.manura.foodapp.FoodHutService.Controller.Res.FoodHutHalfRes;

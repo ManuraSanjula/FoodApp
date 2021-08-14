@@ -1,10 +1,5 @@
 package com.manura.foodapp.FoodHutService;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-
 import org.neo4j.driver.Driver;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -13,9 +8,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.neo4j.core.DatabaseSelection;
 import org.springframework.data.neo4j.core.ReactiveDatabaseSelectionProvider;
-import org.springframework.data.neo4j.core.schema.GeneratedValue;
-import org.springframework.data.neo4j.core.schema.Id;
-import org.springframework.data.neo4j.core.schema.Node;
 import org.springframework.data.neo4j.core.transaction.ReactiveNeo4jTransactionManager;
 import org.springframework.data.neo4j.repository.ReactiveNeo4jRepository;
 import org.springframework.data.neo4j.repository.config.EnableReactiveNeo4jRepositories;
@@ -24,9 +16,8 @@ import org.springframework.transaction.ReactiveTransactionManager;
 import com.manura.foodapp.FoodHutService.Node.CommentNode;
 import com.manura.foodapp.FoodHutService.Node.FoodHutNode;
 import com.manura.foodapp.FoodHutService.Node.FoodNode;
+import com.manura.foodapp.FoodHutService.Node.UserNode;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
 import reactor.core.publisher.Mono;
 
 @SpringBootApplication(proxyBeanMethods = false)
@@ -73,29 +64,4 @@ public class FoodHutServiceApplication {
 		  Mono<UserNode> findByPublicId(String publicId);
 	}
 	
-	@Data
-	@Node("User")
-	@EqualsAndHashCode
-	public class UserNode implements Serializable, Comparable<UserNode> {
-		private static final long serialVersionUID = -3034787297243469089L;
-		@Id
-		@GeneratedValue
-		private Long id;
-		private String publicId;
-		private String firstName;
-		private String lastName;
-		private String email;
-		private Boolean active;
-		private Boolean emailVerify;
-		private String address;
-		private Date passwordChangedAt;
-		private List<String> roles = new ArrayList<>();
-		private List<String> authorities = new ArrayList<>();
-		private String pic;
-		@Override
-		public int compareTo(UserNode o) {
-			return this.id.equals(o.getId()) ? 1 :0;
-		}
-	}
-
 }
