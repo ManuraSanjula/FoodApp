@@ -11,6 +11,9 @@ import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.Node;
 import org.springframework.data.neo4j.core.schema.Relationship;
 
+import com.manura.foodapp.FoodHutService.Node.Relationship.FoodHutHasComment;
+import com.manura.foodapp.FoodHutService.Node.Relationship.FoodHutHasFood;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -43,11 +46,11 @@ public class FoodHutNode implements Serializable, Comparable<FoodHutNode> {
 	private List<String> phoneNumbers;
 	private String opentAt;
 
-	@Relationship(type = "COMMENT", direction = Relationship.Direction.INCOMING)
-	private Set<CommentNode> comment = new HashSet<>();
+	@Relationship(type = "FOODHUT_HAS_COMMENTS", direction = Relationship.Direction.INCOMING)
+	private Set<FoodHutHasComment> comment = new HashSet<>();
 
-	@Relationship(type = "FOOD", direction = Relationship.Direction.INCOMING)
-	private Set<FoodNode> food = new HashSet<>();
+	@Relationship(type = "FOODHUT_HAS_FOODS", direction = Relationship.Direction.INCOMING)
+	private Set<FoodHutHasFood> food = new HashSet<>();
 	private Point location;
 
 	@Override

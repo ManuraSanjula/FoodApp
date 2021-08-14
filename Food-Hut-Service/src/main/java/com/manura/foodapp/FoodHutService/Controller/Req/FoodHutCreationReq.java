@@ -6,11 +6,11 @@ import java.util.List;
 import lombok.Data;
 
 @Data
-public class FoodHutUpdateReq implements Serializable{
+public class FoodHutCreationReq implements Serializable{
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = -3318721054209590026L;
+	private static final long serialVersionUID = -3318000054209590026L;
 	private String name;
 	private Integer groupSizePerTable;
 	private Integer ratingsQuantity;
