@@ -223,15 +223,15 @@ public class FoodHutServiceImpl implements FoodHutService {
 
 	@Override
 	public Mono<FoodNode> addFood(Mono<FoodNode> food) {
-		return food.doOnNext(i -> i.setId(null)).publishOn(Schedulers.boundedElastic())
+		return food.publishOn(Schedulers.boundedElastic())
 				.subscribeOn(Schedulers.boundedElastic()).flatMap(foodRepo::save);
 	}
 
 	@Override
 	public Mono<FoodNode> updateFood(String id, Mono<FoodNode> food) {
-		return foodRepo.findByPublicId(id).switchIfEmpty(Mono.empty()).switchIfEmpty(addFood(food))
-				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic()).map(i -> {
-					return food.map(req -> {
+		return foodRepo.findByPublicId(id).switchIfEmpty(addFood(food))
+				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic()).mapNotNull(i -> {
+					return food.mapNotNull(req -> {
 						req.setId(i.getId());
 						req.setPublicId(i.getPublicId());
 						return req;

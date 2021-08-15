@@ -3,8 +3,6 @@ package com.manura.foodapp.FoodHutService.Node;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-
 import org.springframework.data.neo4j.core.schema.GeneratedValue;
 import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.Node;
@@ -31,7 +29,6 @@ public class FoodNode implements Serializable, Comparable<FoodNode> {
 	private Integer likes;
 	private Double price;
 	private Double rating;
-	private Map<String, Integer> nutrition;
 	private String coverImage;
 
 	private List<String> images = new ArrayList<String>();
