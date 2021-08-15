@@ -8,7 +8,7 @@ import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode
-public class CommentsDto implements Serializable ,Comparable<CommentsDto>{
+public class CommentsDto implements Serializable{
     /**
 	 * 
 	 */
@@ -21,9 +21,5 @@ public class CommentsDto implements Serializable ,Comparable<CommentsDto>{
 	private UserDto user;
 	private FoodHutDto foodHut;
 	private Double rating;
-	@Override
-	public int compareTo(CommentsDto o) {
-		// TODO Auto-generated method stub
-		return this.id.equals(o.getId()) ? 1 :0;
-	}
+	
 }

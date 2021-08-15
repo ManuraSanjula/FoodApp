@@ -12,6 +12,7 @@ public class FoodHutCreationReq implements Serializable{
 	 */
 	private static final long serialVersionUID = -3318000054209590026L;
 	private String name;
+	private Integer zip;
 	private Integer groupSizePerTable;
 	private Integer ratingsQuantity;
 	private String summary;

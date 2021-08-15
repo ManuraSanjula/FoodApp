@@ -331,18 +331,19 @@ public class FoodServiceImpl implements FoodService {
 
 	@Override
 	public Mono<UserEntity> updateUser(String id, Mono<UserDto> userDto) {
-		return Mono.just(userRepo.findByPublicId(id)).publishOn(Schedulers.boundedElastic())
-				.subscribeOn(Schedulers.boundedElastic()).switchIfEmpty(saveUser(userDto)).mapNotNull(i -> {
-					return userDto.map(user -> {
-						i.setFirstName(user.getFirstName());
-						i.setLastName(user.getLastName());
-						i.setEmail(user.getEmail());
-						i.setAddress(user.getAddress());
-						i.setPic(user.getPic());
-						return Mono.just(userRepo.save(i));
-					}).flatMap(user -> user);
-				}).flatMap(i -> i);
-
+		return	userDto.flatMap(user -> {
+			UserEntity userEntity = userRepo.findByPublicId(id);
+			if(userEntity != null) {
+				userEntity.setFirstName(user.getFirstName());
+				userEntity.setLastName(user.getLastName());
+				userEntity.setEmail(user.getEmail());
+				userEntity.setAddress(user.getAddress());
+				userEntity.setPic(user.getPic());
+				return Mono.just(userRepo.save(userEntity));
+			}else {
+				return saveUser(Mono.just(user));
+			}
+		});
 	}
 
 	@Override

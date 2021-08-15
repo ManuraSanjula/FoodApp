@@ -26,16 +26,13 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode
-public class FoodHutNode implements Serializable, Comparable<FoodHutNode> {
-
-	/**
-	 * 
-	 */
+public class FoodHutNode implements Serializable{
 	private static final long serialVersionUID = -1269695791365291936L;
 	@Id
 	@GeneratedValue
 	private Long id;
-	String publicId;
+	private Integer zip;
+	private String publicId;
 	private String name;
 	private Integer groupSizePerTable;
 	private Integer ratingsQuantity;
@@ -46,16 +43,10 @@ public class FoodHutNode implements Serializable, Comparable<FoodHutNode> {
 	private List<String> phoneNumbers;
 	private String opentAt;
 
-	@Relationship(type = "FOODHUT_HAS_COMMENTS", direction = Relationship.Direction.INCOMING)
+	@Relationship(type = "FOODHUT_HAS_COMMENTS", direction = Relationship.Direction.OUTGOING)
 	private Set<FoodHutHasComment> comment = new HashSet<>();
 
-	@Relationship(type = "FOODHUT_HAS_FOODS", direction = Relationship.Direction.INCOMING)
+	@Relationship(type = "FOODHUT_HAS_FOODS", direction = Relationship.Direction.OUTGOING)
 	private Set<FoodHutHasFood> food = new HashSet<>();
 	private Point location;
-
-	@Override
-	public int compareTo(FoodHutNode o) {
-		// TODO Auto-generated method stub
-		return this.id.equals(o.getId()) ? 1 : 0;
-	}
 }

@@ -1,5 +1,6 @@
 package com.manura.foodapp.FoodHutService.Service.Impl;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -73,6 +74,9 @@ public class FoodHutServiceImpl implements FoodHutService {
 					foodHut.setPublicId(utils.generateId(80));
 					foodHut.setFood(foods);
 					foodHut.setComment(new HashSet<>());
+					foodHut.setImageCover("food-hut/FoodHutCoverImage");
+					foodHut.setRatingsQuantity(4);
+					foodHut.setImages(new ArrayList<>());
 					return foodHut;
 				}).flatMap(foodHutRepo::save).mapNotNull(i -> modelMapper.map(i, FoodHutDto.class));
 	}

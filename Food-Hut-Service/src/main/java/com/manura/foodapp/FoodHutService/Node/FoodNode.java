@@ -14,7 +14,7 @@ import lombok.EqualsAndHashCode;
 @Data
 @Node("Food")
 @EqualsAndHashCode
-public class FoodNode implements Serializable, Comparable<FoodNode> {
+public class FoodNode implements Serializable {
 	
 	private static final long serialVersionUID = 9180316348117018580L;
 
@@ -33,10 +33,4 @@ public class FoodNode implements Serializable, Comparable<FoodNode> {
 
 	private List<String> images = new ArrayList<String>();
 	private Boolean offered = true;
-
-	@Override
-	public int compareTo(FoodNode o) {
-		// TODO Auto-generated method stub
-		return this.id.equals(o.getId()) ? 1 : 0;
-	}
 }

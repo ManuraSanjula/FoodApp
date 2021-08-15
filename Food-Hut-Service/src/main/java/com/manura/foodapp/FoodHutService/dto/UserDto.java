@@ -10,8 +10,8 @@ import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode
-public class UserDto implements Serializable,Comparable<UserDto> {
-    /**
+public class UserDto implements Serializable {
+	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 6831069731408356681L;
@@ -19,19 +19,15 @@ public class UserDto implements Serializable,Comparable<UserDto> {
 	 * 
 	 */
 	private Long id;
-    private String publicId;
-    private String firstName;
-    private String lastName;
-    private String email;
-    private Boolean active;
-    private Boolean emailVerify;
-    private String address;
-    private Date passwordChangedAt;
-    private List<String> roles = new ArrayList<>();
-    private List<String> authorities = new ArrayList<>();
-    private String pic;
-	@Override
-	public int compareTo(UserDto o) {
-		// TODO Auto-generated method stub
-		return this.id.equals(o.getId()) ? 1 :0;	}
+	private String publicId;
+	private String firstName;
+	private String lastName;
+	private String email;
+	private Boolean active;
+	private Boolean emailVerify;
+	private String address;
+	private Date passwordChangedAt;
+	private List<String> roles = new ArrayList<>();
+	private List<String> authorities = new ArrayList<>();
+	private String pic;
 }

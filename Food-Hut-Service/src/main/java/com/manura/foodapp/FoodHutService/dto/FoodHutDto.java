@@ -7,15 +7,19 @@ import java.util.Set;
 
 import org.springframework.data.geo.Point;
 
+import com.manura.foodapp.FoodHutService.Node.Relationship.FoodHutHasComment;
+import com.manura.foodapp.FoodHutService.Node.Relationship.FoodHutHasFood;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode
-public class FoodHutDto implements Serializable, Comparable<FoodHutDto> {
+public class FoodHutDto implements Serializable {
 	private static final long serialVersionUID = 3900391630028803808L;
-	private String id;
-	String publicId;
+	private Long id;
+	private Integer zip;
+	private String publicId;
 	private String name;
 	private Integer groupSizePerTable;
 	private Integer ratingsQuantity;
@@ -23,16 +27,9 @@ public class FoodHutDto implements Serializable, Comparable<FoodHutDto> {
 	private String description;
 	private String imageCover;
 	private List<String> images;
-	List<String> phoneNumbers;
+	private List<String> phoneNumbers;
 	private String opentAt;
-	private Set<CommentsDto> comment = new HashSet<>();
-	private Set<FoodDto> food = new HashSet<>();
+	private Set<FoodHutHasComment> comment = new HashSet<>();
+	private Set<FoodHutHasFood> food = new HashSet<>();
 	private Point location;
-
-	@Override
-	public int compareTo(FoodHutDto o) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
 }

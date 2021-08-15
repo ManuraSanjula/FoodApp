@@ -23,7 +23,8 @@ public class UserEvent implements Runnable {
            ObjectMapper oMapper = new ObjectMapper();
            String json = oMapper.writeValueAsString(createdUser);
            rabbitTemplate.convertAndSend("food-app-userCreated", "" ,json);
-       }else if(action == "userUpdated"){
+       }
+       if(action == "userUpdated"){
            ObjectMapper oMapper = new ObjectMapper();
            String json = oMapper.writeValueAsString(createdUser);
            rabbitTemplate.convertAndSend("food-app-userUpdated", "" ,json);

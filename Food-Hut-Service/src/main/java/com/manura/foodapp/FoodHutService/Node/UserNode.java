@@ -14,7 +14,7 @@ import lombok.EqualsAndHashCode;
 @Data
 @Node("User")
 @EqualsAndHashCode
-public class UserNode implements Serializable, Comparable<UserNode> {
+public class UserNode implements Serializable{
 	private static final long serialVersionUID = -3034787297243469089L;
 	@Id
 	@GeneratedValue
@@ -30,8 +30,4 @@ public class UserNode implements Serializable, Comparable<UserNode> {
 	private List<String> roles = new ArrayList<>();
 	private List<String> authorities = new ArrayList<>();
 	private String pic;
-	@Override
-	public int compareTo(UserNode o) {
-		return this.id.equals(o.getId()) ? 1 :0;
-	}
 }

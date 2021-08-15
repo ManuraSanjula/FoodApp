@@ -32,8 +32,7 @@ public class Sub {
 	public void user_created_food(String message) {
 		try {
 			var user = objectMapper.readValue(message, UserDto.class);
-			serviceImpl.saveUser(Mono.just(user)).subscribe();
-		
+			serviceImpl.saveUser(Mono.just(user)).subscribe();	
 		} catch (Exception e) {
 			LOG.info("Error is {}", e.getMessage());
 		}
@@ -43,7 +42,8 @@ public class Sub {
 	public void user_updated_food(String message) {
 		try {
 			var user = objectMapper.readValue(message, UserDto.class);
-			serviceImpl.updateUser(user.getPublicId(),Mono.just(user)).subscribe();
+			serviceImpl.updateUser(user.getPublicId(),Mono.just(user)).subscribe(i->{
+			});
 		} catch (Exception e) {
 			LOG.info("Error is {}", e.getMessage());
 		}

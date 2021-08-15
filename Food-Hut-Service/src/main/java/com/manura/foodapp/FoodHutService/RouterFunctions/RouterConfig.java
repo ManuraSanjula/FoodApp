@@ -34,7 +34,7 @@ public class RouterConfig {
                 .GET("", requestHandler::getAllFoodHuts)
                 .GET("/{id}", requestHandler::getOneFoodHut)
                 .PUT("/{id}", requestHandler::updateFoodHut)
-                .POST("/", requestHandler::saveFooHut)
+                .POST("", requestHandler::saveFooHut)
                 .POST("/{id}/comment", requestHandler::saveComment)
                 .onError(FoodHutError.class, foodHutErrorexceptionHandler())
                 .onError(FoodHutNotFoundError.class, foodHutNotFoundErrorexceptionHandler())
