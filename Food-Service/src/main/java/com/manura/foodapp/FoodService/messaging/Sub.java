@@ -53,8 +53,8 @@ public class Sub {
 	public void foodHut_created_food(String message) {
 		try {
 			var foodHut = objectMapper.readValue(message, FoodHutDtoForMessaging.class);
-			Double latitude = foodHut.getLocation().getY();
-			Double longitude = foodHut.getLocation().getX();
+			Double latitude = foodHut.getLatitude();
+			Double longitude = foodHut.getLongitude();
 			GeoJsonPoint locationPoint = new GeoJsonPoint(longitude,latitude);
 			
 			FoodHutDto foodHutEntity = modelMapper.map(foodHut, FoodHutDto.class);
@@ -62,6 +62,7 @@ public class Sub {
 			serviceImpl.saveFoodHut(Mono.just(foodHutEntity)).subscribe();
 		
 		} catch (Exception e) {
+			System.out.println(e.getMessage());
 			LOG.info("Error is {}", e.getMessage());
 		}
 	}
@@ -70,8 +71,8 @@ public class Sub {
 	public void foodHut_updated_food(String message) {
 		try {
 			var foodHut = objectMapper.readValue(message, FoodHutDtoForMessaging.class);
-			Double latitude = foodHut.getLocation().getY();
-			Double longitude = foodHut.getLocation().getX();
+			Double latitude = foodHut.getLatitude();
+			Double longitude = foodHut.getLongitude();
 			GeoJsonPoint locationPoint = new GeoJsonPoint(longitude,latitude);
 			
 			FoodHutDto foodHutEntity = modelMapper.map(foodHut, FoodHutDto.class);

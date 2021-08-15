@@ -17,9 +17,8 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode
 public class FoodHutDto implements Serializable {
 	private static final long serialVersionUID = 3900391630028803808L;
-	private Long id;
+	private String id;
 	private Integer zip;
-	private String publicId;
 	private String name;
 	private Integer groupSizePerTable;
 	private Integer ratingsQuantity;

@@ -28,7 +28,7 @@ public class CommentNode implements Serializable{
 
 	@Relationship(type = "CommentHasUser", direction = Direction.OUTGOING )
 	private UserNode user;
-	@Relationship(type = "CommentHasFoodHut", direction =   Direction.OUTGOING)
+	@Relationship(type = "CommentHasFoodHut", direction =   Direction.INCOMING)
 	private FoodHutNode foodHut;
 	private Double rating;
 }

@@ -12,7 +12,7 @@ public class FoodHutHalfRes implements Serializable, Comparable<FoodHutHalfRes> 
 	 * 
 	 */
 	private static final long serialVersionUID = -2566575723145687983L;
-	String publicId;
+	String id;
 	private String name;
 	private Integer groupSizePerTable;
 	private Integer ratingsQuantity;

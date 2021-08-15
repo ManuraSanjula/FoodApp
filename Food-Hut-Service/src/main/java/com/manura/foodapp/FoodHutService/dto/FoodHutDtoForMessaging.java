@@ -1,4 +1,4 @@
-package com.manura.foodapp.FoodService.dto;
+package com.manura.foodapp.FoodHutService.dto;
 
 import java.io.Serializable;
 import java.util.List;
@@ -11,7 +11,7 @@ public class FoodHutDtoForMessaging implements Serializable{
     /**
 	 * 
 	 */
-	private static final long serialVersionUID = 5316571982360725610L;
+	private static final long serialVersionUID = 531657193336725610L;
 	private String id;
 	private String name;
     private String address;

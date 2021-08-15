@@ -26,27 +26,14 @@ public class Pub {
         	foodDtoForMessaging.setPublicId(data.getId());
             try {
                 if (action == "created") {
-<<<<<<< HEAD
                     var json = objectMapper.writeValueAsString(foodDtoForMessaging);
                     rabbitTemplate.convertAndSend("food-app-foodCreated", "", json);
                 }
                 if (action == "update") {
                     var json = objectMapper.writeValueAsString(foodDtoForMessaging);
-=======
-                	data.setPublicId(data.getPublicId());
-                	data.setId(null);
-                    var json = objectMapper.writeValueAsString(data);
-
-                    rabbitTemplate.convertAndSend("food-app-foodCreated", "", json);
+                	rabbitTemplate.convertAndSend("food-app-foodUpdated", "", json);
                 }
-                if (action == "update") {
-                	data.setPublicId(data.getPublicId());
-                	data.setId(null);
-                    var json = objectMapper.writeValueAsString(data);
-
->>>>>>> e04f5cb1cdca4b24c797dce332764b000dde4030
-                    rabbitTemplate.convertAndSend("food-app-foodUpdated", "", json);
-                }
+                
             } catch (Exception e) {
 
             }
