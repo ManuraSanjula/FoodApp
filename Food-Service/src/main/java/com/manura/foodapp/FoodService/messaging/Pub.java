@@ -20,11 +20,15 @@ public class Pub {
         food.subscribe(data -> {
             try {
                 if (action == "created") {
+                	data.setPublicId(data.getPublicId());
+                	data.setId(null);
                     var json = objectMapper.writeValueAsString(data);
 
                     rabbitTemplate.convertAndSend("food-app-foodCreated", "", json);
                 }
                 if (action == "update") {
+                	data.setPublicId(data.getPublicId());
+                	data.setId(null);
                     var json = objectMapper.writeValueAsString(data);
 
                     rabbitTemplate.convertAndSend("food-app-foodUpdated", "", json);
