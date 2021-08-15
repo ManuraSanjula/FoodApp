@@ -55,7 +55,7 @@ public class RouterConfig {
         	ErrorMessage response = new ErrorMessage();
             response.setMessage(ex.getMessage());
             response.setTimestamp(new Date());
-            return ServerResponse.badRequest().bodyValue(response);
+            return ServerResponse.status(404).bodyValue(response);
         };
     }
 }
