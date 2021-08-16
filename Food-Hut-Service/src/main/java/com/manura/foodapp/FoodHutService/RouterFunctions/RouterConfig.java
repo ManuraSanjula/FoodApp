@@ -36,6 +36,8 @@ public class RouterConfig {
                 .PUT("/{id}", requestHandler::updateFoodHut)
                 .POST("", requestHandler::saveFooHut)
                 .POST("/{id}/comment", requestHandler::saveComment)
+                .PUT("/comment/{id}", requestHandler::updateComment)
+                .DELETE("/comment/{id}", requestHandler::deleteComment)
                 .onError(FoodHutError.class, foodHutErrorexceptionHandler())
                 .onError(FoodHutNotFoundError.class, foodHutNotFoundErrorexceptionHandler())
                 .build();

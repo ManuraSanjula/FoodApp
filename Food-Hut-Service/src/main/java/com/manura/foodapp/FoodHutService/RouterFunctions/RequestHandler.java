@@ -53,6 +53,11 @@ public class RequestHandler {
 				}).flatMap(i -> i);
 
 	}
+	
+	public Mono<ServerResponse> deleteComment(ServerRequest serverRequest) {
+		String id = serverRequest.pathVariable("id");
+		return ServerResponse.ok().body(foodHutServiceImpl.deleteComment(id), Void.class); 
+	}
 
 	public Mono<ServerResponse> updateFoodHut(ServerRequest serverRequest) {
 		String id = serverRequest.pathVariable("id");
@@ -67,6 +72,15 @@ public class RequestHandler {
 			 });
 		 }).flatMap(i->i).flatMap(i->i);
 
+	}
+	
+	public Mono<ServerResponse> updateComment(ServerRequest serverRequest) {
+		String id = serverRequest.pathVariable("id");
+		return foodHutServiceImpl.updateComment(id,serverRequest.queryParam("desc").get()).map(i->{
+			return ServerResponse.ok()
+					.body(Mono.just(i), CommentsDto.class)
+					.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+		}).flatMap(i->i);
 	}
 
 	public Mono<ServerResponse> saveComment(ServerRequest serverRequest) {

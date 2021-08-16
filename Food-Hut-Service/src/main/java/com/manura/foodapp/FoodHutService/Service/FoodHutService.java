@@ -24,4 +24,6 @@ public interface FoodHutService {
   Mono<UserNode> updateUser(String id,Mono<UserNode> user);
   Mono<FoodNode> addFood(Mono<FoodNode> food);
   Mono<FoodNode> updateFood(String id,Mono<FoodNode> food);
+  Mono<CommentsDto> updateComment(String id,String comment);
+  Mono<Void> deleteComment(String id);
 }

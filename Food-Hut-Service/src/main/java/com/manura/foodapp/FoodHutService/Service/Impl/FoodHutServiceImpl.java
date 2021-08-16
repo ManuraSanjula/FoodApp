@@ -45,15 +45,11 @@ public class FoodHutServiceImpl implements FoodHutService {
 	private FoodHutRepo foodHutRepo;
 	@Autowired
 	private CommentRepo commentRepo;
-
 	@Autowired
 	private UserRepo userRepo;
-
 	private ModelMapper modelMapper = new ModelMapper();
-
 	@Autowired
 	private Utils utils;
-
 	@Autowired
 	private Pub pub;
 
@@ -256,5 +252,20 @@ public class FoodHutServiceImpl implements FoodHutService {
 						return req;
 					}).flatMap(foodRepo::save);
 				}).flatMap(u -> u);
+	}
+
+	@Override
+	public Mono<CommentsDto> updateComment(String id, String comment) {
+		return commentRepo.findByPublicId(id)
+				.switchIfEmpty(
+						Mono.error(new FoodHutError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
+				.doOnNext(i->i.setComment(comment)).flatMap(commentRepo::save)
+		.map(i->modelMapper.map(i, CommentsDto.class));
+		
+	}
+
+	@Override
+	public Mono<Void> deleteComment(String id) {
+		return commentRepo.deleteByPublicId(id);
 	}
 }

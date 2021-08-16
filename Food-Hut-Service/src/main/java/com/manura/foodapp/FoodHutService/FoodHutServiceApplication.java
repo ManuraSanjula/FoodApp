@@ -40,6 +40,7 @@ public class FoodHutServiceApplication {
 
 	public interface CommentRepo extends ReactiveNeo4jRepository<CommentNode, Long> {
 		Mono<CommentNode> findByPublicId(String publicId);
+		Mono<Void> deleteByPublicId(String id);
 	}
 
 	@Configuration(proxyBeanMethods = false)
@@ -60,8 +61,9 @@ public class FoodHutServiceApplication {
 			return new ReactiveNeo4jTransactionManager(driver, databaseSelectionProvider);
 		}
 	}
-	public interface UserRepo extends ReactiveNeo4jRepository<UserNode, Long>  {
-		  Mono<UserNode> findByPublicId(String publicId);
+
+	public interface UserRepo extends ReactiveNeo4jRepository<UserNode, Long> {
+		Mono<UserNode> findByPublicId(String publicId);
 	}
-	
+
 }
