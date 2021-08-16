@@ -14,10 +14,13 @@ import reactor.core.publisher.Mono;
 public interface RedisService {
 	public void save(FoodCachingRedis obj);
 	public Mono<FoodDto> getFood(String name);
-	Flux<CommentsDto> findAllComment(String id);
+	public Flux<CommentsDto> findAllComment(String id);
+	
 	public void save(CommentCachingRedis obj);
 	public Mono<Void> updateCommentIFFoodUpdated(String key,FoodCommentDto food);
 	public Mono<Void> updateFoodIFFoodHutUpdated(String key,String foodHutId,FoodHutDto food);
+	public Mono<Void> commentUpdated(String foodId,String commentId,CommentsDto commentDto);
+	public Mono<Void> deleteComment(String foodId,String commentId);
 	public Mono<Void> updateCommentIFUserUpdated(String key,UserCommentDto user);
 	public Mono<Void> addNewComment(String key,CommentsDto comment);
 }

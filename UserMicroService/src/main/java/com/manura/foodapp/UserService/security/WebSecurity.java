@@ -4,6 +4,7 @@ import com.manura.foodapp.UserService.Service.impl.UserServiceImpl;
 import com.manura.foodapp.UserService.shared.Utils.JWT.security.token.creator.TokenCreator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -23,6 +24,12 @@ public class WebSecurity extends WebSecurityConfigurerAdapter {
     private final UserServiceImpl userDetailsService;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final TokenCreator tokenCreator;
+    
+    @Value("${app.public.routes}")
+    private String [] publicRoutes;
+    
+    @Value("${app.user.roles}")
+    private String [] roles;
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
@@ -30,20 +37,8 @@ public class WebSecurity extends WebSecurityConfigurerAdapter {
         http
                 .cors().and()
                 .csrf().disable().authorizeRequests()
-                .antMatchers(HttpMethod.POST, SecurityConstants.SIGN_UP_URL)
-                .permitAll()
-                .antMatchers(HttpMethod.GET, "/users/email-verification-request")
-                .permitAll()
-                .antMatchers(HttpMethod.GET, SecurityConstants.VERIFICATION_EMAIL_URL)
-                .permitAll()
-                .antMatchers(HttpMethod.GET, SecurityConstants.VERIFICATION_EMAIL_WEB)
-                .permitAll()
-                .antMatchers(HttpMethod.GET, SecurityConstants.PASSWORD_RESET_REQUEST_WEB)
-                .permitAll()
-                .antMatchers(HttpMethod.POST, SecurityConstants.PASSWORD_RESET_REQUEST_URL)
-                .permitAll()
-                .antMatchers(HttpMethod.POST, SecurityConstants.PASSWORD_RESET_URL)
-                .permitAll()
+                .antMatchers(publicRoutes).permitAll()
+                .antMatchers("/users/{email}").hasAnyAuthority(roles)
                 .anyRequest().authenticated().and()
                 .addFilter(getAuthenticationFilter())
                 .sessionManagement()

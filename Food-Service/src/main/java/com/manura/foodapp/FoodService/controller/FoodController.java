@@ -9,6 +9,7 @@ import org.springframework.data.geo.Metrics;
 import org.springframework.data.geo.Point;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.multipart.FilePart;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -91,6 +92,22 @@ public class FoodController {
 				.subscribeOn(Schedulers.boundedElastic())
 				.switchIfEmpty(Mono.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())));
 	}
+	
+	@PutMapping("/{id}/comments/{commenId}")
+	Mono<ResponseEntity<CommentsDto>> commentUpdate(@PathVariable String commenId,@RequestParam(required = false,defaultValue = "") String desc) {
+		return foodServiceImpl.updateComment(commenId, desc)
+				.map(ResponseEntity::ok).publishOn(Schedulers.boundedElastic())
+				.subscribeOn(Schedulers.boundedElastic())
+				.defaultIfEmpty(ResponseEntity.internalServerError().build());
+	}
+	
+	@DeleteMapping("/{id}/comments/{commenId}")
+	Mono<ResponseEntity<Void>> commentDelete(@PathVariable String id,@PathVariable String commenId) {
+		return foodServiceImpl.deleteComment(id, commenId)
+				.map(ResponseEntity::ok).publishOn(Schedulers.boundedElastic())
+				.subscribeOn(Schedulers.boundedElastic())
+				.defaultIfEmpty(ResponseEntity.internalServerError().build());
+	}
 
 	@PostMapping
 	Mono<ResponseEntity<FoodDto>> insertFood(@RequestBody Mono<FoodReq> foodReq) {
@@ -105,7 +122,6 @@ public class FoodController {
 				.subscribeOn(Schedulers.boundedElastic())
 				.defaultIfEmpty(ResponseEntity.internalServerError().build());
 	}
-
 
 	@PutMapping("/{id}")
 	Mono<ResponseEntity<FoodDto>> updateFood(@PathVariable String id, @RequestBody Mono<FoodReq> foodReq) {

@@ -469,4 +469,29 @@ public class FoodServiceImpl implements FoodService {
 	public Double avg() {
 		return foodRepo.avg();
 	}
+
+	@Override
+	public Mono<CommentsDto> updateComment(String id, String desc) {
+		Optional<CommentsEntity> comment = commentRepo.findById(id);
+		if(comment.isPresent()) {
+			return	Mono.just(comment.get()).doOnNext(i->i.setDescription(desc))
+					.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
+					.flatMap(i->Mono.just(commentRepo.save(i)))
+					.doOnNext(i->{
+						 redisServiceImpl.commentUpdated(i.getFood().getId(), i.getId(), modelMapper.map(i, CommentsDto.class));
+					})
+					.map(i -> modelMapper.map(i, CommentsDto.class));
+		}else {
+			return Mono.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())); 
+		}
+	}
+
+	@Override
+	public Mono<Void> deleteComment(String foodId,String commentID) {
+		commentRepo.deleteById(commentID);
+		redisServiceImpl.deleteComment(foodId, commentID);
+		return Mono.empty();
+	}
 }
+
+

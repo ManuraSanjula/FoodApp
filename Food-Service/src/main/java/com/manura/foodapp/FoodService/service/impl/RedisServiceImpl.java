@@ -155,4 +155,56 @@ public class RedisServiceImpl implements RedisService {
 		}
 		return Mono.empty();
 	}
+
+	@Override
+	public Mono<Void> commentUpdated(String foodId,String commentId, CommentsDto commentDto) {
+		try {
+			return	reactiveRedisTemplateOpsComment.get("Comment" + foodId).map(i -> {
+				List<CommentsDto> comment = new ArrayList<>();
+				comment.addAll(i.getComment());
+				comment.forEach(com->{
+					if(com.getId().equals(commentDto.getId())) {
+						com = commentDto;
+					}
+				});
+				i.setComment(comment);
+				try {
+					reactiveRedisTemplateOpsComment.set("Comment" + foodId, i);
+				}catch (Exception e) {
+					// TODO: handle exception
+				}
+				return i;
+			}).then();
+		}catch (Exception e) {
+			return Mono.empty();
+		}
+	}
+
+	@Override
+	public Mono<Void> deleteComment(String foodId, String commentId) {
+		try {
+			return	reactiveRedisTemplateOpsComment.get("Comment" + foodId).map(i -> {
+				List<CommentsDto> comment = new ArrayList<>();
+				comment.addAll(i.getComment());
+				comment.forEach(com->{
+					if(com.getId().equals(commentId)) {
+						com = null;
+					}
+				});
+				while (comment.remove(null)) {
+		        }
+				i.setComment(comment);
+				try {
+					reactiveRedisTemplateOpsComment.set("Comment" + foodId, i);
+				}catch (Exception e) {
+					// TODO: handle exception
+				}
+				return i;
+			}).then();
+		}catch (Exception e) {
+			return Mono.empty();
+		}
+	}
+
+
 }

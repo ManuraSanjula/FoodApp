@@ -61,7 +61,7 @@ public class UserController {
 	@Autowired
 	private UserRepo userRepo;
 
-	@GetMapping(path = "/u/{email}")
+	@GetMapping(path = "/{email}")
 	public UserRes getUser(@PathVariable String email, HttpServletResponse res, Authentication authentication) {
 		UserEntity userDetails = (UserEntity) authentication.getPrincipal();
 		ModelMapper modelMapper = new ModelMapper();

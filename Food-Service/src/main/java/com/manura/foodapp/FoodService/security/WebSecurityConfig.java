@@ -27,13 +27,22 @@ import reactor.core.publisher.Mono;
 public class WebSecurityConfig {
 	private final Logger logger = LoggerFactory.getLogger(WebSecurityConfig.class);
 	private final TokenConverter tokenConverter;
+	
 	@Value("${app.public_routes}")
     private String[] publicRoutes;
+	
+	@Value("${app.admin.routes}")
+    private String[] adimnRoutes;
+	
+	@Value("${app.roles}")
+    private String[] roles;
+	
 	@Bean
 	public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http, AuthenticationManager authManager) {
 		return http.authorizeExchange().pathMatchers(HttpMethod.OPTIONS).permitAll()
-				.pathMatchers(publicRoutes).permitAll()
-				.pathMatchers("/favicon.ico").permitAll().anyExchange().authenticated().and().csrf()
+				.pathMatchers(HttpMethod.GET,publicRoutes).permitAll()
+				.pathMatchers(HttpMethod.PUT,adimnRoutes).permitAll().anyExchange().hasAnyRole(roles)
+				.and().csrf()
 				.disable().httpBasic().disable().formLogin().disable().exceptionHandling()
 				.authenticationEntryPoint((swe, e) -> {
 					logger.info("[1] Authentication error: Unauthorized[401]: " + e.getMessage());
