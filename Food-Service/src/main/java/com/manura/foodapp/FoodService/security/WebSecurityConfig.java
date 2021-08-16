@@ -41,7 +41,7 @@ public class WebSecurityConfig {
 	public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http, AuthenticationManager authManager) {
 		return http.authorizeExchange().pathMatchers(HttpMethod.OPTIONS).permitAll()
 				.pathMatchers(HttpMethod.GET,publicRoutes).permitAll()
-				.pathMatchers(HttpMethod.PUT,adimnRoutes).permitAll().anyExchange().hasAnyRole(roles)
+				.pathMatchers(HttpMethod.PUT,adimnRoutes).permitAll().anyExchange().hasAnyAuthority(roles)
 				.and().csrf()
 				.disable().httpBasic().disable().formLogin().disable().exceptionHandling()
 				.authenticationEntryPoint((swe, e) -> {
