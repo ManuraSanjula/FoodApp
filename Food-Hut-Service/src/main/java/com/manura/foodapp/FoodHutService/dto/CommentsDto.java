@@ -12,9 +12,11 @@ public class CommentsDto implements Serializable{
     /**
 	 * 
 	 */
-	private static final long serialVersionUID = 7238769481312413923L;
+	private static final long serialVersionUID = 1389117597069617528L;
+	/**
+	 * 
+	 */
 	private String id;
-	private String publicId;
 	private String comment;
 	private String userImage;
 	private Date createdAt;

@@ -1,5 +1,7 @@
 package com.manura.foodapp.FoodHutService.RouterFunctions;
 
+import java.util.Date;
+
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -11,7 +13,9 @@ import com.manura.foodapp.FoodHutService.Controller.Req.FoodHutCreationReq;
 import com.manura.foodapp.FoodHutService.Controller.Req.FoodHutUpdateReq;
 import com.manura.foodapp.FoodHutService.Controller.Res.FoodHutHalfRes;
 import com.manura.foodapp.FoodHutService.Error.Model.FoodHutError;
+import com.manura.foodapp.FoodHutService.Error.Model.Res.ErrorMessage;
 import com.manura.foodapp.FoodHutService.Service.Impl.FoodHutServiceImpl;
+import com.manura.foodapp.FoodHutService.dto.CommentsDto;
 import com.manura.foodapp.FoodHutService.dto.FoodHutDto;
 import com.manura.foodapp.FoodHutService.utils.ErrorMessages;
 
@@ -34,27 +38,52 @@ public class RequestHandler {
 							i.getLatitude(), i.getLongitude()), FoodHutDto.class);
 				}).flatMap(i -> i);
 	}
+
 	public Mono<ServerResponse> getAllFoodHuts(ServerRequest serverRequest) {
 		return ServerResponse.ok().body(foodHutServiceImpl.getAll(), FoodHutHalfRes.class)
 				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
+
 	public Mono<ServerResponse> getOneFoodHut(ServerRequest serverRequest) {
 		String id = serverRequest.pathVariable("id");
-		return ServerResponse.ok().body(foodHutServiceImpl.getOne(id), FoodHutDto.class)
-				.switchIfEmpty(Mono.error(new FoodHutError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
-				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+		return foodHutServiceImpl.getOne(id)
+				.switchIfEmpty(Mono.error(new FoodHutError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage()))).map(i -> {
+					return ServerResponse.ok().body(Mono.just(i), FoodHutDto.class)
+							.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+				}).flatMap(i -> i);
+
 	}
+
 	public Mono<ServerResponse> updateFoodHut(ServerRequest serverRequest) {
 		String id = serverRequest.pathVariable("id");
-		return ServerResponse.ok().body(foodHutServiceImpl.update(id,serverRequest.bodyToMono(FoodHutUpdateReq.class)), FoodHutDto.class)
-				.switchIfEmpty(Mono.error(new FoodHutError(ErrorMessages.COULD_NOT_UPDATE_RECORD.getErrorMessage())))
-				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+		
+		return serverRequest.bodyToMono(FoodHutUpdateReq.class)
+		    .switchIfEmpty(Mono.error(new FoodHutError(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage()))).mapNotNull(req->{
+			 return foodHutServiceImpl.update(id, Mono.just(req)).mapNotNull(i->{
+				 return ServerResponse.ok()
+					.body(Mono.just(i), FoodHutDto.class)
+					.switchIfEmpty(Mono.error(new FoodHutError(ErrorMessages.COULD_NOT_UPDATE_RECORD.getErrorMessage())))
+					.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+			 });
+		 }).flatMap(i->i).flatMap(i->i);
+
 	}
-	
+
 	public Mono<ServerResponse> saveComment(ServerRequest serverRequest) {
 		String id = serverRequest.pathVariable("id");
-		return ServerResponse.ok().body(foodHutServiceImpl.addComment(id,serverRequest.bodyToMono(CommentReq.class)), FoodHutDto.class)
-				.switchIfEmpty(Mono.error(new FoodHutError(ErrorMessages.COULD_NOT_CREATE_RECORD.getErrorMessage())))
-				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+		return serverRequest.bodyToMono(CommentReq.class)
+				.switchIfEmpty(Mono.error(new FoodHutError(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage())))
+				.mapNotNull(req -> {
+					if (req.getRating() == null || req.getUserId() == null || req.getComment() == null) {
+						ErrorMessage errorMessage = new ErrorMessage();
+						errorMessage.setTimestamp(new Date());
+						errorMessage.setMessage(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage());
+						return ServerResponse.badRequest().body(Mono.just(errorMessage), ErrorMessage.class)
+								.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+					}
+					return ServerResponse.ok()
+							.body(foodHutServiceImpl.addComment(id, Mono.just(req)), CommentsDto.class)
+							.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+				}).flatMap(i -> i).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
 }
