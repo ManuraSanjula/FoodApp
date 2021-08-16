@@ -101,7 +101,9 @@ public class RedisServiceImpl implements RedisService {
 						comm.setFood(food);
 					}
 				});
-				reactiveRedisTemplateOpsComment.set("Comment" + key, i);
+				reactiveRedisTemplateOpsComment.set("Comment" + key, i).subscribe(__->{
+					
+				});
 			});
 		}catch (Exception e) {
 		}
@@ -134,7 +136,9 @@ public class RedisServiceImpl implements RedisService {
 						comm.setUser(user);
 					}
 				});
-				reactiveRedisTemplateOpsComment.set("Comment" + key, i);
+				reactiveRedisTemplateOpsComment.set("Comment" + key, i).subscribe(__->{
+					
+				});
 			});
 		}catch (Exception e) {
 		}
@@ -149,7 +153,9 @@ public class RedisServiceImpl implements RedisService {
 				commentList.addAll(i.getComment());
 				commentList.add(comment);
 				i.setComment(commentList);
-				reactiveRedisTemplateOpsComment.set("Comment" + key, i);
+				reactiveRedisTemplateOpsComment.set("Comment" + key, i).subscribe(__->{
+					
+				});
 			});
 		}catch (Exception e) {
 		}
@@ -159,22 +165,24 @@ public class RedisServiceImpl implements RedisService {
 	@Override
 	public Mono<Void> commentUpdated(String foodId,String commentId, CommentsDto commentDto) {
 		try {
-			return	reactiveRedisTemplateOpsComment.get("Comment" + foodId).map(i -> {
+			reactiveRedisTemplateOpsComment.get("Comment" + foodId).subscribe(i -> {
 				List<CommentsDto> comment = new ArrayList<>();
 				comment.addAll(i.getComment());
-				comment.forEach(com->{
-					if(com.getId().equals(commentDto.getId())) {
-						com = commentDto;
+				comment.forEach(commentData->{
+					if(commentData.getId().equals(commentDto.getId())) {
+						commentData.setDescription(commentDto.getDescription());
 					}
 				});
 				i.setComment(comment);
 				try {
-					reactiveRedisTemplateOpsComment.set("Comment" + foodId, i);
+					reactiveRedisTemplateOpsComment.set("Comment" + foodId, i).subscribe(__->{
+						
+					});
 				}catch (Exception e) {
 					// TODO: handle exception
 				}
-				return i;
-			}).then();
+			});
+			return Mono.empty();
 		}catch (Exception e) {
 			return Mono.empty();
 		}
@@ -183,7 +191,7 @@ public class RedisServiceImpl implements RedisService {
 	@Override
 	public Mono<Void> deleteComment(String foodId, String commentId) {
 		try {
-			return	reactiveRedisTemplateOpsComment.get("Comment" + foodId).map(i -> {
+			reactiveRedisTemplateOpsComment.get("Comment" + foodId).subscribe(i -> {
 				List<CommentsDto> comment = new ArrayList<>();
 				comment.addAll(i.getComment());
 				comment.forEach(com->{
@@ -195,12 +203,14 @@ public class RedisServiceImpl implements RedisService {
 		        }
 				i.setComment(comment);
 				try {
-					reactiveRedisTemplateOpsComment.set("Comment" + foodId, i);
+					reactiveRedisTemplateOpsComment.set("Comment" + foodId, i).subscribe(d->{
+						
+					});
 				}catch (Exception e) {
 					// TODO: handle exception
 				}
-				return i;
-			}).then();
+			});
+			return Mono.empty();
 		}catch (Exception e) {
 			return Mono.empty();
 		}
