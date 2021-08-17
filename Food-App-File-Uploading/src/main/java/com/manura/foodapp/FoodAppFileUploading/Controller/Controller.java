@@ -38,6 +38,15 @@ public class Controller {
 				.map(ResponseEntity::ok);
 
 	}
+	
+	@GetMapping(value = "/foodHut-image/{fileName:.+}", produces = MediaType.IMAGE_JPEG_VALUE)
+	public Mono<ResponseEntity<Resource>> getFoodHutImage(@PathVariable String fileName) {		
+		return fileStorageService.loadFileAsResource(fileName+".jpeg","FoodHut").
+				publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
+				.switchIfEmpty(Mono.error(new ImageNotFoundError("")))
+				.map(ResponseEntity::ok);
+
+	}
 
 	@RequestMapping("/**")
 	Mono<String> notFound() {

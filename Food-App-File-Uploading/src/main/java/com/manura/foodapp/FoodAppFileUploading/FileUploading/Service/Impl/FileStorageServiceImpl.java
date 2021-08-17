@@ -38,6 +38,9 @@ public class FileStorageServiceImpl implements FileStorageService {
 
 	@Value("${food-file.upload-dir}")
 	private Path foodFileStorageLocation;
+	
+	@Value("${foodHut-file.upload-dir}")
+	private Path foodHutFileStorageLocation;
 
 	@Autowired
 	private RedisServiceImpl redisService;
@@ -206,9 +209,37 @@ public class FileStorageServiceImpl implements FileStorageService {
 		if (type.equals("User")) {
 			return redisService.getResource(fileName).switchIfEmpty(loadFileAsResourceIfCacheNotPresent(fileName, type))
 					.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
-		} else {
+		} else if(type.equals("FoodHut")) {
 			return redisService.getResource(fileName).switchIfEmpty(loadFileAsResourceIfCacheNotPresent(fileName, type))
 					.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+		}else {
+			return redisService.getResource(fileName).switchIfEmpty(loadFileAsResourceIfCacheNotPresent(fileName, type))
+					.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+		}
+	}
+
+	@Override
+	public Flux<String> uploadFileFoodHut(Path path, Flux<DataBuffer> bufferFlux, String fileName) {
+		try {
+			Path opPath = foodHutFileStorageLocation.resolve(path);
+
+			AsynchronousFileChannel channel = AsynchronousFileChannel.open(opPath, StandardOpenOption.CREATE,
+					StandardOpenOption.WRITE);
+			return DataBufferUtils.write(bufferFlux, channel).mapNotNull(i -> {
+				if (i.capacity() > 100000) {
+					return fileName;
+				} else {
+					File image = new File(opPath.toAbsolutePath().toString());
+					image.delete();
+					return null;
+				}
+				
+			}).doOnComplete(() -> {
+				File image = new File(opPath.toAbsolutePath().toString());
+				addTextWatermark("Food-App", "jpeg", image, image);
+			}).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+		} catch (Exception e) {
+			return Flux.empty();
 		}
 	}
 

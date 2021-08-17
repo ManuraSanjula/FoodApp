@@ -1,10 +1,14 @@
 package com.manura.foodapp.FoodHutService.RouterFunctions;
 
 import java.util.Date;
+import java.util.Map;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.codec.multipart.FilePart;
+import org.springframework.http.codec.multipart.Part;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.BodyExtractors;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
@@ -43,7 +47,7 @@ public class RequestHandler {
 		return ServerResponse.ok().body(foodHutServiceImpl.getAll(), FoodHutHalfRes.class)
 				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
-	
+
 	public Mono<ServerResponse> getAllComments(ServerRequest serverRequest) {
 		String id = serverRequest.pathVariable("id");
 		return ServerResponse.ok().body(foodHutServiceImpl.getAllComments(id), CommentsDto.class)
@@ -67,6 +71,18 @@ public class RequestHandler {
 		return ServerResponse.ok().body(foodHutServiceImpl.deleteComment(foodHutId, commentId), Void.class)
 				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 
+	}
+
+	public Mono<ServerResponse> setCoverImage(ServerRequest serverRequest) {
+		String id = serverRequest.pathVariable("id");
+		return serverRequest.body(BodyExtractors.toMultipartData()).publishOn(Schedulers.boundedElastic())
+				.subscribeOn(Schedulers.boundedElastic()).flatMap(parts -> {
+					Map<String, Part> singleValueMap = parts.toSingleValueMap();
+					FilePart file = (FilePart) singleValueMap.get("coverImg");
+					return ServerResponse.ok()
+							.body(foodHutServiceImpl.uploadCoverImage(id, Mono.just(file)), FoodHutDto.class)
+							.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+				});
 	}
 
 	public Mono<ServerResponse> updateFoodHut(ServerRequest serverRequest) {

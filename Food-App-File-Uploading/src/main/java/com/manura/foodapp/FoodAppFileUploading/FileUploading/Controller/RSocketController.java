@@ -38,4 +38,12 @@ public class RSocketController {
 		return fileStorageService.uploadFileFood(path, content, fileName)
 				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
+	
+	@MessageMapping("file.upload.foodHut")
+	public Flux<String> foodHutUploadCoverImage(@Payload Flux<DataBuffer> content)  {
+		String fileName = ("Food" + utils.generateName(30));
+		var path = Paths.get(fileName + ".jpeg");
+		return fileStorageService.uploadFileFoodHut(path, content, fileName)
+				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+	}
 }

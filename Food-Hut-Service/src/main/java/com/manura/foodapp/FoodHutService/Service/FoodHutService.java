@@ -2,6 +2,8 @@ package com.manura.foodapp.FoodHutService.Service;
 
 import java.util.List;
 
+import org.springframework.http.codec.multipart.FilePart;
+
 import com.manura.foodapp.FoodHutService.Node.FoodNode;
 import com.manura.foodapp.FoodHutService.Node.UserNode;
 import com.manura.foodapp.FoodHutService.Controller.Req.CommentReq;
@@ -27,4 +29,6 @@ public interface FoodHutService {
   Mono<CommentsDto> updateComment(String foodHutId,String commentId,String comment);
   Flux<CommentsDto> getAllComments(String id);
   Mono<Void> deleteComment(String foodHutId,String commentId);
+  Mono<FoodHutDto> uploadCoverImage(String id,Mono<FilePart> filePartFlux);
+  Mono<FoodHutDto> uploadImages(String id,Flux<FilePart> filePartFlux);
 }

@@ -9,6 +9,8 @@ import java.util.Set;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.geo.Point;
+import org.springframework.http.codec.multipart.FilePart;
+import org.springframework.messaging.rsocket.RSocketRequester;
 import org.springframework.stereotype.Service;
 
 import com.manura.foodapp.FoodHutService.FoodHutServiceApplication.CommentRepo;
@@ -52,6 +54,8 @@ public class FoodHutServiceImpl implements FoodHutService {
 	private Utils utils;
 	@Autowired
 	private Pub pub;
+	@Autowired
+	private Mono<RSocketRequester> rSocketRequester;
 
 	@Override
 	public Mono<FoodHutDto> save(Mono<FoodHutDto> dto, List<String> foodIds, Double latitude, Double longitude) {
@@ -86,6 +90,7 @@ public class FoodHutServiceImpl implements FoodHutService {
 					new Thread(runnable).start();
 				}).mapNotNull(i -> modelMapper.map(i, FoodHutDto.class));
 	}
+
 	@Override
 	public Mono<FoodHutDto> update(String id, Mono<FoodHutUpdateReq> dto) {
 		return dto.switchIfEmpty(Mono.error(new FoodHutError(ErrorMessages.COULD_NOT_UPDATE_RECORD.getErrorMessage())))
@@ -142,22 +147,24 @@ public class FoodHutServiceImpl implements FoodHutService {
 							}).mapNotNull(i -> modelMapper.map(i, FoodHutDto.class));
 				}).flatMap(i -> i);
 	}
+
 	@Override
 	public Flux<FoodHutHalfRes> getAll() {
 		return foodHutRepo.findAll().map(i -> modelMapper.map(i, FoodHutHalfRes.class))
 				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
+
 	@Override
 	public Mono<FoodHutDto> getOne(String id) {
-		return foodHutRepo.findByPublicId(id)
-				.mapNotNull(i -> modelMapper.map(i, FoodHutDto.class)).publishOn(Schedulers.boundedElastic())
+		return foodHutRepo.findByPublicId(id).mapNotNull(i -> modelMapper.map(i, FoodHutDto.class))
+				.publishOn(Schedulers.boundedElastic())
 				.switchIfEmpty(Mono.error(new FoodHutError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
 				.subscribeOn(Schedulers.boundedElastic());
 	}
+
 	@Override
 	public Mono<CommentsDto> addComment(String id, Mono<CommentReq> comment) {
-		return comment
-				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
+		return comment.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
 				.switchIfEmpty(Mono.error(new FoodHutError(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage())))
 				.mapNotNull(i -> {
 					return foodHutRepo.findByPublicId(id)
@@ -166,8 +173,8 @@ public class FoodHutServiceImpl implements FoodHutService {
 							.mapNotNull(foodHut -> {
 								Set<FoodHutHasComment> commentNodes = new HashSet<>();
 								commentNodes.addAll(foodHut.getComment());
-								return userRepo.findByPublicId(i.getUserId())
-										.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
+								return userRepo.findByPublicId(i.getUserId()).publishOn(Schedulers.boundedElastic())
+										.subscribeOn(Schedulers.boundedElastic())
 										.switchIfEmpty(Mono.error(
 												new FoodHutError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
 										.mapNotNull(user -> {
@@ -187,17 +194,20 @@ public class FoodHutServiceImpl implements FoodHutService {
 											foodHutRepo.save(foodHut).subscribe();
 											return j;
 										}).mapNotNull(j -> modelMapper.map(j, CommentsDto.class))
-										.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+										.publishOn(Schedulers.boundedElastic())
+										.subscribeOn(Schedulers.boundedElastic());
 
-							}).flatMap(j -> j)
-							.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+							}).flatMap(j -> j).publishOn(Schedulers.boundedElastic())
+							.subscribeOn(Schedulers.boundedElastic());
 				}).flatMap(i -> i).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
+
 	@Override
 	public Mono<UserNode> addUser(Mono<UserNode> user) {
 		return user.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
 				.flatMap(userRepo::save);
 	}
+
 	@Override
 	public Mono<UserNode> updateUser(String id, Mono<UserNode> user) {
 		return userRepo.findByPublicId(id).publishOn(Schedulers.boundedElastic())
@@ -230,11 +240,13 @@ public class FoodHutServiceImpl implements FoodHutService {
 							.subscribeOn(Schedulers.boundedElastic());
 				}).flatMap(i -> i).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
+
 	@Override
 	public Mono<FoodNode> addFood(Mono<FoodNode> food) {
 		return food.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
 				.flatMap(foodRepo::save);
 	}
+
 	@Override
 	public Mono<FoodNode> updateFood(String id, Mono<FoodNode> food) {
 		return foodRepo.findByPublicId(id).switchIfEmpty(addFood(food)).publishOn(Schedulers.boundedElastic())
@@ -246,6 +258,7 @@ public class FoodHutServiceImpl implements FoodHutService {
 					}).flatMap(foodRepo::save);
 				}).flatMap(u -> u);
 	}
+
 	@Override
 	public Mono<CommentsDto> updateComment(String foodHutId, String commentId, String comment) {
 		return commentRepo.findByPublicId(commentId)
@@ -255,6 +268,7 @@ public class FoodHutServiceImpl implements FoodHutService {
 				.subscribeOn(Schedulers.boundedElastic());
 
 	}
+
 	@Override
 	public Mono<Void> deleteComment(String foodHutId, String commentId) {
 		return foodHutRepo.findByPublicId(foodHutId).publishOn(Schedulers.boundedElastic())
@@ -275,6 +289,7 @@ public class FoodHutServiceImpl implements FoodHutService {
 							.subscribeOn(Schedulers.boundedElastic());
 				}).flatMap(i -> i);
 	}
+
 	@Override
 	public Flux<CommentsDto> getAllComments(String id) {
 		return foodHutRepo.findByPublicId(id).publishOn(Schedulers.boundedElastic())
@@ -286,5 +301,55 @@ public class FoodHutServiceImpl implements FoodHutService {
 					commsts.addAll(i.getComment());
 					return Flux.fromIterable(commsts);
 				}).map(i -> modelMapper.map(i.getComment(), CommentsDto.class));
+	}
+
+	@Override
+	public Mono<FoodHutDto> uploadCoverImage(String id, Mono<FilePart> filePartFlux) {
+		return foodHutRepo.findByPublicId(id).publishOn(Schedulers.boundedElastic())
+				.subscribeOn(Schedulers.boundedElastic())
+				.switchIfEmpty(Mono.error(new FoodHutError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
+				.mapNotNull(i -> {
+					String name = filePartFlux.publishOn(Schedulers.boundedElastic())
+							.subscribeOn(Schedulers.boundedElastic()).map(part -> {
+								return this.rSocketRequester.publishOn(Schedulers.boundedElastic())
+										.subscribeOn(Schedulers.boundedElastic())
+										.map(rsocket -> rsocket.route("file.upload.foodHut").data(part.content()))
+										.map(r -> r.retrieveFlux(String.class)).flatMapMany(s -> s);
+							}).flatMapMany(s -> s).blockLast();
+
+					String image = ("/foodHut-image/" + name);
+					i.setImageCover(image);
+					return i;
+				}).flatMap(foodHutRepo::save).mapNotNull(i -> modelMapper.map(i, FoodHutDto.class))
+				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+	}
+
+	@Override
+	public Mono<FoodHutDto> uploadImages(String id, Flux<FilePart> filePartFlux) {
+		return foodHutRepo.findByPublicId(id).publishOn(Schedulers.boundedElastic())
+				.subscribeOn(Schedulers.boundedElastic()).map(food -> {
+					List<String> urls = new ArrayList<String>();
+
+					return filePartFlux.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
+							.map(file -> {
+
+								String image = this.rSocketRequester
+										.map(rsocket -> rsocket.route("file.upload.food").data(file.content()))
+										.mapNotNull(r -> r.retrieveFlux(String.class)).flatMapMany(s -> s).distinct()
+										.publishOn(Schedulers.boundedElastic()).blockFirst();
+
+								if (image != null) {
+									String fullImageUril = ("/food-image/" + image);
+									urls.add(fullImageUril);
+								}
+								return urls;
+							}).map(i -> {
+								food.setImages(i);
+								return food;
+							}).blockLast();
+
+//					return food;
+				}).flatMap(foodHutRepo::save).mapNotNull(i -> modelMapper.map(i, FoodHutDto.class))
+				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
 }
