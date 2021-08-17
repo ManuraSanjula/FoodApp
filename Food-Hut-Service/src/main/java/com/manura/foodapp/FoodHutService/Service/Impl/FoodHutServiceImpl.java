@@ -73,7 +73,7 @@ public class FoodHutServiceImpl implements FoodHutService {
 					});
 					foodHut.setLocation(location);
 					foodHut.setPublicId(utils.generateId(80));
-					foodHut.setFood(foods);
+					foodHut.setFoods(foods);
 					foodHut.setComment(new HashSet<>());
 					foodHut.setImageCover("/food-hut/FoodHutCoverImage");
 					foodHut.setRatingsQuantity(4);
@@ -86,7 +86,6 @@ public class FoodHutServiceImpl implements FoodHutService {
 					new Thread(runnable).start();
 				}).mapNotNull(i -> modelMapper.map(i, FoodHutDto.class));
 	}
-
 	@Override
 	public Mono<FoodHutDto> update(String id, Mono<FoodHutUpdateReq> dto) {
 		return dto.switchIfEmpty(Mono.error(new FoodHutError(ErrorMessages.COULD_NOT_UPDATE_RECORD.getErrorMessage())))
@@ -117,7 +116,7 @@ public class FoodHutServiceImpl implements FoodHutService {
 								}
 								if (updateReq.getFoodIds() != null) {
 									Set<FoodHutHasFood> foods = new HashSet<>();
-									foods.addAll(i.getFood());
+									foods.addAll(i.getFoods());
 									updateReq.getFoodIds().forEach(j -> {
 										foodRepo.findByPublicId(j).publishOn(Schedulers.boundedElastic())
 												.subscribeOn(Schedulers.boundedElastic()).subscribe(food -> {
@@ -143,22 +142,18 @@ public class FoodHutServiceImpl implements FoodHutService {
 							}).mapNotNull(i -> modelMapper.map(i, FoodHutDto.class));
 				}).flatMap(i -> i);
 	}
-
 	@Override
 	public Flux<FoodHutHalfRes> getAll() {
 		return foodHutRepo.findAll().map(i -> modelMapper.map(i, FoodHutHalfRes.class))
 				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
-
 	@Override
 	public Mono<FoodHutDto> getOne(String id) {
-
-		return foodHutRepo.findByPublicId(id).switchIfEmpty(Mono.empty())
+		return foodHutRepo.findByPublicId(id)
 				.mapNotNull(i -> modelMapper.map(i, FoodHutDto.class)).publishOn(Schedulers.boundedElastic())
 				.switchIfEmpty(Mono.error(new FoodHutError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
 				.subscribeOn(Schedulers.boundedElastic());
 	}
-
 	@Override
 	public Mono<CommentsDto> addComment(String id, Mono<CommentReq> comment) {
 		return comment
@@ -177,7 +172,6 @@ public class FoodHutServiceImpl implements FoodHutService {
 												new FoodHutError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
 										.mapNotNull(user -> {
 											CommentNode commentNode = new CommentNode();
-											commentNode.setFoodHut(foodHut);
 											commentNode.setUser(user);
 											commentNode.setRating(i.getRating());
 											commentNode.setComment(i.getComment());
@@ -197,16 +191,13 @@ public class FoodHutServiceImpl implements FoodHutService {
 
 							}).flatMap(j -> j)
 							.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
-				}).flatMap(i -> i).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
-;
+				}).flatMap(i -> i).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
-
 	@Override
 	public Mono<UserNode> addUser(Mono<UserNode> user) {
 		return user.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
 				.flatMap(userRepo::save);
 	}
-
 	@Override
 	public Mono<UserNode> updateUser(String id, Mono<UserNode> user) {
 		return userRepo.findByPublicId(id).publishOn(Schedulers.boundedElastic())
@@ -239,13 +230,11 @@ public class FoodHutServiceImpl implements FoodHutService {
 							.subscribeOn(Schedulers.boundedElastic());
 				}).flatMap(i -> i).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
-
 	@Override
 	public Mono<FoodNode> addFood(Mono<FoodNode> food) {
 		return food.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
 				.flatMap(foodRepo::save);
 	}
-
 	@Override
 	public Mono<FoodNode> updateFood(String id, Mono<FoodNode> food) {
 		return foodRepo.findByPublicId(id).switchIfEmpty(addFood(food)).publishOn(Schedulers.boundedElastic())
@@ -257,7 +246,6 @@ public class FoodHutServiceImpl implements FoodHutService {
 					}).flatMap(foodRepo::save);
 				}).flatMap(u -> u);
 	}
-
 	@Override
 	public Mono<CommentsDto> updateComment(String foodHutId, String commentId, String comment) {
 		return commentRepo.findByPublicId(commentId)
@@ -267,7 +255,6 @@ public class FoodHutServiceImpl implements FoodHutService {
 				.subscribeOn(Schedulers.boundedElastic());
 
 	}
-
 	@Override
 	public Mono<Void> deleteComment(String foodHutId, String commentId) {
 		return foodHutRepo.findByPublicId(foodHutId).publishOn(Schedulers.boundedElastic())
@@ -288,13 +275,16 @@ public class FoodHutServiceImpl implements FoodHutService {
 							.subscribeOn(Schedulers.boundedElastic());
 				}).flatMap(i -> i);
 	}
-
 	@Override
 	public Flux<CommentsDto> getAllComments(String id) {
-		return foodHutRepo.findByPublicId(id).switchIfEmpty(Mono.empty()).publishOn(Schedulers.boundedElastic())
+		return foodHutRepo.findByPublicId(id).publishOn(Schedulers.boundedElastic())
 				.subscribeOn(Schedulers.boundedElastic())
 				.switchIfEmpty(Mono.error(new FoodHutError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
-				.flatMapMany(i -> Flux.fromIterable(i.getComment())).map(i -> i.getComment())
-				.map(i -> modelMapper.map(i, CommentsDto.class));
+				.flatMapMany(i -> {
+
+					List<FoodHutHasComment> commsts = new ArrayList<>();
+					commsts.addAll(i.getComment());
+					return Flux.fromIterable(commsts);
+				}).map(i -> modelMapper.map(i.getComment(), CommentsDto.class));
 	}
 }

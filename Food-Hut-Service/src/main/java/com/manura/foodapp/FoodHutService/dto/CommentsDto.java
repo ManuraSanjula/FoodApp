@@ -21,7 +21,6 @@ public class CommentsDto implements Serializable{
 	private String userImage;
 	private Date createdAt;
 	private UserDto user;
-	private FoodHutDto foodHut;
 	private Double rating;
 	
 }

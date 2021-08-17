@@ -47,6 +47,6 @@ public class FoodHutNode implements Serializable{
 	private Set<FoodHutHasComment> comment = new HashSet<>();
 
 	@Relationship(type = "FOODHUT_HAS_FOODS", direction = Relationship.Direction.OUTGOING)
-	private Set<FoodHutHasFood> food = new HashSet<>();
+	private Set<FoodHutHasFood> foods = new HashSet<>();
 	private Point location;
 }
