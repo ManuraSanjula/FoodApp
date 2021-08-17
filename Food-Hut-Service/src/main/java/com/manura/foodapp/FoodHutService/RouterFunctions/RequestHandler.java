@@ -43,44 +43,60 @@ public class RequestHandler {
 		return ServerResponse.ok().body(foodHutServiceImpl.getAll(), FoodHutHalfRes.class)
 				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
+	
+	public Mono<ServerResponse> getAllComments(ServerRequest serverRequest) {
+		String id = serverRequest.pathVariable("id");
+		return ServerResponse.ok().body(foodHutServiceImpl.getAllComments(id), CommentsDto.class)
+				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+	}
 
 	public Mono<ServerResponse> getOneFoodHut(ServerRequest serverRequest) {
 		String id = serverRequest.pathVariable("id");
-		return foodHutServiceImpl.getOne(id)
+		return foodHutServiceImpl.getOne(id).publishOn(Schedulers.boundedElastic())
+				.subscribeOn(Schedulers.boundedElastic())
 				.switchIfEmpty(Mono.error(new FoodHutError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage()))).map(i -> {
 					return ServerResponse.ok().body(Mono.just(i), FoodHutDto.class)
 							.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 				}).flatMap(i -> i);
 
 	}
-	
+
 	public Mono<ServerResponse> deleteComment(ServerRequest serverRequest) {
-		String id = serverRequest.pathVariable("id");
-		return ServerResponse.ok().body(foodHutServiceImpl.deleteComment(id), Void.class); 
+		String foodHutId = serverRequest.pathVariable("foodHutId");
+		String commentId = serverRequest.pathVariable("commentId");
+		return ServerResponse.ok().body(foodHutServiceImpl.deleteComment(foodHutId, commentId), Void.class)
+				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+
 	}
 
 	public Mono<ServerResponse> updateFoodHut(ServerRequest serverRequest) {
 		String id = serverRequest.pathVariable("id");
-		
-		return serverRequest.bodyToMono(FoodHutUpdateReq.class)
-		    .switchIfEmpty(Mono.error(new FoodHutError(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage()))).mapNotNull(req->{
-			 return foodHutServiceImpl.update(id, Mono.just(req)).mapNotNull(i->{
-				 return ServerResponse.ok()
-					.body(Mono.just(i), FoodHutDto.class)
-					.switchIfEmpty(Mono.error(new FoodHutError(ErrorMessages.COULD_NOT_UPDATE_RECORD.getErrorMessage())))
-					.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
-			 });
-		 }).flatMap(i->i).flatMap(i->i);
+
+		return serverRequest.bodyToMono(FoodHutUpdateReq.class).publishOn(Schedulers.boundedElastic())
+				.subscribeOn(Schedulers.boundedElastic())
+				.switchIfEmpty(Mono.error(new FoodHutError(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage())))
+				.mapNotNull(req -> {
+					return foodHutServiceImpl.update(id, Mono.just(req)).publishOn(Schedulers.boundedElastic())
+							.subscribeOn(Schedulers.boundedElastic()).mapNotNull(i -> {
+								return ServerResponse.ok().body(Mono.just(i), FoodHutDto.class)
+										.switchIfEmpty(Mono.error(new FoodHutError(
+												ErrorMessages.COULD_NOT_UPDATE_RECORD.getErrorMessage())))
+										.publishOn(Schedulers.boundedElastic())
+										.subscribeOn(Schedulers.boundedElastic());
+							});
+				}).flatMap(i -> i).flatMap(i -> i).publishOn(Schedulers.boundedElastic())
+				.subscribeOn(Schedulers.boundedElastic());
 
 	}
-	
+
 	public Mono<ServerResponse> updateComment(ServerRequest serverRequest) {
-		String id = serverRequest.pathVariable("id");
-		return foodHutServiceImpl.updateComment(id,serverRequest.queryParam("desc").get()).map(i->{
-			return ServerResponse.ok()
-					.body(Mono.just(i), CommentsDto.class)
-					.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
-		}).flatMap(i->i);
+		String foodHutId = serverRequest.pathVariable("foodHutId");
+		String commentId = serverRequest.pathVariable("commentId");
+		return foodHutServiceImpl.updateComment(foodHutId, commentId, serverRequest.queryParam("comment").get())
+				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic()).map(i -> {
+					return ServerResponse.ok().body(Mono.just(i), CommentsDto.class)
+							.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+				}).flatMap(i -> i);
 	}
 
 	public Mono<ServerResponse> saveComment(ServerRequest serverRequest) {

@@ -33,7 +33,7 @@ public interface FoodService {
     Mono<FoodDto> uploadCoverImage(String id,Mono<FilePart> filePartFlux);
     Mono<FoodDto> uploadImages(String id,Flux<FilePart> filePartFlux);
     Flux<FoodDto> findByLocationNear(Point p, Distance d);
-    Mono<CommentsDto> updateComment(String id,String desc);
+    Mono<CommentsDto> updateComment(String id,String foodId,String desc);
     Mono<Void> deleteComment(String foodId,String commentID);
     Double avg();
 }

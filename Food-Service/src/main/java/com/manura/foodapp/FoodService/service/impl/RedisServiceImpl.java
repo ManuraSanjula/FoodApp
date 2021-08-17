@@ -70,12 +70,16 @@ public class RedisServiceImpl implements RedisService {
 	public Flux<CommentsDto> findAllComment(String foodId) {
 		try {
 			return reactiveRedisTemplateOpsComment.get("Comment" + foodId).map(i -> {
-				return Flux.fromIterable(i.getComment());
-			}).flatMapMany(i -> i).switchIfEmpty(Flux.empty()).publishOn(Schedulers.boundedElastic())
-					.subscribeOn(Schedulers.boundedElastic()).map(i -> modelMapper.map(i, CommentsDto.class));
+				if(i.getComment() != null) {
+					return Flux.fromIterable(i.getComment());
+				}else {
+					return Flux.fromIterable(new ArrayList<>());
+				}
+			}).flatMapMany(i -> i).switchIfEmpty(Flux.fromIterable(new ArrayList<>())).publishOn(Schedulers.boundedElastic())
+					.subscribeOn(Schedulers.boundedElastic()).mapNotNull(i -> modelMapper.map(i, CommentsDto.class));
 
 		} catch (Exception e) {
-			return Flux.empty();
+			return Flux.fromIterable(new ArrayList<>());
 		}
 	}
 
@@ -194,13 +198,7 @@ public class RedisServiceImpl implements RedisService {
 			reactiveRedisTemplateOpsComment.get("Comment" + foodId).subscribe(i -> {
 				List<CommentsDto> comment = new ArrayList<>();
 				comment.addAll(i.getComment());
-				comment.forEach(com->{
-					if(com.getId().equals(commentId)) {
-						com = null;
-					}
-				});
-				while (comment.remove(null)) {
-		        }
+				comment.removeIf(j->j.getId().equals(commentId));
 				i.setComment(comment);
 				try {
 					reactiveRedisTemplateOpsComment.set("Comment" + foodId, i).subscribe(d->{

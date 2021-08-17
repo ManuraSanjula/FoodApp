@@ -88,14 +88,14 @@ public class FoodController {
 	@GetMapping("/{id}/comments")
 	Flux<CommentsDto> getAllComment(@PathVariable String id) {
 		return foodServiceImpl.findAllComment(id).publishOn(Schedulers.boundedElastic())
-				.publishOn(Schedulers.boundedElastic())
 				.subscribeOn(Schedulers.boundedElastic())
 				.switchIfEmpty(Mono.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())));
 	}
 	
 	@PutMapping("/{id}/comments/{commenId}")
-	Mono<ResponseEntity<CommentsDto>> commentUpdate(@PathVariable String commenId,@RequestParam(required = false,defaultValue = "") String desc) {
-		return foodServiceImpl.updateComment(commenId, desc)
+	Mono<ResponseEntity<CommentsDto>> commentUpdate(@PathVariable String id,@PathVariable String commenId,
+			@RequestParam(required = false,defaultValue = "") String desc) {
+		return foodServiceImpl.updateComment(commenId, id,desc)
 				.map(ResponseEntity::ok).publishOn(Schedulers.boundedElastic())
 				.subscribeOn(Schedulers.boundedElastic())
 				.defaultIfEmpty(ResponseEntity.internalServerError().build());
@@ -105,8 +105,7 @@ public class FoodController {
 	Mono<ResponseEntity<Void>> commentDelete(@PathVariable String id,@PathVariable String commenId) {
 		return foodServiceImpl.deleteComment(id, commenId)
 				.map(ResponseEntity::ok).publishOn(Schedulers.boundedElastic())
-				.subscribeOn(Schedulers.boundedElastic())
-				.defaultIfEmpty(ResponseEntity.internalServerError().build());
+				.subscribeOn(Schedulers.boundedElastic());
 	}
 
 	@PostMapping
@@ -117,7 +116,8 @@ public class FoodController {
 				return Mono.error(new FoodError(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage()));
 			}
 
-			return foodServiceImpl.save(Mono.just(modelMapper.map(i, FoodDto.class)), i.getFoodHutsIds());
+			return foodServiceImpl.save(Mono.just(modelMapper.map(i, FoodDto.class)), i.getFoodHutsIds())
+					.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 		}).map(ResponseEntity::ok).publishOn(Schedulers.boundedElastic())
 				.subscribeOn(Schedulers.boundedElastic())
 				.defaultIfEmpty(ResponseEntity.internalServerError().build());
@@ -127,7 +127,8 @@ public class FoodController {
 	Mono<ResponseEntity<FoodDto>> updateFood(@PathVariable String id, @RequestBody Mono<FoodReq> foodReq) {
 
 		return foodReq.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic()).flatMap(i -> {
-			return foodServiceImpl.update(id, Mono.just(modelMapper.map(i, FoodDto.class)), i.getFoodHutsIds());
+			return foodServiceImpl.update(id, Mono.just(modelMapper.map(i, FoodDto.class)), i.getFoodHutsIds())
+					.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 		}).map(ResponseEntity::ok).publishOn(Schedulers.boundedElastic())
 				.subscribeOn(Schedulers.boundedElastic())
 				.defaultIfEmpty(ResponseEntity.internalServerError().build());
@@ -137,13 +138,13 @@ public class FoodController {
 	Mono<ResponseEntity<CommentsDto>> addComment(@PathVariable String id,
 			@RequestBody Mono<CommentReq> commentReq, Mono<Principal> principal) {
 		return commentReq.flatMap(i -> {
-
 			if (i.getDescription() == null) {
 				return Mono.error(new FoodError(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage()));
 			}
-			
-			return principal.map(Principal::getName).map(usr -> {
-				return foodServiceImpl.saveComment(id, Mono.just(modelMapper.map(i, CommentsDto.class)), usr);
+			return principal.map(Principal::getName)
+					.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic()).map(usr -> {
+				return foodServiceImpl.saveComment(id, Mono.just(modelMapper.map(i, CommentsDto.class)), usr)
+						.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 			}).flatMap(u->u);
 		}).map(ResponseEntity::ok).publishOn(Schedulers.boundedElastic())
 				.subscribeOn(Schedulers.boundedElastic())
@@ -151,7 +152,7 @@ public class FoodController {
 	}
 	
 	  @GetMapping("/location-near")
-	  public final Flux<FoodDto> getLocations(
+	  public  Flux<FoodDto> getLocations(
 	    @RequestParam("lat") Double latitude,
 	    @RequestParam("long") Double longitude,
 	    @RequestParam("d") double distance) {

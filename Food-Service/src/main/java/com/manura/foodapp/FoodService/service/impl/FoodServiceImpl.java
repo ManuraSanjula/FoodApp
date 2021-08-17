@@ -2,6 +2,7 @@ package com.manura.foodapp.FoodService.service.impl;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -11,10 +12,10 @@ import java.util.Set;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.geo.Distance;
+import org.springframework.data.geo.Point;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.messaging.rsocket.RSocketRequester;
 import org.springframework.stereotype.Service;
-import org.springframework.data.geo.Point;
 
 import com.manura.foodapp.FoodService.Error.Model.FoodNotFoundError;
 import com.manura.foodapp.FoodService.Redis.Model.CommentCachingRedis;
@@ -256,8 +257,8 @@ public class FoodServiceImpl implements FoodService {
 						}).flatMap(i -> i).flatMap(i -> i).publishOn(Schedulers.boundedElastic())
 						.subscribeOn(Schedulers.boundedElastic()).flatMap(comm -> Mono.just(commentRepo.save(comm)))
 						.map(commEntity -> {
-							List<CommentsEntity> commentsEntities = new ArrayList<CommentsEntity>(
-									commEntity.getFood().getComments());
+							List<CommentsEntity> commentsEntities = new ArrayList<CommentsEntity>();
+							commentsEntities.addAll(commEntity.getFood().getComments());
 							commentsEntities.add(commEntity);
 							commEntity.getFood().setComments(commentsEntities);
 							foodRepo.save(commEntity.getFood());
@@ -356,7 +357,7 @@ public class FoodServiceImpl implements FoodService {
 		Optional<FoodEntity> food = foodRepo.findById(id);
 		if (food.isPresent()) {
 			return Flux.fromIterable(food.get().getComments()).publishOn(Schedulers.boundedElastic())
-					.switchIfEmpty(Flux.empty()).map(i -> modelMapper.map(i, CommentsDto.class))
+					.switchIfEmpty(Flux.fromIterable(new ArrayList<>())).map(i -> modelMapper.map(i, CommentsDto.class))
 					.subscribeOn(Schedulers.boundedElastic()).doOnNext((i) -> {
 						List<CommentsDto> commentsDtos = new ArrayList<>();
 						commentsDtos.add(i);
@@ -471,9 +472,10 @@ public class FoodServiceImpl implements FoodService {
 	}
 
 	@Override
-	public Mono<CommentsDto> updateComment(String id, String desc) {
+	public Mono<CommentsDto> updateComment(String id,String foodId, String desc) {
 		Optional<CommentsEntity> comment = commentRepo.findById(id);
-		if(comment.isPresent()) {
+		Optional<FoodEntity> food = foodRepo.findById(foodId);
+		if(comment.isPresent() && food.isPresent()) {
 			return	Mono.just(comment.get()).doOnNext(i->i.setDescription(desc))
 					.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
 					.flatMap(i->Mono.just(commentRepo.save(i)))
@@ -488,8 +490,28 @@ public class FoodServiceImpl implements FoodService {
 
 	@Override
 	public Mono<Void> deleteComment(String foodId,String commentID) {
-		commentRepo.deleteById(commentID);
-		redisServiceImpl.deleteComment(foodId, commentID);
-		return Mono.empty();
+		Optional<FoodEntity> food = foodRepo.findById(foodId);
+		if(food.isPresent())	{
+			return Mono.just(food.get()).flatMap(i->{
+				Optional<CommentsEntity> comment = commentRepo.findById(commentID);
+				if(comment.isPresent()) {
+					List<CommentsEntity> comments = Collections.synchronizedList(new ArrayList<>());
+					comments.addAll(i.getComments());
+					comments.removeIf(j->j.getId().equals(comment.get().getId()));
+					commentRepo.deleteById(commentID);
+					redisServiceImpl.deleteComment(foodId, commentID);
+					i.setComments(comments);
+					foodRepo.save(i);
+					return Mono.empty();
+
+				}else {
+					return Mono.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())); 
+				}
+			});
+		}else {
+			return Mono.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())); 
+		}
 	}
 }
+
+
