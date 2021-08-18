@@ -91,7 +91,7 @@ public class RedisServiceImpl implements RedisService {
 	}
 
 	@Override
-	public void save(CommentCachingRedis obj) {
+	public void saveComment(CommentCachingRedis obj) {
 		try {
 			reactiveRedisTemplateOpsComment.set(obj.getName(), obj).publishOn(Schedulers.boundedElastic())
 					.subscribeOn(Schedulers.boundedElastic()).subscribe(i -> {

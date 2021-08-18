@@ -20,7 +20,7 @@ public class CommentsDto implements Serializable{
 	private String comment;
 	private String userImage;
 	private Date createdAt;
-	private UserDto user;
+	private UserCommentDto user;
 	private Double rating;
 	
 }

@@ -14,7 +14,7 @@ import reactor.core.publisher.Mono;
 
 public interface RedisService {
 	public void save(FoodCachingRedis obj);
-	public void save(CommentCachingRedis obj);
+	public void saveComment(CommentCachingRedis obj);
 
 	public Mono<Void> addNewUser(UserEntity user);
 	public Mono<Void> updateUser(String key,UserEntity user);

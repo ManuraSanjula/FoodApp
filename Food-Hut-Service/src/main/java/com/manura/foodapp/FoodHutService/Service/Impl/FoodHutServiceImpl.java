@@ -23,6 +23,7 @@ import com.manura.foodapp.FoodHutService.Node.FoodNode;
 import com.manura.foodapp.FoodHutService.Node.UserNode;
 import com.manura.foodapp.FoodHutService.Node.Relationship.FoodHutHasComment;
 import com.manura.foodapp.FoodHutService.Node.Relationship.FoodHutHasFood;
+import com.manura.foodapp.FoodHutService.Redis.model.CommentCachingRedis;
 import com.manura.foodapp.FoodHutService.Controller.Req.CommentReq;
 import com.manura.foodapp.FoodHutService.Controller.Req.FoodHutUpdateReq;
 import com.manura.foodapp.FoodHutService.Controller.Res.FoodHutHalfRes;
@@ -54,6 +55,8 @@ public class FoodHutServiceImpl implements FoodHutService {
 	private Utils utils;
 	@Autowired
 	private Pub pub;
+	@Autowired
+	private RedisServiceImpl redisServiceImpl;
 	@Autowired
 	private Mono<RSocketRequester> rSocketRequester;
 
@@ -88,7 +91,9 @@ public class FoodHutServiceImpl implements FoodHutService {
 						pub.pubFood(Mono.just(i), "created");
 					};
 					new Thread(runnable).start();
-				}).mapNotNull(i -> modelMapper.map(i, FoodHutDto.class));
+				}).mapNotNull(i -> modelMapper.map(i, FoodHutDto.class)).doOnNext(i -> {
+					redisServiceImpl.save(i);
+				});
 	}
 
 	@Override
@@ -154,10 +159,19 @@ public class FoodHutServiceImpl implements FoodHutService {
 				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
 
-	@Override
-	public Mono<FoodHutDto> getOne(String id) {
+	private Mono<FoodHutDto> foodHutNoCache(String id) {
 		return foodHutRepo.findByPublicId(id).mapNotNull(i -> modelMapper.map(i, FoodHutDto.class))
 				.publishOn(Schedulers.boundedElastic())
+				.switchIfEmpty(Mono.error(new FoodHutError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
+				.subscribeOn(Schedulers.boundedElastic()).doOnNext(i -> {
+					redisServiceImpl.save(i);
+				});
+	}
+
+	@Override
+	public Mono<FoodHutDto> getOne(String id) {
+		return redisServiceImpl.getOneFoodHut(id).switchIfEmpty(foodHutNoCache(id))
+				.mapNotNull(i -> modelMapper.map(i, FoodHutDto.class)).publishOn(Schedulers.boundedElastic())
 				.switchIfEmpty(Mono.error(new FoodHutError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
 				.subscribeOn(Schedulers.boundedElastic());
 	}
@@ -205,7 +219,7 @@ public class FoodHutServiceImpl implements FoodHutService {
 	@Override
 	public Mono<UserNode> addUser(Mono<UserNode> user) {
 		return user.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
-				.flatMap(userRepo::save);
+				.flatMap(userRepo::save).doOnNext(redisServiceImpl::addNewUser);
 	}
 
 	@Override
@@ -238,7 +252,10 @@ public class FoodHutServiceImpl implements FoodHutService {
 								return usr;
 							}).flatMap(userRepo::save).publishOn(Schedulers.boundedElastic())
 							.subscribeOn(Schedulers.boundedElastic());
-				}).flatMap(i -> i).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+				}).flatMap(i -> i).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
+				.doOnNext(i->{
+					redisServiceImpl.updateUser(id, i);
+				});
 	}
 
 	@Override
@@ -265,7 +282,12 @@ public class FoodHutServiceImpl implements FoodHutService {
 				.switchIfEmpty(Mono.error(new FoodHutError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
 				.doOnNext(i -> i.setComment(comment)).flatMap(commentRepo::save)
 				.map(i -> modelMapper.map(i, CommentsDto.class)).publishOn(Schedulers.boundedElastic())
-				.subscribeOn(Schedulers.boundedElastic());
+				.subscribeOn(Schedulers.boundedElastic())
+				.doOnNext(i -> {
+					redisServiceImpl.commentUpdated(foodHutId, i.getId(),
+							modelMapper.map(i, CommentsDto.class)).publishOn(Schedulers.boundedElastic())
+					.subscribeOn(Schedulers.boundedElastic());
+				});
 
 	}
 
@@ -286,21 +308,35 @@ public class FoodHutServiceImpl implements FoodHutService {
 								foodHutRepo.save(foodHut).subscribe();
 								return commentRepo.deleteByPublicId(commentId);
 							}).flatMap(i -> i).publishOn(Schedulers.boundedElastic())
+							.doOnNext(i->{
+								redisServiceImpl.deleteComment(foodHutId, commentId);
+							})
 							.subscribeOn(Schedulers.boundedElastic());
 				}).flatMap(i -> i);
 	}
 
-	@Override
-	public Flux<CommentsDto> getAllComments(String id) {
+	private Flux<CommentsDto> commentNoCache(String id) {
 		return foodHutRepo.findByPublicId(id).publishOn(Schedulers.boundedElastic())
 				.subscribeOn(Schedulers.boundedElastic())
 				.switchIfEmpty(Mono.error(new FoodHutError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
 				.flatMapMany(i -> {
-
 					List<FoodHutHasComment> commsts = new ArrayList<>();
 					commsts.addAll(i.getComment());
 					return Flux.fromIterable(commsts);
-				}).map(i -> modelMapper.map(i.getComment(), CommentsDto.class));
+				}).map(i -> modelMapper.map(i.getComment(), CommentsDto.class)).doOnNext((i) -> {
+					List<CommentsDto> commentsDtos = new ArrayList<>();
+					commentsDtos.add(i);
+					CommentCachingRedis commentCachingRedis = new CommentCachingRedis();
+					commentCachingRedis.setName("Comment" + id);
+					commentCachingRedis.setComment(commentsDtos);
+					redisServiceImpl.saveComment(("Comment" + id), commentCachingRedis);
+				});
+	}
+
+	@Override
+	public Flux<CommentsDto> getAllComments(String id) {
+		return redisServiceImpl.getAllComments(id).publishOn(Schedulers.boundedElastic())
+				.subscribeOn(Schedulers.boundedElastic()).switchIfEmpty(commentNoCache(id));
 	}
 
 	@Override
@@ -311,33 +347,38 @@ public class FoodHutServiceImpl implements FoodHutService {
 				.mapNotNull(i -> {
 					String name = filePartFlux.publishOn(Schedulers.boundedElastic())
 							.subscribeOn(Schedulers.boundedElastic()).map(part -> {
-								
+
 								return this.rSocketRequester.publishOn(Schedulers.boundedElastic())
 										.subscribeOn(Schedulers.boundedElastic())
 										.map(rsocket -> rsocket.route("file.upload.foodHut").data(part.content()))
 										.map(r -> r.retrieveFlux(String.class)).flatMapMany(s -> s);
 							}).flatMapMany(s -> s).blockLast();
 
-					if(name !=null) {
+					if (name != null) {
 						String image = ("/foodHut-image/" + name);
 						i.setImageCover(image);
-					}else {
+					} else {
 						throw new FoodHutError("image processing failed");
 					}
 					return i;
 				}).flatMap(foodHutRepo::save).mapNotNull(i -> modelMapper.map(i, FoodHutDto.class))
-				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
+				.doOnNext(i -> {
+					redisServiceImpl.save(i);
+				});
 	}
 
 	@Override
 	public Mono<FoodHutDto> uploadImages(String id, Flux<FilePart> filePartFlux) {
 		return foodHutRepo.findByPublicId(id).publishOn(Schedulers.boundedElastic())
 				.subscribeOn(Schedulers.boundedElastic())
-				.switchIfEmpty(Mono.error(new FoodHutError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage()))).mapNotNull(food -> {
+				.switchIfEmpty(Mono.error(new FoodHutError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
+				.mapNotNull(food -> {
 					List<String> urls = new ArrayList<String>();
 
 					return filePartFlux.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
-							.switchIfEmpty(Mono.error(new FoodHutError(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage())))
+							.switchIfEmpty(Mono
+									.error(new FoodHutError(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage())))
 							.mapNotNull(file -> {
 
 								String image = this.rSocketRequester
@@ -354,9 +395,9 @@ public class FoodHutServiceImpl implements FoodHutService {
 								food.setImages(i);
 								return food;
 							}).blockLast();
-
-//					return food;
 				}).flatMap(foodHutRepo::save).mapNotNull(i -> modelMapper.map(i, FoodHutDto.class))
-				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic()).doOnNext(i -> {
+					redisServiceImpl.save(i);
+				});
 	}
 }

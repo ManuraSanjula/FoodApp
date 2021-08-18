@@ -387,7 +387,7 @@ public class FoodServiceImpl implements FoodService {
 						CommentCachingRedis commentCachingRedis = new CommentCachingRedis();
 						commentCachingRedis.setName("Comment" + id);
 						commentCachingRedis.setComment(commentsDtos);
-						redisServiceImpl.save(commentCachingRedis);
+						redisServiceImpl.saveComment(commentCachingRedis);
 					});
 		} else {
 			return Flux.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage()));
