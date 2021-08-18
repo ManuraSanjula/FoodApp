@@ -23,6 +23,7 @@ import com.manura.foodapp.FoodHutService.dto.CommentsDto;
 import com.manura.foodapp.FoodHutService.dto.FoodHutDto;
 import com.manura.foodapp.FoodHutService.utils.ErrorMessages;
 
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
@@ -73,21 +74,29 @@ public class RequestHandler {
 
 	}
 
+	public Mono<ServerResponse> setImages(ServerRequest serverRequest) {
+		String id = serverRequest.pathVariable("id");
+		return foodHutServiceImpl
+				.uploadImages(id,
+						serverRequest.multipartData().map(it -> it.get("images")).flatMapMany(Flux::fromIterable)
+								.cast(FilePart.class))
+				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
+				.mapNotNull(i -> ServerResponse.ok().body(Mono.just(i), FoodHutDto.class)
+						.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic()))
+				.flatMap(i -> i);
+	}
+
 	public Mono<ServerResponse> setCoverImage(ServerRequest serverRequest) {
-		/*Mono<String> then = request.multipartData().map(it -> it.get("files"))
-        .flatMapMany(Flux::fromIterable)
-        .cast(FilePart.class)
-        .flatMap(it -> it.transferTo(Paths.get("/tmp/" + it.filename())))
-        .then(Mono.just("OK"));*/
+
 		String id = serverRequest.pathVariable("id");
 		return serverRequest.body(BodyExtractors.toMultipartData()).publishOn(Schedulers.boundedElastic())
 				.subscribeOn(Schedulers.boundedElastic()).flatMap(parts -> {
 					Map<String, Part> singleValueMap = parts.toSingleValueMap();
 					FilePart file = (FilePart) singleValueMap.get("coverImg");
-					return	foodHutServiceImpl.uploadCoverImage(id, Mono.just(file))
+					return foodHutServiceImpl.uploadCoverImage(id, Mono.just(file))
 							.mapNotNull(i -> ServerResponse.ok().body(Mono.just(i), FoodHutDto.class)
 									.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic()))
-							.flatMap(i->i);
+							.flatMap(i -> i);
 				});
 	}
 

@@ -332,23 +332,25 @@ public class FoodHutServiceImpl implements FoodHutService {
 	@Override
 	public Mono<FoodHutDto> uploadImages(String id, Flux<FilePart> filePartFlux) {
 		return foodHutRepo.findByPublicId(id).publishOn(Schedulers.boundedElastic())
-				.subscribeOn(Schedulers.boundedElastic()).map(food -> {
+				.subscribeOn(Schedulers.boundedElastic())
+				.switchIfEmpty(Mono.error(new FoodHutError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage()))).mapNotNull(food -> {
 					List<String> urls = new ArrayList<String>();
 
 					return filePartFlux.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
-							.map(file -> {
+							.switchIfEmpty(Mono.error(new FoodHutError(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage())))
+							.mapNotNull(file -> {
 
 								String image = this.rSocketRequester
-										.map(rsocket -> rsocket.route("file.upload.food").data(file.content()))
+										.map(rsocket -> rsocket.route("file.upload.foodHut").data(file.content()))
 										.mapNotNull(r -> r.retrieveFlux(String.class)).flatMapMany(s -> s).distinct()
 										.publishOn(Schedulers.boundedElastic()).blockFirst();
 
 								if (image != null) {
-									String fullImageUril = ("/food-image/" + image);
+									String fullImageUril = ("/foodHut-image/" + image);
 									urls.add(fullImageUril);
 								}
 								return urls;
-							}).map(i -> {
+							}).mapNotNull(i -> {
 								food.setImages(i);
 								return food;
 							}).blockLast();
