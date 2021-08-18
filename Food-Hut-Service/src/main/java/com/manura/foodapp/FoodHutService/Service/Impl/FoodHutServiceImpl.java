@@ -311,14 +311,19 @@ public class FoodHutServiceImpl implements FoodHutService {
 				.mapNotNull(i -> {
 					String name = filePartFlux.publishOn(Schedulers.boundedElastic())
 							.subscribeOn(Schedulers.boundedElastic()).map(part -> {
+								
 								return this.rSocketRequester.publishOn(Schedulers.boundedElastic())
 										.subscribeOn(Schedulers.boundedElastic())
 										.map(rsocket -> rsocket.route("file.upload.foodHut").data(part.content()))
 										.map(r -> r.retrieveFlux(String.class)).flatMapMany(s -> s);
 							}).flatMapMany(s -> s).blockLast();
 
-					String image = ("/foodHut-image/" + name);
-					i.setImageCover(image);
+					if(name !=null) {
+						String image = ("/foodHut-image/" + name);
+						i.setImageCover(image);
+					}else {
+						throw new FoodHutError("image processing failed");
+					}
 					return i;
 				}).flatMap(foodHutRepo::save).mapNotNull(i -> modelMapper.map(i, FoodHutDto.class))
 				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());

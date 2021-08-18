@@ -10,6 +10,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import com.manura.foodapp.FoodService.Redis.Model.CommentCachingRedis;
 import com.manura.foodapp.FoodService.Redis.Model.FoodCachingRedis;
+import com.manura.foodapp.FoodService.entity.UserEntity;
 
 @Configuration
 public class RedisConfig {
@@ -30,6 +31,16 @@ public class RedisConfig {
 		RedisSerializationContext.RedisSerializationContextBuilder<String, CommentCachingRedis> builder = RedisSerializationContext
 				.newSerializationContext(keySerializer);
 		RedisSerializationContext<String, CommentCachingRedis> context = builder.value(valueSerializer).build();
+		return new ReactiveRedisTemplate<>(factory, context);
+	}
+	
+	@Bean
+	public ReactiveRedisTemplate<String, UserEntity> reactiveRedisTemplateForUser(ReactiveRedisConnectionFactory factory) {
+		StringRedisSerializer keySerializer = new StringRedisSerializer();
+		Jackson2JsonRedisSerializer<UserEntity> valueSerializer = new Jackson2JsonRedisSerializer<>(UserEntity.class);
+		RedisSerializationContext.RedisSerializationContextBuilder<String, UserEntity> builder = RedisSerializationContext
+				.newSerializationContext(keySerializer);
+		RedisSerializationContext<String, UserEntity> context = builder.value(valueSerializer).build();
 		return new ReactiveRedisTemplate<>(factory, context);
 	}
 }

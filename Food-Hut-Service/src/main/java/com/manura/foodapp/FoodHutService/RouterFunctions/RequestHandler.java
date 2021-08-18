@@ -74,14 +74,20 @@ public class RequestHandler {
 	}
 
 	public Mono<ServerResponse> setCoverImage(ServerRequest serverRequest) {
+		/*Mono<String> then = request.multipartData().map(it -> it.get("files"))
+        .flatMapMany(Flux::fromIterable)
+        .cast(FilePart.class)
+        .flatMap(it -> it.transferTo(Paths.get("/tmp/" + it.filename())))
+        .then(Mono.just("OK"));*/
 		String id = serverRequest.pathVariable("id");
 		return serverRequest.body(BodyExtractors.toMultipartData()).publishOn(Schedulers.boundedElastic())
 				.subscribeOn(Schedulers.boundedElastic()).flatMap(parts -> {
 					Map<String, Part> singleValueMap = parts.toSingleValueMap();
 					FilePart file = (FilePart) singleValueMap.get("coverImg");
-					return ServerResponse.ok()
-							.body(foodHutServiceImpl.uploadCoverImage(id, Mono.just(file)), FoodHutDto.class)
-							.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+					return	foodHutServiceImpl.uploadCoverImage(id, Mono.just(file))
+							.mapNotNull(i -> ServerResponse.ok().body(Mono.just(i), FoodHutDto.class)
+									.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic()))
+							.flatMap(i->i);
 				});
 	}
 

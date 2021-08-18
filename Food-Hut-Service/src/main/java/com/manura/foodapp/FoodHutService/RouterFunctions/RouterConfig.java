@@ -31,6 +31,7 @@ public class RouterConfig {
     }
     private RouterFunction<ServerResponse> serverResponseRouterFunction(){
         return RouterFunctions.route()
+        		.PUT("/{id}/coverImage", requestHandler::setCoverImage)
                 .GET("", requestHandler::getAllFoodHuts)
                 .GET("/{id}", requestHandler::getOneFoodHut)
                 .PUT("/{id}", requestHandler::updateFoodHut)

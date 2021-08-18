@@ -38,7 +38,7 @@ public class FileStorageServiceImpl implements FileStorageService {
 
 	@Value("${food-file.upload-dir}")
 	private Path foodFileStorageLocation;
-	
+
 	@Value("${foodHut-file.upload-dir}")
 	private Path foodHutFileStorageLocation;
 
@@ -151,7 +151,7 @@ public class FileStorageServiceImpl implements FileStorageService {
 					image.delete();
 					return null;
 				}
-				
+
 			}).doOnComplete(() -> {
 				File image = new File(opPath.toAbsolutePath().toString());
 				addTextWatermark("Food-App", "jpeg", image, image);
@@ -163,44 +163,31 @@ public class FileStorageServiceImpl implements FileStorageService {
 
 	@Override
 	public Mono<Resource> loadFileAsResourceIfCacheNotPresent(String fileName, String type) {
+		Path filePath = null;
 		if (type.equals("User")) {
-			try {
-				Path filePath = this.userFileStorageLocation.resolve(fileName).normalize();
-				Resource resource = new UrlResource(filePath.toUri());
-				if (resource.exists()) {
-					try {
-						redisService.ifCacheEmpty(fileName, resource.getInputStream().readAllBytes())
-								.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
-					} catch (Exception e) {
-
-					}
-					return Mono.just(resource).publishOn(Schedulers.boundedElastic())
-							.subscribeOn(Schedulers.boundedElastic());
-				} else {
-					return Mono.empty();
-				}
-			} catch (MalformedURLException ex) {
-				return Mono.empty();
-			}
+			filePath = this.userFileStorageLocation.resolve(fileName).normalize();
+		} else if (type.equals("FoodHut")) {
+			filePath = this.foodHutFileStorageLocation.resolve(fileName).normalize();
 		} else {
-			try {
-				Path filePath = this.foodFileStorageLocation.resolve(fileName).normalize();
-				Resource resource = new UrlResource(filePath.toUri());
-				if (resource.exists()) {
-					try {
-						redisService.ifCacheEmpty(fileName, resource.getInputStream().readAllBytes())
-								.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
-					} catch (Exception e) {
+			filePath = this.foodFileStorageLocation.resolve(fileName).normalize();
+		}
+		try {
 
-					}
-					return Mono.just(resource).publishOn(Schedulers.boundedElastic())
-							.subscribeOn(Schedulers.boundedElastic());
-				} else {
-					return Mono.empty();
+			Resource resource = new UrlResource(filePath.toUri());
+			if (resource.exists()) {
+				try {
+					redisService.ifCacheEmpty(fileName, resource.getInputStream().readAllBytes())
+							.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+				} catch (Exception e) {
+
 				}
-			} catch (MalformedURLException ex) {
+				return Mono.just(resource).publishOn(Schedulers.boundedElastic())
+						.subscribeOn(Schedulers.boundedElastic());
+			} else {
 				return Mono.empty();
 			}
+		} catch (MalformedURLException ex) {
+			return Mono.empty();
 		}
 	}
 
@@ -209,10 +196,10 @@ public class FileStorageServiceImpl implements FileStorageService {
 		if (type.equals("User")) {
 			return redisService.getResource(fileName).switchIfEmpty(loadFileAsResourceIfCacheNotPresent(fileName, type))
 					.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
-		} else if(type.equals("FoodHut")) {
+		} else if (type.equals("FoodHut")) {
 			return redisService.getResource(fileName).switchIfEmpty(loadFileAsResourceIfCacheNotPresent(fileName, type))
 					.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
-		}else {
+		} else {
 			return redisService.getResource(fileName).switchIfEmpty(loadFileAsResourceIfCacheNotPresent(fileName, type))
 					.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 		}
@@ -226,14 +213,7 @@ public class FileStorageServiceImpl implements FileStorageService {
 			AsynchronousFileChannel channel = AsynchronousFileChannel.open(opPath, StandardOpenOption.CREATE,
 					StandardOpenOption.WRITE);
 			return DataBufferUtils.write(bufferFlux, channel).mapNotNull(i -> {
-				if (i.capacity() > 100000) {
-					return fileName;
-				} else {
-					File image = new File(opPath.toAbsolutePath().toString());
-					image.delete();
-					return null;
-				}
-				
+				return fileName;
 			}).doOnComplete(() -> {
 				File image = new File(opPath.toAbsolutePath().toString());
 				addTextWatermark("Food-App", "jpeg", image, image);
