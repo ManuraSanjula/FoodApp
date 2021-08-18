@@ -115,7 +115,6 @@ public class FoodController {
 					|| i.getType() == null) {
 				return Mono.error(new FoodError(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage()));
 			}
-
 			return foodServiceImpl.save(Mono.just(modelMapper.map(i, FoodDto.class)), i.getFoodHutsIds())
 					.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 		}).map(ResponseEntity::ok).publishOn(Schedulers.boundedElastic())
@@ -125,7 +124,6 @@ public class FoodController {
 
 	@PutMapping("/{id}")
 	Mono<ResponseEntity<FoodDto>> updateFood(@PathVariable String id, @RequestBody Mono<FoodReq> foodReq) {
-
 		return foodReq.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic()).flatMap(i -> {
 			return foodServiceImpl.update(id, Mono.just(modelMapper.map(i, FoodDto.class)), i.getFoodHutsIds())
 					.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
@@ -137,7 +135,9 @@ public class FoodController {
 	@PostMapping("/{id}/comments")
 	Mono<ResponseEntity<CommentsDto>> addComment(@PathVariable String id,
 			@RequestBody Mono<CommentReq> commentReq, Mono<Principal> principal) {
-		return commentReq.flatMap(i -> {
+		return commentReq
+				.publishOn(Schedulers.boundedElastic())
+				.subscribeOn(Schedulers.boundedElastic()).flatMap(i -> {
 			if (i.getDescription() == null) {
 				return Mono.error(new FoodError(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage()));
 			}
