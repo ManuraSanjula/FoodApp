@@ -4,9 +4,6 @@ import java.io.Serializable;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import org.springframework.data.geo.Point;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -25,6 +22,6 @@ public class FoodHutDto implements Serializable {
 	private List<String> images;
 	private List<String> phoneNumbers;
 	private String opentAt;
+	private Set<FoodHutHasCommentDto> comment = new HashSet<>();
 	private Set<FoodHutHasFoodDto> foods = new HashSet<>();
-	private Point location;
 }

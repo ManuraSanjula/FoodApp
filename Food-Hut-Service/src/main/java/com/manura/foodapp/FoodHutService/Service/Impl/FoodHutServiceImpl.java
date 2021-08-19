@@ -213,7 +213,9 @@ public class FoodHutServiceImpl implements FoodHutService {
 
 							}).flatMap(j -> j).publishOn(Schedulers.boundedElastic())
 							.subscribeOn(Schedulers.boundedElastic());
-				}).flatMap(i -> i).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+				}).flatMap(i -> i).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic()).doOnNext(i->{
+					redisServiceImpl.addNewComment(id, i).subscribe();
+				});
 	}
 
 	@Override
@@ -298,6 +300,8 @@ public class FoodHutServiceImpl implements FoodHutService {
 				.switchIfEmpty(Mono.error(new FoodHutError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
 				.mapNotNull(foodHut -> {
 					return commentRepo.findByPublicId(commentId)
+							.publishOn(Schedulers.boundedElastic())
+							.subscribeOn(Schedulers.boundedElastic())
 							.switchIfEmpty(
 									Mono.error(new FoodHutError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
 							.mapNotNull(i -> {
@@ -306,11 +310,9 @@ public class FoodHutServiceImpl implements FoodHutService {
 								comments.removeIf(j -> j.getComment().getPublicId().equals(i.getPublicId()));
 								foodHut.setComment(comments);
 								foodHutRepo.save(foodHut).subscribe();
+								redisServiceImpl.deleteComment(foodHut.getPublicId(), i.getPublicId()).subscribe();
 								return commentRepo.deleteByPublicId(commentId);
 							}).flatMap(i -> i).publishOn(Schedulers.boundedElastic())
-							.doOnNext(i->{
-								redisServiceImpl.deleteComment(foodHutId, commentId);
-							})
 							.subscribeOn(Schedulers.boundedElastic());
 				}).flatMap(i -> i);
 	}
@@ -318,19 +320,22 @@ public class FoodHutServiceImpl implements FoodHutService {
 	private Flux<CommentsDto> commentNoCache(String id) {
 		return foodHutRepo.findByPublicId(id).publishOn(Schedulers.boundedElastic())
 				.subscribeOn(Schedulers.boundedElastic())
-				.switchIfEmpty(Mono.error(new FoodHutError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
+				.switchIfEmpty(Mono.empty())
 				.flatMapMany(i -> {
 					List<FoodHutHasComment> commsts = new ArrayList<>();
 					commsts.addAll(i.getComment());
-					return Flux.fromIterable(commsts);
-				}).map(i -> modelMapper.map(i.getComment(), CommentsDto.class)).doOnNext((i) -> {
+					
 					List<CommentsDto> commentsDtos = new ArrayList<>();
-					commentsDtos.add(i);
+					commsts.forEach(c->{
+						commentsDtos.add(modelMapper.map(c.getComment(), CommentsDto.class));
+					});
 					CommentCachingRedis commentCachingRedis = new CommentCachingRedis();
 					commentCachingRedis.setName("Comment" + id);
 					commentCachingRedis.setComment(commentsDtos);
 					redisServiceImpl.saveComment(("Comment" + id), commentCachingRedis);
-				});
+					
+					return Flux.fromIterable(commsts);
+				}).map(i -> modelMapper.map(i.getComment(), CommentsDto.class));
 	}
 
 	@Override

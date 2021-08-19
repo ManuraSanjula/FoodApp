@@ -69,9 +69,8 @@ public class RequestHandler {
 	public Mono<ServerResponse> deleteComment(ServerRequest serverRequest) {
 		String foodHutId = serverRequest.pathVariable("foodHutId");
 		String commentId = serverRequest.pathVariable("commentId");
-		return ServerResponse.ok().body(foodHutServiceImpl.deleteComment(foodHutId, commentId), Void.class)
-				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
-
+		return	foodHutServiceImpl.deleteComment(foodHutId, commentId).map(i-> ServerResponse.ok().body(Mono.just(i), Void.class)
+				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())).flatMap(i->i);
 	}
 
 	public Mono<ServerResponse> setImages(ServerRequest serverRequest) {
@@ -142,9 +141,17 @@ public class RequestHandler {
 						return ServerResponse.badRequest().body(Mono.just(errorMessage), ErrorMessage.class)
 								.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 					}
-					return ServerResponse.ok()
-							.body(foodHutServiceImpl.addComment(id, Mono.just(req)), CommentsDto.class)
-							.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+					
+					return foodHutServiceImpl.addComment(id, Mono.just(req)).map(i->{
+						return ServerResponse.ok()
+								.body(Mono.just(i), CommentsDto.class)
+								.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+					})
+					.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic()).flatMap(i->i);
+				
 				}).flatMap(i -> i).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
 }
+
+
+

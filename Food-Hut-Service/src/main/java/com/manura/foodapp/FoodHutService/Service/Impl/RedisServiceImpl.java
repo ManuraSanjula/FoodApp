@@ -158,19 +158,16 @@ public class RedisServiceImpl implements RedisService {
 		try {
 			reactiveRedisTemplateOpsComment.get("Comment" + foodId).publishOn(Schedulers.boundedElastic())
 					.subscribeOn(Schedulers.boundedElastic()).subscribe(i -> {
+						System.out.println("========");
 						List<CommentsDto> comment = new ArrayList<>();
 						comment.addAll(i.getComment());
 						comment.removeIf(j -> j.getId().equals(commentId));
 						i.setComment(comment);
-						try {
-							reactiveRedisTemplateOpsComment.set("Comment" + foodId, i)
-									.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
-									.subscribe(d -> {
+						reactiveRedisTemplateOpsComment.set("Comment" + foodId, i)
+						.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
+						.subscribe(d -> {
 
-									});
-						} catch (Exception e) {
-							
-						}
+						});
 					});
 			return Mono.empty();
 		} catch (Exception e) {
