@@ -64,6 +64,7 @@ public class FoodHutServiceApplication {
 
 	public interface UserRepo extends ReactiveNeo4jRepository<UserNode, Long> {
 		Mono<UserNode> findByPublicId(String publicId);
+		Mono<UserNode> findByEmail(String emial);
 	}
 
 }

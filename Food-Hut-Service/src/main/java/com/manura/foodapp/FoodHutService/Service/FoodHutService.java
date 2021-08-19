@@ -21,6 +21,7 @@ public interface FoodHutService {
   Mono<FoodHutDto> update(String id,Mono<FoodHutUpdateReq> dto);
   Flux<FoodHutHalfRes> getAll();
   Mono<FoodHutDto> getOne(String id);
+  Mono<UserNode> getUser(String user);
   Mono<CommentsDto> addComment(String id,Mono<CommentReq> comment);
   Mono<UserNode> addUser(Mono<UserNode> user);
   Mono<UserNode> updateUser(String id,Mono<UserNode> user);

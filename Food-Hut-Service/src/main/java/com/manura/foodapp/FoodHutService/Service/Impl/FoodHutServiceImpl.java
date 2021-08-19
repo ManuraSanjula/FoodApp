@@ -405,4 +405,17 @@ public class FoodHutServiceImpl implements FoodHutService {
 					redisServiceImpl.save(i);
 				});
 	}
+	
+	private Mono<UserNode> ifUserAbsentInCache(String id) {
+		return userRepo.findByPublicId(id).publishOn(Schedulers.boundedElastic()).switchIfEmpty(Mono.empty())
+				.subscribeOn(Schedulers.boundedElastic()).doOnNext(i -> {
+					redisServiceImpl.addNewUser(i).subscribe();
+				});
+	}
+
+	@Override
+	public Mono<UserNode> getUser(String user) {
+		return redisServiceImpl.getUser(user).publishOn(Schedulers.boundedElastic()).switchIfEmpty(ifUserAbsentInCache(user))
+				.subscribeOn(Schedulers.boundedElastic());
+	}
 }
