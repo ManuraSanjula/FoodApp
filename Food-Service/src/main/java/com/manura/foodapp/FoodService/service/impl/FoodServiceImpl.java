@@ -41,6 +41,8 @@ import com.manura.foodapp.FoodService.util.Utils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 @Service
 public class FoodServiceImpl implements FoodService {
@@ -75,15 +77,14 @@ public class FoodServiceImpl implements FoodService {
 
 		Optional<FoodEntity> food = foodRepo.findById(id);
 		if (food.isPresent()) {
-			return Mono.just(food.get()).publishOn(Schedulers.boundedElastic())
-					.subscribeOn(Schedulers.boundedElastic()).map(i -> modelMapper.map(i, FoodDto.class)).map(i -> {
-				FoodCachingRedis obj = new FoodCachingRedis();
-				obj.setName(id);
-				obj.setFood(i);
-				redisServiceImpl.save(obj)
-				;
-				return i;
-			});
+			return Mono.just(food.get()).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
+					.map(i -> modelMapper.map(i, FoodDto.class)).map(i -> {
+						FoodCachingRedis obj = new FoodCachingRedis();
+						obj.setName(id);
+						obj.setFood(i);
+						redisServiceImpl.save(obj);
+						return i;
+					});
 		} else {
 			return Mono.empty();
 		}
@@ -91,14 +92,16 @@ public class FoodServiceImpl implements FoodService {
 	}
 
 	@Override
-	public Flux<FoodDto> findAll() {
-		return Flux.fromIterable(foodRepo.findAll()).publishOn(Schedulers.boundedElastic())
+	public Flux<FoodDto> findAll(int page, int size) {
+		Pageable paging = PageRequest.of(page, size);
+		return Flux.fromIterable(foodRepo.findAll(paging).getContent()).publishOn(Schedulers.boundedElastic())
 				.subscribeOn(Schedulers.boundedElastic()).map(i -> modelMapper.map(i, FoodDto.class));
 	}
 
 	@Override
-	public Flux<FoodDto> findByType(String type) {
-		return Flux.fromIterable(foodRepo.findByType(type)).publishOn(Schedulers.boundedElastic())
+	public Flux<FoodDto> findByType(String type, int page, int size) {
+		Pageable paging = PageRequest.of(page, size);
+		return Flux.fromIterable(foodRepo.findByType(type, paging).getContent()).publishOn(Schedulers.boundedElastic())
 				.subscribeOn(Schedulers.boundedElastic()).map(i -> modelMapper.map(i, FoodDto.class));
 	}
 
@@ -202,8 +205,7 @@ public class FoodServiceImpl implements FoodService {
 							FoodCachingRedis obj = new FoodCachingRedis();
 							obj.setName(i.getId());
 							obj.setFood(modelMapper.map(i, FoodDto.class));
-							redisServiceImpl.save(obj)
-							;
+							redisServiceImpl.save(obj);
 						};
 						new Thread(event).start();
 						return i;
@@ -279,8 +281,8 @@ public class FoodServiceImpl implements FoodService {
 	public Mono<FoodHutDto> saveFoodHut(Mono<FoodHutDto> foodHut) {
 		return foodHut.map(i -> modelMapper.map(i, FoodHutEntity.class)).publishOn(Schedulers.boundedElastic())
 				.subscribeOn(Schedulers.boundedElastic()).map(i -> {
-			return i;
-		}).flatMap(i -> Mono.just(foodHutRepo.save(i))).map(i -> modelMapper.map(i, FoodHutDto.class))
+					return i;
+				}).flatMap(i -> Mono.just(foodHutRepo.save(i))).map(i -> modelMapper.map(i, FoodHutDto.class))
 				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
 
@@ -290,26 +292,26 @@ public class FoodServiceImpl implements FoodService {
 		if (findById.isPresent()) {
 			return Mono.just(findById.get()).publishOn(Schedulers.boundedElastic())
 					.subscribeOn(Schedulers.boundedElastic()).map(i -> {
-				foodHut.map(dto -> {
-					i.setName(dto.getName());
-					i.setPhoneNumbers(dto.getPhoneNumbers());
-					i.setAddress(dto.getAddress());
-					i.setImage(dto.getImage());
-					return i;
-				});
-				return i;
-			}).flatMap(i -> Mono.just(foodHutRepo.save(i))).map(i -> modelMapper.map(i, FoodHutDto.class))
+						foodHut.map(dto -> {
+							i.setName(dto.getName());
+							i.setPhoneNumbers(dto.getPhoneNumbers());
+							i.setAddress(dto.getAddress());
+							i.setImage(dto.getImage());
+							return i;
+						});
+						return i;
+					}).flatMap(i -> Mono.just(foodHutRepo.save(i))).map(i -> modelMapper.map(i, FoodHutDto.class))
 					.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 		} else {
-			return saveFoodHut(foodHut).publishOn(Schedulers.boundedElastic())
-					.subscribeOn(Schedulers.boundedElastic());
+			return saveFoodHut(foodHut).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 		}
 
 	}
 
 	@Override
-	public Flux<FoodDto> findByTypeAndName(String type, String name) {
-		return Flux.fromIterable(foodRepo.findByTypeAndName(type, name)).publishOn(Schedulers.boundedElastic())
+	public Flux<FoodDto> findByTypeAndName(String type, String name, int page, int size) {
+		Pageable paging = PageRequest.of(page, size);
+		return Flux.fromIterable(foodRepo.findByTypeAndName(type, name, paging).getContent()).publishOn(Schedulers.boundedElastic())
 				.subscribeOn(Schedulers.boundedElastic()).map(i -> modelMapper.map(i, FoodDto.class));
 	}
 
@@ -317,39 +319,37 @@ public class FoodServiceImpl implements FoodService {
 		UserEntity userEntity = userRepo.findByPublicId(id);
 		if (userEntity != null) {
 			return Mono.just(userEntity).publishOn(Schedulers.boundedElastic()).switchIfEmpty(Mono.empty())
-					.subscribeOn(Schedulers.boundedElastic()).doOnNext(i->{
+					.subscribeOn(Schedulers.boundedElastic()).doOnNext(i -> {
 						redisServiceImpl.addNewUser(i).publishOn(Schedulers.boundedElastic())
-						.subscribeOn(Schedulers.boundedElastic()).subscribe();
+								.subscribeOn(Schedulers.boundedElastic()).subscribe();
 					});
 		} else {
 			return Mono.empty();
-		}   
+		}
 	}
 
 	@Override
 	public Mono<UserEntity> getUser(String id) {
-		return redisServiceImpl.getUser(id).publishOn(Schedulers.boundedElastic()).switchIfEmpty(ifUserAbsentInCache(id))
-				.subscribeOn(Schedulers.boundedElastic());
+		return redisServiceImpl.getUser(id).publishOn(Schedulers.boundedElastic())
+				.switchIfEmpty(ifUserAbsentInCache(id)).subscribeOn(Schedulers.boundedElastic());
 	}
 
 	@Override
 	public Mono<UserEntity> saveUser(Mono<UserDto> user) {
-		return user.publishOn(Schedulers.boundedElastic())
-				.subscribeOn(Schedulers.boundedElastic()).flatMap(u -> {
+		return user.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic()).flatMap(u -> {
 			u.setRoles(Arrays.asList("ROLE_USER"));
 			u.setAuthorities(
 					Arrays.asList("READ_AUTHORITY", "WRITE_AUTHORITY", "DELETE_AUTHORITY", "UPDATE_AUTHORITY"));
 			return Mono.just(userRepo.save(modelMapper.map(u, UserEntity.class)));
 		}).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic()).doOnNext(i -> {
 			redisServiceImpl.addNewUser(i).publishOn(Schedulers.boundedElastic())
-			.subscribeOn(Schedulers.boundedElastic()).subscribe();
+					.subscribeOn(Schedulers.boundedElastic()).subscribe();
 		});
 	}
 
 	@Override
 	public Mono<UserEntity> updateUser(String id, Mono<UserDto> userDto) {
-		return userDto.publishOn(Schedulers.boundedElastic())
-				.subscribeOn(Schedulers.boundedElastic()).flatMap(user -> {
+		return userDto.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic()).flatMap(user -> {
 			UserEntity userEntity = userRepo.findByPublicId(id);
 			if (userEntity != null) {
 				userEntity.setFirstName(user.getFirstName());
@@ -359,20 +359,21 @@ public class FoodServiceImpl implements FoodService {
 				userEntity.setPic(user.getPic());
 				return Mono.just(userRepo.save(userEntity)).publishOn(Schedulers.boundedElastic())
 						.subscribeOn(Schedulers.boundedElastic()).doOnNext(i -> {
-					redisServiceImpl.updateUser(id, i).subscribe();
-				});
+							redisServiceImpl.updateUser(id, i).subscribe();
+						});
 			} else {
 				return saveUser(Mono.just(user)).doOnNext(i -> {
 					redisServiceImpl.addNewUser(i).publishOn(Schedulers.boundedElastic())
-					.subscribeOn(Schedulers.boundedElastic()).subscribe();
+							.subscribeOn(Schedulers.boundedElastic()).subscribe();
 				});
 			}
 		});
 	}
 
 	@Override
-	public Flux<FoodDto> findByNames(String name) {
-		return Flux.fromIterable(foodRepo.findByName(name)).publishOn(Schedulers.boundedElastic())
+	public Flux<FoodDto> findByNames(String name, int page, int size) {
+		Pageable paging = PageRequest.of(page, size);
+		return Flux.fromIterable(foodRepo.findByName(name, paging).getContent()).publishOn(Schedulers.boundedElastic())
 				.subscribeOn(Schedulers.boundedElastic()).map(i -> modelMapper.map(i, FoodDto.class));
 	}
 
@@ -429,8 +430,7 @@ public class FoodServiceImpl implements FoodService {
 						};
 						new Thread(event).start();
 						return i;
-					}).map(i -> modelMapper.map(i, FoodDto.class))
-					.publishOn(Schedulers.boundedElastic())
+					}).map(i -> modelMapper.map(i, FoodDto.class)).publishOn(Schedulers.boundedElastic())
 					.subscribeOn(Schedulers.boundedElastic());
 		} else {
 			return Mono.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage()));
@@ -482,20 +482,17 @@ public class FoodServiceImpl implements FoodService {
 	@Override
 	public Flux<FoodDto> findByLocationNear(Point p, Distance d) {
 
-		return Flux.fromIterable(this.foodHutRepo.findByLocationNear(p, d))
-				.publishOn(Schedulers.boundedElastic())
+		return Flux.fromIterable(this.foodHutRepo.findByLocationNear(p, d)).publishOn(Schedulers.boundedElastic())
 				.subscribeOn(Schedulers.boundedElastic()).map(i -> {
-			return Flux.fromIterable(i.getFoods());
-		}).flatMap(i -> i).map(i -> modelMapper.map(i, FoodDto.class))
-				.publishOn(Schedulers.boundedElastic())
+					return Flux.fromIterable(i.getFoods());
+				}).flatMap(i -> i).map(i -> modelMapper.map(i, FoodDto.class)).publishOn(Schedulers.boundedElastic())
 				.subscribeOn(Schedulers.boundedElastic());
 
 	}
 
 	@Override
 	public Double avg() {
-		return foodRepo.avg()
-				;
+		return foodRepo.avg();
 	}
 
 	@Override
@@ -506,9 +503,9 @@ public class FoodServiceImpl implements FoodService {
 			return Mono.just(comment.get()).doOnNext(i -> i.setDescription(desc)).publishOn(Schedulers.boundedElastic())
 					.subscribeOn(Schedulers.boundedElastic()).flatMap(i -> Mono.just(commentRepo.save(i)))
 					.doOnNext(i -> {
-						redisServiceImpl.commentUpdated(i.getFood().getId(), i.getId(),
-								modelMapper.map(i, CommentsDto.class)).publishOn(Schedulers.boundedElastic())
-						.subscribeOn(Schedulers.boundedElastic());
+						redisServiceImpl
+								.commentUpdated(i.getFood().getId(), i.getId(), modelMapper.map(i, CommentsDto.class))
+								.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 					}).map(i -> modelMapper.map(i, CommentsDto.class));
 		} else {
 			return Mono.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage()));
@@ -519,23 +516,23 @@ public class FoodServiceImpl implements FoodService {
 	public Mono<Void> deleteComment(String foodId, String commentID) {
 		Optional<FoodEntity> food = foodRepo.findById(foodId);
 		if (food.isPresent()) {
-			return Mono.just(food.get()).publishOn(Schedulers.boundedElastic())
-					.subscribeOn(Schedulers.boundedElastic()).flatMap(i -> {
-				Optional<CommentsEntity> comment = commentRepo.findById(commentID);
-				if (comment.isPresent()) {
-					List<CommentsEntity> comments = Collections.synchronizedList(new ArrayList<>());
-					comments.addAll(i.getComments());
-					comments.removeIf(j -> j.getId().equals(comment.get().getId()));
-					commentRepo.deleteById(commentID);
-					redisServiceImpl.deleteComment(foodId, commentID);
-					i.setComments(comments);
-					foodRepo.save(i);
-					return Mono.empty();
+			return Mono.just(food.get()).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
+					.flatMap(i -> {
+						Optional<CommentsEntity> comment = commentRepo.findById(commentID);
+						if (comment.isPresent()) {
+							List<CommentsEntity> comments = Collections.synchronizedList(new ArrayList<>());
+							comments.addAll(i.getComments());
+							comments.removeIf(j -> j.getId().equals(comment.get().getId()));
+							commentRepo.deleteById(commentID);
+							redisServiceImpl.deleteComment(foodId, commentID);
+							i.setComments(comments);
+							foodRepo.save(i);
+							return Mono.empty();
 
-				} else {
-					return Mono.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage()));
-				}
-			});
+						} else {
+							return Mono.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage()));
+						}
+					});
 		} else {
 			return Mono.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage()));
 		}

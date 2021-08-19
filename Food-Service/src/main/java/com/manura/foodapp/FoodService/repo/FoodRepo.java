@@ -1,7 +1,7 @@
 package com.manura.foodapp.FoodService.repo;
 
-import java.util.List;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
@@ -10,14 +10,17 @@ import com.manura.foodapp.FoodService.entity.FoodEntity;
 
 @Repository
 public interface FoodRepo extends MongoRepository<FoodEntity, String> {
-    List<FoodEntity> findByName(String name);
+	Page<FoodEntity> findByName(String name,Pageable pageable);
 
-    List<FoodEntity> findByType(String type);
+	Page<FoodEntity> findByType(String type,Pageable pageable);
 
-    List<FoodEntity> findByTypeAndName(String type, String name);
+    Page<FoodEntity> findByTypeAndName(String type, String name,Pageable pageable);
     
     FoodEntity findByPublicId(String publicId);
     
-     @Aggregation(pipeline = { "{$group: { _id: $id, total: {$avg: $rating }}}" })
-	 double avg();
+    Page<FoodEntity> findAll(Pageable pageable);
+
+    
+    @Aggregation(pipeline = { "{$group: { _id: $id, total: {$avg: $rating }}}" })
+	double avg();
 }

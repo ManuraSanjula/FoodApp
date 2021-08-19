@@ -45,22 +45,24 @@ public class FoodController {
 
 	@GetMapping
 	Flux<HalfFoodRes> getAllFoods(@RequestParam(required = false) String type,
-			@RequestParam(required = false) String name, @RequestParam(required = false) Boolean sort) {
+			@RequestParam(required = false) String name, @RequestParam(required = false) Boolean sort,
+			@RequestParam(defaultValue = "0") int page,
+		      @RequestParam(defaultValue = "3") int size) {
 
 		if (type != null)
-			return foodServiceImpl.findByType(type).publishOn(Schedulers.boundedElastic())
+			return foodServiceImpl.findByType(type,page,size).publishOn(Schedulers.boundedElastic())
 					.subscribeOn(Schedulers.boundedElastic()).map(i -> modelMapper.map(i, HalfFoodRes.class)).sort();
 
 		else if (name != null)
-			return foodServiceImpl.findByNames(name).publishOn(Schedulers.boundedElastic())
+			return foodServiceImpl.findByNames(name,page,size).publishOn(Schedulers.boundedElastic())
 					.subscribeOn(Schedulers.boundedElastic()).map(i -> modelMapper.map(i, HalfFoodRes.class)).sort();
 
 		else if (name != null && type != null)
-			return foodServiceImpl.findByTypeAndName(name, type).publishOn(Schedulers.boundedElastic())
+			return foodServiceImpl.findByTypeAndName(name, type,page,size).publishOn(Schedulers.boundedElastic())
 					.subscribeOn(Schedulers.boundedElastic()).map(i -> modelMapper.map(i, HalfFoodRes.class)).sort();
 
 		else
-			return foodServiceImpl.findAll().publishOn(Schedulers.boundedElastic())
+			return foodServiceImpl.findAll(page,size).publishOn(Schedulers.boundedElastic())
 					.subscribeOn(Schedulers.boundedElastic()).map(i -> modelMapper.map(i, HalfFoodRes.class)).sort();
 	}
 
