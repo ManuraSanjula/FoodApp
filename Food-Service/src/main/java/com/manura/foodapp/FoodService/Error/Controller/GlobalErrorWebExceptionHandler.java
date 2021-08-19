@@ -50,7 +50,7 @@ public class GlobalErrorWebExceptionHandler extends AbstractErrorWebExceptionHan
         }else if(errorPropertiesMap.get("error") == "Unauthorized"){
         	return ServerResponse.status(HttpStatus.UNAUTHORIZED)
                     .contentType(MediaType.APPLICATION_JSON)
-                    .body(BodyInserters.fromValue(errorPropertiesMap));
+                    .body(BodyInserters.fromValue(""));
         }
         else {
         	 return ServerResponse.status(HttpStatus.BAD_REQUEST)

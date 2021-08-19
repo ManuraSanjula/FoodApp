@@ -43,6 +43,7 @@ public class GlobalErrorWebExceptionHandler extends AbstractErrorWebExceptionHan
         Map<String, Object> errorPropertiesMap = getErrorAttributes(request,
                 ErrorAttributeOptions.defaults());
 
+
         if(errorPropertiesMap.get("error") == "Not Found"){
             return ServerResponse.status(HttpStatus.NOT_FOUND)
                     .contentType(MediaType.APPLICATION_JSON)
@@ -50,7 +51,7 @@ public class GlobalErrorWebExceptionHandler extends AbstractErrorWebExceptionHan
         }else if(errorPropertiesMap.get("error") == "Unauthorized"){
         	return ServerResponse.status(HttpStatus.UNAUTHORIZED)
                     .contentType(MediaType.APPLICATION_JSON)
-                    .body(BodyInserters.fromValue(errorPropertiesMap));
+                    .body(BodyInserters.fromValue(""));
         }
         else {
         	 return ServerResponse.status(HttpStatus.BAD_REQUEST)

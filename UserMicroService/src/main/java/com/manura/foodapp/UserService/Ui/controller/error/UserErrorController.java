@@ -25,14 +25,17 @@ public class UserErrorController extends AbstractErrorController {
     }
 
     @RequestMapping
-    public ResponseEntity<Map<String, Object>> errorMapping(HttpServletRequest request){
+    public ResponseEntity errorMapping(HttpServletRequest request){
         Map<String, Object> body = this.getErrorAttributes(request, false);
         HttpStatus status = this.getStatus(request);
-
-        if(body.get("error") == "Forbidden" && status.value() == Integer.valueOf((Integer) body.get("status"))){//Not Found
-            body.replace("message","UnAuthorized");
-            status = this.getStatus(request);
+        body.remove("message");
+        body.remove("requestId");
+        if(body.get("error").equals("Forbidden") && status.value() == Integer.valueOf((Integer) body.get("status"))){//Not Found
+        	 return new ResponseEntity<>("", status);
         }
+        if(body.get("error").equals("Unauthorized") && status.value() == Integer.valueOf((Integer) body.get("status"))){//Not Found
+       	 return new ResponseEntity<>("", status);
+       }
         if(body.get("error") == "Not Found" && status.value() == Integer.valueOf((Integer) body.get("status"))){
             body.replace("message","Please Enter Valid Url");
         }

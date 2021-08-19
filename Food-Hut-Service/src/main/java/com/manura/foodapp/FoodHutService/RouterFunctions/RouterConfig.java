@@ -37,7 +37,7 @@ public class RouterConfig {
                 .GET("/{id}", requestHandler::getOneFoodHut)
                 .PUT("/{id}", requestHandler::updateFoodHut)
                 .POST("", requestHandler::saveFooHut)
-                .GET("/{id}/comment", requestHandler::getAllComments)
+                .GET("/{id}/comments", requestHandler::getAllComments)
                 .POST("/{id}/comment", requestHandler::saveComment)
                 .PUT("/{foodHutId}/comment/{commentId}", requestHandler::updateComment)
                 .DELETE("/{foodHutId}/comment/{commentId}", requestHandler::deleteComment)

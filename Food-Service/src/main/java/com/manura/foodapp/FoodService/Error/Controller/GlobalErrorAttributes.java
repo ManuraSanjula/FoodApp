@@ -13,9 +13,8 @@ public class GlobalErrorAttributes extends DefaultErrorAttributes {
     @Override
     public Map<String, Object> getErrorAttributes(ServerRequest request,ErrorAttributeOptions options) {
         Map<String, Object> map = super.getErrorAttributes(request, options);
-        if(map.get("message") ==null){
-        	 map.remove("message");
-        }
+        map.remove("message");
+        map.remove("path");
         map.remove("requestId");
         return map;
     }
