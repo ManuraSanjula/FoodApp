@@ -19,4 +19,6 @@ public class CartTable implements Serializable {
 	private FoodTable food;
 	
 	private UserTable user;
+	
+	private Long count;
 }
