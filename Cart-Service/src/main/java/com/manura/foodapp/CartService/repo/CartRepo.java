@@ -13,6 +13,6 @@ import com.manura.foodapp.CartService.Table.CartTable;
  *
  */
 @Repository
-public interface CartRepo extends ReactiveCrudRepository<CartTable, Long> {
+public interface CartRepo extends ReactiveCrudRepository<CartTable, Integer> {
 
 }

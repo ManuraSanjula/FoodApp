@@ -14,7 +14,7 @@ public class FoodDto implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = 8753047797694557053L;
-	private Long id;
+    private Integer id;
 	private String name;
 	private String publicId;
 	private String description;

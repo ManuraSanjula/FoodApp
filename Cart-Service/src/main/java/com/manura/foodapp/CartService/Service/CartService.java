@@ -3,9 +3,9 @@
  */
 package com.manura.foodapp.CartService.Service;
 
+import com.manura.foodapp.CartService.Table.FoodTable;
+import com.manura.foodapp.CartService.Table.UserTable;
 import com.manura.foodapp.CartService.Table.Dto.CartDto;
-import com.manura.foodapp.CartService.Table.Dto.FoodDto;
-import com.manura.foodapp.CartService.Table.Dto.UserDto;
 
 import reactor.core.publisher.Mono;
 
@@ -18,11 +18,11 @@ public interface CartService {
 
 	Mono<Void> deleteCart(String id);
 
-	Mono<UserDto> saveUser(Mono<UserDto> user);
+	Mono<UserTable> saveUser(Mono<UserTable> user);
 
-	Mono<UserDto> updateUser(Mono<UserDto> user);
+	Mono<UserTable> updateUser(String id,Mono<UserTable> user);
 	
-	Mono<FoodDto> saveFood(Mono<FoodDto> food);
+	Mono<FoodTable> saveFood(Mono<FoodTable> food);
 
-	Mono<FoodDto> updateFood(Mono<FoodDto> food);
+	Mono<FoodTable> updateFood(String id,Mono<FoodTable> food);
 }

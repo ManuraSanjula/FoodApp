@@ -1,9 +1,7 @@
 package com.manura.foodapp.CartService.Table.Dto;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 
 import lombok.Data;
@@ -18,7 +16,7 @@ public class UserDto implements Serializable{
 	 * 
 	 */
 	
-	private Long id;
+    private Integer id;
 	private String publicId;
 	private String firstName;
 	private String lastName;
@@ -27,7 +25,5 @@ public class UserDto implements Serializable{
 	private Boolean emailVerify;
 	private String address;
 	private Date passwordChangedAt;
-	private List<String> roles = new ArrayList<>();
-	private List<String> authorities = new ArrayList<>();
 	private String pic;
 }
