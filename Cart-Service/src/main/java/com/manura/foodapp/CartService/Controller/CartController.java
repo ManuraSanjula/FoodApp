@@ -15,7 +15,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 @RestController
-@RequestMapping("Cart")
+@RequestMapping("cart")
 public class CartController {
   @Autowired
   private CartServiceImpl cartServiceImpl;

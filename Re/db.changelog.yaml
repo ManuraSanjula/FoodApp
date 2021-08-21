@@ -1,0 +1,218 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: 01-create-user-table
+      author: Manura
+      changes:
+        - createTable:
+            schema: public
+            tableName: user
+            columns:
+              - column:
+                  name: id
+                  type: int
+                  autoIncrement: true
+                  startWith: 100
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: publicId
+                  type: varchar(100)
+                  defaultValue: ""
+                  constraints:
+                    nullable: false
+              - column:
+                  name: firstName
+                  type: varchar(50)
+                  defaultValue: ""
+                  constraints:
+                    nullable: false
+              - column:
+                  name: lastName
+                  type: varchar(50)
+                  defaultValue: ""
+                  constraints:
+                    nullable: false
+              - column:
+                  name: email
+                  type: varchar(60)
+                  defaultValue: ""
+                  constraints:
+                    nullable: false   
+              - column:
+                  name: active
+                  type: boolean
+                  defaultValue: true
+                  constraints:
+                    nullable: false  
+              - column:
+                  name: emailVerify
+                  type: boolean
+                  defaultValue: true
+                  constraints:
+                    nullable: false  
+              - column:
+                  name: address
+                  type: varchar(1000)
+                  defaultValue: ""
+                  constraints:
+                    nullable: false 
+              - column:
+                  name: pic
+                  type: varchar(100)
+                  defaultValue: ""
+                  constraints:
+                    nullable: false                             
+              - column:
+                  name: created_date
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: last_modified_date
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 02-create-food-table
+      author: Manura
+      changes:
+        - createTable:
+            schema: public
+            tableName: food
+            columns:
+              - column:
+                  name: id
+                  type: int
+                  autoIncrement: true
+                  startWith: 100
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(100)
+                  defaultValue: ""
+                  constraints:
+                    nullable: false
+              - column:
+                  name: publicId
+                  type: varchar(100)
+                  defaultValue: ""
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: varchar(5000)
+                  defaultValue: ""
+                  constraints:
+                    nullable: false
+              - column:
+                  name: type
+                  type: varchar(70)
+                  defaultValue: ""
+                  constraints:
+                    nullable: false
+              - column:
+                  name: unlikes
+                  type: int
+                  defaultValue: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: likes
+                  type: int
+                  defaultValue: 0
+                  constraints:
+                    nullable: false     
+              - column:
+                  name: price
+                  type: int
+                  defaultValue: 6
+                  constraints:
+                    nullable: false       
+              - column:
+                  name: rating
+                  type: int
+                  defaultValue: 3
+                  constraints:
+                    nullable: false   
+              - column:
+                  name: coverImage
+                  type: varchar(70)
+                  defaultValue: ""
+                  constraints:
+                    nullable: false 
+              - column:
+                  name: created_date
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: last_modified_date
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 03-create-cart-table
+      author: Manura
+      changes:
+        - createTable:
+            schema: public
+            tableName: cart
+            columns:
+              - column:
+                  name: id
+                  type: int
+                  autoIncrement: true
+                  startWith: 100
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: publicId
+                  type: varchar(100)
+                  defaultValue: ""
+                  constraints:
+                    nullable: false
+              - column:
+                  name: count
+                  type: int
+                  defaultValue: 1
+                  constraints:
+                    nullable: false    
+              - column:
+                  name: price
+                  type: int 
+                  constraints:
+                    nullable: false    
+
+  - changeSet:
+      id: 04-add-relations
+      author: Manura
+      changes:
+        - addColumn:
+            schema: public
+            tableName: cart
+            columns:
+               name: user_id
+               type: int
+               constraints:
+                 foreignKeyName: fk_item_user_id
+                 references: user(id)
+        - addColumn:
+            schema: public
+            tableName: cart
+            columns:
+               name: food_id
+               type: int
+               constraints:
+                 foreignKeyName: fk_item_food_id
+                 references: food(id)

@@ -1,8 +1,11 @@
 package com.manura.foodapp.CartService.Table;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.annotation.Transient;
 import org.springframework.data.domain.Persistable;
 import org.springframework.data.relational.core.mapping.Table;
@@ -11,9 +14,11 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.Accessors;
 
 @Table
 @Data
+@Accessors(chain = true)
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -37,6 +42,12 @@ public class FoodTable implements Serializable,Persistable<Integer> {
 	
 	@Builder.Default
 	private Boolean offered = true;
+	
+	@CreatedDate
+	private LocalDateTime createdDate;
+
+	@LastModifiedDate
+	private LocalDateTime lastModifiedDate;
 	
 	@Transient
     private boolean newFoodTable;
