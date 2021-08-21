@@ -14,14 +14,16 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import lombok.experimental.Accessors;
 
-@Table
+@Table("food")
 @Data
 @Accessors(chain = true)
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@ToString
 public class FoodTable implements Serializable,Persistable<Integer> {
 	/**
 	 * 

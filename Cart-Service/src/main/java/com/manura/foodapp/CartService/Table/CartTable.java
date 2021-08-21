@@ -14,14 +14,16 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import lombok.experimental.Accessors;
 
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table
+@Table("cart")
 @Accessors(chain = true)
 @Data
+@ToString
 public class CartTable implements Serializable, Persistable<Integer> {
 
 	private static final long serialVersionUID = 1162253883799444803L;
