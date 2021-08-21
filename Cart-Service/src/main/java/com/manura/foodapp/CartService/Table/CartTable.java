@@ -7,36 +7,43 @@ import org.springframework.data.annotation.Transient;
 import org.springframework.data.domain.Persistable;
 import org.springframework.data.relational.core.mapping.Table;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Table
 @Data
-public class CartTable implements Serializable ,Persistable<Integer> {
-	
+public class CartTable implements Serializable, Persistable<Integer> {
+
 	private static final long serialVersionUID = 1162253883799444803L;
 	@Id
-    private Integer id;
+	private Integer id;
 	private String publicId;
 
 	private FoodTable food;
-	
-	private UserTable user;
-	
-	@Transient
-    private boolean CartTable;
-	
-	@Override
-    @Transient
-    public boolean isNew() {
-        return this.CartTable || id == null;
-    }
 
-    public CartTable setAsNew(){
-        this.CartTable = true;
-        return this;
-    }
-	
+	private UserTable user;
+
+	@Transient
+	private boolean CartTable;
+
+	@Override
+	@Transient
+	public boolean isNew() {
+		return this.CartTable || id == null;
+	}
+
+	public CartTable setAsNew() {
+		this.CartTable = true;
+		return this;
+	}
+
 	private Long count;
 
-	
+	private Double price;
+
 }

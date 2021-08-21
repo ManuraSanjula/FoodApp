@@ -3,6 +3,7 @@
  */
 package com.manura.foodapp.CartService.Service;
 
+import com.manura.foodapp.CartService.Controller.Req.Model.CartReq;
 import com.manura.foodapp.CartService.Table.FoodTable;
 import com.manura.foodapp.CartService.Table.UserTable;
 import com.manura.foodapp.CartService.Table.Dto.CartDto;
@@ -14,7 +15,7 @@ import reactor.core.publisher.Mono;
  *
  */
 public interface CartService {
-	Mono<CartDto> saveCart(Mono<CartDto> cart);
+	Mono<CartDto> saveCart(Mono<CartReq> cart);
 
 	Mono<Void> deleteCart(String id);
 

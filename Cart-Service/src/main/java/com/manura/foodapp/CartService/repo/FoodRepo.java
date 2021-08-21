@@ -3,7 +3,7 @@
  */
 package com.manura.foodapp.CartService.repo;
 
-import org.springframework.data.repository.reactive.ReactiveCrudRepository;
+import org.springframework.data.r2dbc.repository.R2dbcRepository;
 import org.springframework.stereotype.Repository;
 
 import com.manura.foodapp.CartService.Table.FoodTable;
@@ -15,6 +15,6 @@ import reactor.core.publisher.Mono;
  *
  */
 @Repository
-public interface FoodRepo extends ReactiveCrudRepository<FoodTable,Integer> {
+public interface FoodRepo extends R2dbcRepository<FoodTable,Integer> {
    Mono<FoodTable> findByPublicId(String publicId);
 }

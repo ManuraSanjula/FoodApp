@@ -7,10 +7,16 @@ import org.springframework.data.annotation.Transient;
 import org.springframework.data.domain.Persistable;
 import org.springframework.data.relational.core.mapping.Table;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Table
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class FoodTable implements Serializable,Persistable<Integer> {
 	/**
 	 * 
@@ -28,6 +34,8 @@ public class FoodTable implements Serializable,Persistable<Integer> {
 	private Double price;
 	private Double rating;
 	private String coverImage;
+	
+	@Builder.Default
 	private Boolean offered = true;
 	
 	@Transient

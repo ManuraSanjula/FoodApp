@@ -1,17 +1,21 @@
 package com.manura.foodapp.CartService.Table;
 
 import java.io.Serializable;
-import java.util.Date;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
 import org.springframework.data.domain.Persistable;
 import org.springframework.data.relational.core.mapping.Table;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Table
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class UserTable implements Serializable,Persistable<Integer>{
 	/**
 	 * 
@@ -26,7 +30,6 @@ public class UserTable implements Serializable,Persistable<Integer>{
 	private Boolean active;
 	private Boolean emailVerify;
 	private String address;
-	private Date passwordChangedAt;
 	private String pic;
 	@Transient
     private boolean newUserTable;
@@ -42,3 +45,7 @@ public class UserTable implements Serializable,Persistable<Integer>{
         return this;
     }
 }
+
+
+
+
