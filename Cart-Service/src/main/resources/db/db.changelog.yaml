@@ -211,6 +211,12 @@ databaseChangeLog:
                   defaultValue: ""
                   constraints:
                     nullable: false
+              - column:
+                  name: food
+                  type: varchar(100)
+                  defaultValue: ""
+                  constraints:
+                    nullable: false
 
   - changeSet:
       id: 04-add-relations

@@ -13,6 +13,7 @@ import com.manura.foodapp.CartService.Controller.Req.Model.CartReq;
 import com.manura.foodapp.CartService.Service.Impl.CartServiceImpl;
 import com.manura.foodapp.CartService.Table.Dto.CartDto;
 
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
@@ -29,10 +30,9 @@ public class CartController {
 				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
    
-    @GetMapping("/{id}")
-  	Mono<ResponseEntity<CartDto>> getOneCart(@PathVariable String id) {
-  		return cartServiceImpl.getCart(id).map(ResponseEntity::ok)
-  				.defaultIfEmpty(ResponseEntity.badRequest().build())
+    @GetMapping("/{user}")
+  	Flux<CartDto> getOneCart(@PathVariable String user) {
+  		return cartServiceImpl.getCart(user)
   				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
   	}
   

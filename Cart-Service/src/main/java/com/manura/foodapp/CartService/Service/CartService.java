@@ -8,6 +8,7 @@ import com.manura.foodapp.CartService.Table.FoodTable;
 import com.manura.foodapp.CartService.Table.UserTable;
 import com.manura.foodapp.CartService.Table.Dto.CartDto;
 
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
@@ -16,7 +17,7 @@ import reactor.core.publisher.Mono;
  */
 public interface CartService {
 	Mono<CartDto> saveCart(Mono<CartReq> cart);
-	Mono<CartDto> getCart(String id);
+	Flux<CartDto> getCart(String id);
 	Mono<Void> deleteCart(String id);
 
 	Mono<UserTable> saveUser(Mono<UserTable> user);
