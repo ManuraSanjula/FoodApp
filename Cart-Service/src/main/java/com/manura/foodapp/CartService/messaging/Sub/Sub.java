@@ -11,7 +11,6 @@ import com.manura.foodapp.CartService.Service.Impl.CartServiceImpl;
 import com.manura.foodapp.CartService.Table.FoodTable;
 import com.manura.foodapp.CartService.Table.UserTable;
 
-
 import reactor.core.publisher.Mono;
 
 @Service
@@ -21,7 +20,7 @@ public class Sub {
 	
 	@Autowired
 	private CartServiceImpl cartServiceImpl;
-	//
+	
 	private static final Logger LOG = LoggerFactory.getLogger(Sub.class);
 	
 	@RabbitListener(queues = "user_created-Cart")
@@ -29,7 +28,6 @@ public class Sub {
 		try {
 			var user = objectMapper.readValue(message, UserTable.class);
 			cartServiceImpl.saveUser(Mono.just(user)).subscribe();
-		
 		} catch (Exception e) {
 			LOG.info("Error is {}", e.getMessage());
 		}
@@ -39,9 +37,7 @@ public class Sub {
 	public void user_updated_Cart(String message) {
 		try {
 			var user = objectMapper.readValue(message, UserTable.class);
-			System.out.println(user);
-
-			//cartServiceImpl.updateUser(user.getPublicId(),Mono.just(user)).subscribe();
+			cartServiceImpl.updateUser(user.getPublicId(),Mono.just(user)).subscribe();
 		} catch (Exception e) {
 			LOG.info("Error is {}", e.getMessage());
 		}
@@ -51,8 +47,7 @@ public class Sub {
 	public void food_created_Cart(String message) {
 		try {
 			var food = objectMapper.readValue(message, FoodTable.class);
-			System.out.println(food);
-			//cartServiceImpl.saveFood(Mono.just(food)).subscribe();
+			cartServiceImpl.saveFood(Mono.just(food)).subscribe();
 		} catch (Exception e) {
 			LOG.info("Error is {}", e.getMessage());
 		}
@@ -62,9 +57,7 @@ public class Sub {
 	public void food_updated_Cart(String message) {
 		try {
 			var food = objectMapper.readValue(message, FoodTable.class);
-			System.out.println(food);
-
-			//cartServiceImpl.updateFood(food.getPublicId(),Mono.just(food)).subscribe();
+			cartServiceImpl.updateFood(food.getPublicId(),Mono.just(food)).subscribe();
 		} catch (Exception e) {
 			System.out.println(e.getMessage());
 			LOG.error("Error is {}", e.getMessage());

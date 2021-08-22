@@ -16,7 +16,7 @@ import reactor.core.publisher.Mono;
  */
 public interface CartService {
 	Mono<CartDto> saveCart(Mono<CartReq> cart);
-
+	Mono<CartDto> getCart(String id);
 	Mono<Void> deleteCart(String id);
 
 	Mono<UserTable> saveUser(Mono<UserTable> user);

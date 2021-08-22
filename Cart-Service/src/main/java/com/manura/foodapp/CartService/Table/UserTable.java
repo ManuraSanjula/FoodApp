@@ -17,7 +17,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 
-@Table("user")
+@Table("users")
 @Data
 @Accessors(chain = true)
 @AllArgsConstructor

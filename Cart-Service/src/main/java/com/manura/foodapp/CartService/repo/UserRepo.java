@@ -17,4 +17,7 @@ import reactor.core.publisher.Mono;
 @Repository
 public interface UserRepo extends R2dbcRepository<UserTable, Integer>{
    Mono<UserTable> findByPublicId(String publicId);
+   Mono<UserTable> findByEmail(String emial);
+
 }
+

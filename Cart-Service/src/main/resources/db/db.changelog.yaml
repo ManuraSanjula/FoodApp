@@ -1,12 +1,12 @@
 databaseChangeLog:
 
   - changeSet:
-      id: 01-create-user-table
+      id: 01-create-users-table
       author: Manura
       changes:
         - createTable:
             schema: public
-            tableName: user
+            tableName: users
             columns:
               - column:
                   name: id
@@ -17,19 +17,19 @@ databaseChangeLog:
                     primaryKey: true
                     nullable: false
               - column:
-                  name: publicId
+                  name: public_id
                   type: varchar(100)
                   defaultValue: ""
                   constraints:
                     nullable: false
               - column:
-                  name: firstName
+                  name: first_name
                   type: varchar(50)
                   defaultValue: ""
                   constraints:
                     nullable: false
               - column:
-                  name: lastName
+                  name: last_name
                   type: varchar(50)
                   defaultValue: ""
                   constraints:
@@ -47,7 +47,7 @@ databaseChangeLog:
                   constraints:
                     nullable: false  
               - column:
-                  name: emailVerify
+                  name: email_verify
                   type: boolean
                   defaultValue: true
                   constraints:
@@ -100,7 +100,7 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
-                  name: publicId
+                  name: public_id
                   type: varchar(100)
                   defaultValue: ""
                   constraints:
@@ -142,7 +142,7 @@ databaseChangeLog:
                   constraints:
                     nullable: false   
               - column:
-                  name: coverImage
+                  name: cover_image
                   type: varchar(70)
                   defaultValue: ""
                   constraints:
@@ -177,7 +177,7 @@ databaseChangeLog:
                     primaryKey: true
                     nullable: false
               - column:
-                  name: publicId
+                  name: public_id
                   type: varchar(100)
                   defaultValue: ""
                   constraints:
@@ -192,7 +192,25 @@ databaseChangeLog:
                   name: price
                   type: int 
                   constraints:
-                    nullable: false    
+                    nullable: false  
+              - column:
+                  name: created_date
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: last_modified_date
+                  type: timestamp
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false  
+              - column:
+                  name: user
+                  type: varchar(100)
+                  defaultValue: ""
+                  constraints:
+                    nullable: false
 
   - changeSet:
       id: 04-add-relations
@@ -206,7 +224,7 @@ databaseChangeLog:
                type: int
                constraints:
                  foreignKeyName: fk_item_user_id
-                 references: user(id)
+                 references: users(id)
         - addColumn:
             schema: public
             tableName: cart

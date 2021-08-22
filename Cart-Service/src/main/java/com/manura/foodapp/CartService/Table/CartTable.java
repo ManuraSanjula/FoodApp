@@ -30,12 +30,14 @@ public class CartTable implements Serializable, Persistable<Integer> {
 	@Id
 	private Integer id;
 	private String publicId;
+	
+	private String user;
 
 	@Transient
 	private FoodTable food;
 
 	@Transient
-	private UserTable user;
+	private UserTable owner;
 
 	@Transient
 	private boolean CartTable;
@@ -45,6 +47,10 @@ public class CartTable implements Serializable, Persistable<Integer> {
 
 	@LastModifiedDate
 	private LocalDateTime lastModifiedDate;
+	
+	private Integer userId;
+	
+	private Integer foodId;
 
 	@Override
 	@Transient

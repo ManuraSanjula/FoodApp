@@ -42,9 +42,6 @@ public class FoodTable implements Serializable,Persistable<Integer> {
 	private Double rating;
 	private String coverImage;
 	
-	@Builder.Default
-	private Boolean offered = true;
-	
 	@CreatedDate
 	private LocalDateTime createdDate;
 

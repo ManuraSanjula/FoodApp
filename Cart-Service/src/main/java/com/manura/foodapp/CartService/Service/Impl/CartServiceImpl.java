@@ -61,21 +61,9 @@ public class CartServiceImpl implements CartService {
 										.switchIfEmpty(Mono.error(new CartSerivceNotFoundError(
 												ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
 										.mapNotNull(user -> {
-											 CartTable cartTable = cartRepo.findByFood(food).publishOn(Schedulers.boundedElastic())
-													.subscribeOn(Schedulers.boundedElastic()).block();
-											 if (cartTable == null) {
-													CartTable cart = new CartTable();
-													cart.setFood(food);
-													cart.setUser(user);
-													cart.setPublicId(utils.generateId(40));
-													cart.setCount(i.getCount());
-													cart.setPrice((i.getCount() *food.getPrice()));
-													return cart;
-												} else {
-													cartTable.setCount((cartTable.getCount() + 1));
-													cartTable.setPrice((food.getPrice() * cartTable.getCount()));
-													return cartTable;
-												}
+											CartTable cart = new CartTable();
+											return cart;
+
 										}).flatMap(cartRepo::save)
 										.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
 										.map(e -> modelMapper.map(e, CartDto.class));
@@ -98,9 +86,7 @@ public class CartServiceImpl implements CartService {
 			return Mono.empty();
 		}
 	}
-
 	@Override
-	@Transactional
 	public Mono<UserTable> updateUser(String id, Mono<UserTable> user) {
 		try {
 			return userRepo.findByPublicId(id).publishOn(Schedulers.boundedElastic())
@@ -109,36 +95,45 @@ public class CartServiceImpl implements CartService {
 								.mapNotNull(i -> {
 									i.setId(usr.getId());
 									i.setPublicId(usr.getPublicId());
+									i.setLastModifiedDate(usr.getLastModifiedDate());
+									i.setCreatedDate(usr.getCreatedDate());
 									return i;
 								}).flatMap(userRepo::save).publishOn(Schedulers.boundedElastic())
 								.subscribeOn(Schedulers.boundedElastic());
 					}).flatMap(i -> i).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
 					.switchIfEmpty(saveUser(user));
-
 		} catch (Exception e) {
 			return Mono.empty();
 		}
 	}
-
 	@Override
 	public Mono<FoodTable> saveFood(Mono<FoodTable> food) {
 		return food.flatMap(foodRepo::save).publishOn(Schedulers.boundedElastic())
 				.subscribeOn(Schedulers.boundedElastic());
 	}
-
 	@Override
-	public Mono<FoodTable> updateFood(String id, Mono<FoodTable> food) {
-		return foodRepo.findByPublicId(id).publishOn(Schedulers.boundedElastic())
-				.subscribeOn(Schedulers.boundedElastic()).map(i -> {
+	public Mono<FoodTable> updateFood(String id, Mono<FoodTable> food) {//
+		return foodRepo.findByPublicId(id)
+				.publishOn(Schedulers.boundedElastic())
+				.subscribeOn(Schedulers.boundedElastic()).mapNotNull(i -> {
 					return food.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
 							.mapNotNull(req -> {
 								req.setId(i.getId());
 								req.setPublicId(i.getPublicId());
+								req.setLastModifiedDate(i.getLastModifiedDate());
+								req.setCreatedDate(i.getCreatedDate());
 								return req;
 							}).flatMap(foodRepo::save).publishOn(Schedulers.boundedElastic())
 							.subscribeOn(Schedulers.boundedElastic());
 				}).flatMap(i -> i).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
-				.switchIfEmpty(saveFood(food));
+				.switchIfEmpty(saveFood(Mono.just(food.block().setAsNew())))
+				;
 	}
 
+	@Override
+	public Mono<CartDto> getCart(String id) {
+		return cartRepo.findByPublicId(id).switchIfEmpty(Mono.error(new CartSerivceNotFoundError(
+				ErrorMessages.NO_RECORD_FOUND.getErrorMessage()))).publishOn(Schedulers.boundedElastic())
+				.subscribeOn(Schedulers.boundedElastic()).map(e -> modelMapper.map(e, CartDto.class));
+	}
 }
