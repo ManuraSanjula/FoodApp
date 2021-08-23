@@ -4,8 +4,10 @@ import lombok.Data;
 import java.io.Serializable;
 import java.util.List;
 
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
+
 @Data
-public class FoodHutDto implements Serializable,Comparable<FoodHutDto> {
+public class FoodHutDtoForSubSaving implements Serializable,Comparable<FoodHutDtoForSubSaving> {
     /**
 	 * 
 	 */
@@ -16,8 +18,10 @@ public class FoodHutDto implements Serializable,Comparable<FoodHutDto> {
     Boolean open;
     List<String> phoneNumbers;
     String image;
-	@Override
-	public int compareTo(FoodHutDto o) {
+    private GeoJsonPoint location;
+
+    @Override
+	public int compareTo(FoodHutDtoForSubSaving o) {
 		// TODO Auto-generated method stub
 		return this.id.equals(o.getId()) ? 1 :0;
 	}

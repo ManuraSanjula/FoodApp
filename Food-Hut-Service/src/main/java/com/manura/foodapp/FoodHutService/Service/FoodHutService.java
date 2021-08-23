@@ -6,7 +6,7 @@ import org.springframework.http.codec.multipart.FilePart;
 import com.manura.foodapp.FoodHutService.Node.FoodNode;
 import com.manura.foodapp.FoodHutService.Node.UserNode;
 import com.manura.foodapp.FoodHutService.Controller.Req.CommentReq;
-import com.manura.foodapp.FoodHutService.Controller.Req.FoodHutUpdateReq;
+import com.manura.foodapp.FoodHutService.Controller.Req.FoodHutReq;
 import com.manura.foodapp.FoodHutService.Controller.Res.FoodHutHalfRes;
 
 import com.manura.foodapp.FoodHutService.dto.CommentsDto;
@@ -17,7 +17,7 @@ import reactor.core.publisher.Mono;
 
 public interface FoodHutService {
   Mono<FoodHutDto> save(Mono<FoodHutDto> dto,List<String> foodIds,Double latitude, Double longitude);
-  Mono<FoodHutDto> update(String id,Mono<FoodHutUpdateReq> dto);
+  Mono<FoodHutDto> update(String id,Mono<FoodHutReq> dto);
   Flux<FoodHutHalfRes> getAll();
   Mono<FoodHutDto> getOne(String id);
   Mono<UserNode> getUser(String user);

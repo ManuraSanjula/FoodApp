@@ -19,11 +19,12 @@ import org.springframework.stereotype.Service;
 
 import com.manura.foodapp.FoodService.Error.Model.FoodNotFoundError;
 import com.manura.foodapp.FoodService.Redis.Model.CommentCachingRedis;
-import com.manura.foodapp.FoodService.Redis.Model.FoodCachingRedis;
+import com.manura.foodapp.FoodService.controller.Model.Res.HalfFoodRes;
 import com.manura.foodapp.FoodService.dto.CommentsDto;
 import com.manura.foodapp.FoodService.dto.FoodCommentDto;
 import com.manura.foodapp.FoodService.dto.FoodDto;
 import com.manura.foodapp.FoodService.dto.FoodHutDto;
+import com.manura.foodapp.FoodService.dto.FoodHutDtoForSubSaving;
 import com.manura.foodapp.FoodService.dto.UserDto;
 import com.manura.foodapp.FoodService.entity.CommentsEntity;
 import com.manura.foodapp.FoodService.entity.FoodEntity;
@@ -74,35 +75,30 @@ public class FoodServiceImpl implements FoodService {
 	private RedisServiceImpl redisServiceImpl;
 
 	private Mono<FoodDto> ifFoodAbsentInCache(String id) {
-
 		Optional<FoodEntity> food = foodRepo.findById(id);
 		if (food.isPresent()) {
 			return Mono.just(food.get()).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
 					.map(i -> modelMapper.map(i, FoodDto.class)).map(i -> {
-						FoodCachingRedis obj = new FoodCachingRedis();
-						obj.setName(id);
-						obj.setFood(i);
-						redisServiceImpl.save(obj);
+						redisServiceImpl.save(i);
 						return i;
 					});
 		} else {
 			return Mono.empty();
 		}
-
 	}
 
 	@Override
-	public Flux<FoodDto> findAll(int page, int size) {
+	public Flux<HalfFoodRes> findAll(int page, int size) {
 		Pageable paging = PageRequest.of(page, size);
 		return Flux.fromIterable(foodRepo.findAll(paging).getContent()).publishOn(Schedulers.boundedElastic())
-				.subscribeOn(Schedulers.boundedElastic()).map(i -> modelMapper.map(i, FoodDto.class));
+				.subscribeOn(Schedulers.boundedElastic()).map(i -> modelMapper.map(i, HalfFoodRes.class));
 	}
 
 	@Override
-	public Flux<FoodDto> findByType(String type, int page, int size) {
+	public Flux<HalfFoodRes> findByType(String type, int page, int size) {
 		Pageable paging = PageRequest.of(page, size);
 		return Flux.fromIterable(foodRepo.findByType(type, paging).getContent()).publishOn(Schedulers.boundedElastic())
-				.subscribeOn(Schedulers.boundedElastic()).map(i -> modelMapper.map(i, FoodDto.class));
+				.subscribeOn(Schedulers.boundedElastic()).map(i -> modelMapper.map(i, HalfFoodRes.class));
 	}
 
 	@Override
@@ -114,7 +110,6 @@ public class FoodServiceImpl implements FoodService {
 	@Override
 	public Mono<FoodDto> save(Mono<FoodDto> foodDto, List<String> foodHutIds) {
 		List<FoodHutEntity> foodHutEntities = new ArrayList<FoodHutEntity>();
-		List<FoodEntity> foodsEntities = new ArrayList<FoodEntity>();
 		return foodDto.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
 				.map(i -> modelMapper.map(i, FoodEntity.class)).map(i -> {
 					i.setPublicId(util.generateId(20));
@@ -125,29 +120,30 @@ public class FoodServiceImpl implements FoodService {
 					i.setOffered(true);
 					i.setImages(new ArrayList<String>());
 					foodHutIds.forEach(id -> {
-						FoodHutEntity foodHutEntity = foodHutRepo.findById(id).get();
-						if (foodHutEntity != null) {
-							foodHutRepo.save(foodHutEntity);
+						Optional<FoodHutEntity> foodHutEntity = foodHutRepo.findById(id);
+						if (foodHutEntity.isPresent()) {
+							foodHutEntities.add(foodHutEntity.get());
 						}
 					});
-					if (foodHutEntities.isEmpty())
-						i.setFoodHuts(null);
 					i.setFoodHuts(foodHutEntities);
 					i.setComments(new ArrayList<>());
 					return i;
-				}).flatMap(food -> Mono.just(foodRepo.save(food))).publishOn(Schedulers.boundedElastic())
+				}).flatMap(food -> Mono.just(foodRepo.save(food))).doOnNext(i->{
+					Runnable updateFoodHut = () -> {
+						foodHutIds.forEach(id -> {
+							Optional<FoodHutEntity> foodHutEntity = foodHutRepo.findById(id);
+							if (foodHutEntity.isPresent()) {
+								foodHutEntity.get().getFoods().add(i);
+								foodHutRepo.save(foodHutEntity.get());
+							}
+						});
+					};
+					new Thread(updateFoodHut).start();
+				}).publishOn(Schedulers.boundedElastic())
 				.subscribeOn(Schedulers.boundedElastic()).map(i -> {
-					foodsEntities.add(i);
-					i.getFoodHuts().forEach(foodHut -> {
-						foodHut.setFoods(foodsEntities);
-						foodHutRepo.save(foodHut);
-					});
 					Runnable event = () -> {
 						pub.pubFood(Mono.just(i), "created");
-						FoodCachingRedis obj = new FoodCachingRedis();
-						obj.setName(i.getId());
-						obj.setFood(modelMapper.map(i, FoodDto.class));
-						redisServiceImpl.save(obj);
+						redisServiceImpl.save(modelMapper.map(i, FoodDto.class));
 					};
 					new Thread(event).start();
 					return modelMapper.map(i, FoodDto.class);
@@ -202,10 +198,7 @@ public class FoodServiceImpl implements FoodService {
 						});
 						Runnable event = () -> {
 							pub.pubFood(Mono.just(i), "update");
-							FoodCachingRedis obj = new FoodCachingRedis();
-							obj.setName(i.getId());
-							obj.setFood(modelMapper.map(i, FoodDto.class));
-							redisServiceImpl.save(obj);
+							redisServiceImpl.save(modelMapper.map(i, FoodDto.class));
 						};
 						new Thread(event).start();
 						return i;
@@ -278,7 +271,7 @@ public class FoodServiceImpl implements FoodService {
 	}
 
 	@Override
-	public Mono<FoodHutDto> saveFoodHut(Mono<FoodHutDto> foodHut) {
+	public Mono<FoodHutDto> saveFoodHut(Mono<FoodHutDtoForSubSaving> foodHut) {
 		return foodHut.map(i -> modelMapper.map(i, FoodHutEntity.class)).publishOn(Schedulers.boundedElastic())
 				.subscribeOn(Schedulers.boundedElastic()).map(i -> {
 					return i;
@@ -287,7 +280,7 @@ public class FoodServiceImpl implements FoodService {
 	}
 
 	@Override
-	public Mono<FoodHutDto> updateFoodHut(Mono<FoodHutDto> foodHut, String id) {
+	public Mono<FoodHutDto> updateFoodHut(Mono<FoodHutDtoForSubSaving> foodHut, String id) {
 		Optional<FoodHutEntity> findById = this.foodHutRepo.findById(id);
 		if (findById.isPresent()) {
 			return Mono.just(findById.get()).publishOn(Schedulers.boundedElastic())
@@ -309,16 +302,16 @@ public class FoodServiceImpl implements FoodService {
 	}
 
 	@Override
-	public Flux<FoodDto> findByTypeAndName(String type, String name, int page, int size) {
+	public Flux<HalfFoodRes> findByTypeAndName(String type, String name, int page, int size) {
 		Pageable paging = PageRequest.of(page, size);
 		return Flux.fromIterable(foodRepo.findByTypeAndName(type, name, paging).getContent()).publishOn(Schedulers.boundedElastic())
-				.subscribeOn(Schedulers.boundedElastic()).map(i -> modelMapper.map(i, FoodDto.class));
+				.subscribeOn(Schedulers.boundedElastic()).map(i -> modelMapper.map(i, HalfFoodRes.class));
 	}
 
 	private Mono<UserEntity> ifUserAbsentInCache(String id) {
-		UserEntity userEntity = userRepo.findByPublicId(id);
-		if (userEntity != null) {
-			return Mono.just(userEntity).publishOn(Schedulers.boundedElastic()).switchIfEmpty(Mono.empty())
+		Optional<UserEntity> userEntity = userRepo.findById(id);
+		if (userEntity.isPresent()) {
+			return Mono.just(userEntity.get()).publishOn(Schedulers.boundedElastic()).switchIfEmpty(Mono.empty())
 					.subscribeOn(Schedulers.boundedElastic()).doOnNext(i -> {
 						redisServiceImpl.addNewUser(i).publishOn(Schedulers.boundedElastic())
 								.subscribeOn(Schedulers.boundedElastic()).subscribe();
@@ -350,8 +343,9 @@ public class FoodServiceImpl implements FoodService {
 	@Override
 	public Mono<UserEntity> updateUser(String id, Mono<UserDto> userDto) {
 		return userDto.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic()).flatMap(user -> {
-			UserEntity userEntity = userRepo.findByPublicId(id);
-			if (userEntity != null) {
+			Optional<UserEntity> userEntityOpt = userRepo.findById(id);
+			if (userEntityOpt.isPresent()) {
+				UserEntity userEntity = userEntityOpt.get();
 				userEntity.setFirstName(user.getFirstName());
 				userEntity.setLastName(user.getLastName());
 				userEntity.setEmail(user.getEmail());
@@ -371,10 +365,10 @@ public class FoodServiceImpl implements FoodService {
 	}
 
 	@Override
-	public Flux<FoodDto> findByNames(String name, int page, int size) {
+	public Flux<HalfFoodRes> findByNames(String name, int page, int size) {
 		Pageable paging = PageRequest.of(page, size);
 		return Flux.fromIterable(foodRepo.findByName(name, paging).getContent()).publishOn(Schedulers.boundedElastic())
-				.subscribeOn(Schedulers.boundedElastic()).map(i -> modelMapper.map(i, FoodDto.class));
+				.subscribeOn(Schedulers.boundedElastic()).map(i -> modelMapper.map(i, HalfFoodRes.class));
 	}
 
 	private Flux<CommentsDto> ifCommentAbsentInCache(String id) {
@@ -423,10 +417,7 @@ public class FoodServiceImpl implements FoodService {
 					}).map(i -> {
 						Runnable event = () -> {
 							pub.pubFood(Mono.just(i), "update");
-							FoodCachingRedis obj = new FoodCachingRedis();
-							obj.setName(i.getId());
-							obj.setFood(modelMapper.map(i, FoodDto.class));
-							redisServiceImpl.save(obj);
+							redisServiceImpl.save(modelMapper.map(i, FoodDto.class));
 						};
 						new Thread(event).start();
 						return i;
@@ -466,10 +457,7 @@ public class FoodServiceImpl implements FoodService {
 					}).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic()).map(i -> {
 						Runnable event = () -> {
 							pub.pubFood(Mono.just(i), "update");
-							FoodCachingRedis obj = new FoodCachingRedis();
-							obj.setName(i.getId());
-							obj.setFood(modelMapper.map(i, FoodDto.class));
-							redisServiceImpl.save(obj);
+							redisServiceImpl.save(modelMapper.map(i, FoodDto.class));
 						};
 						new Thread(event).start();
 						return i;
@@ -480,14 +468,15 @@ public class FoodServiceImpl implements FoodService {
 	}
 
 	@Override
-	public Flux<FoodDto> findByLocationNear(Point p, Distance d) {
-
+	public Flux<HalfFoodRes> findByLocationNear(Point p, Distance d) {
 		return Flux.fromIterable(this.foodHutRepo.findByLocationNear(p, d)).publishOn(Schedulers.boundedElastic())
-				.subscribeOn(Schedulers.boundedElastic()).map(i -> {
-					return Flux.fromIterable(i.getFoods());
-				}).flatMap(i -> i).map(i -> modelMapper.map(i, FoodDto.class)).publishOn(Schedulers.boundedElastic())
-				.subscribeOn(Schedulers.boundedElastic());
-
+				.subscribeOn(Schedulers.boundedElastic()).mapNotNull(i -> {
+				     List<FoodEntity> foods = new ArrayList<>();
+				     foods.addAll(i.getFoods());
+				     return Flux.fromIterable(foods);
+				}).flatMap(i -> i).map(i -> modelMapper.map(i, HalfFoodRes.class)).publishOn(Schedulers.boundedElastic())
+				.subscribeOn(Schedulers.boundedElastic())
+				.switchIfEmpty(Flux.fromIterable(new ArrayList<>()));
 	}
 
 	@Override

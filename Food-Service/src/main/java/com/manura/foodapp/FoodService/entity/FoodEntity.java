@@ -4,14 +4,18 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
+
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 @Document
 @Data
+@EqualsAndHashCode
 public class FoodEntity implements Serializable,Comparable<FoodEntity>{
 	private static final long serialVersionUID = -3765005311194667388L;
 	@Id

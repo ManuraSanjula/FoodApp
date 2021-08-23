@@ -1,10 +1,5 @@
 package com.manura.foodapp.FoodService.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
@@ -12,6 +7,12 @@ import java.util.List;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -22,8 +23,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class UserEntity implements Serializable {
     private static final long serialVersionUID = 89984844849448L;
     @Id
-    private Long id;
-    private String publicId;
+    private String id;
     private String firstName;
     private String lastName;
     private String email;

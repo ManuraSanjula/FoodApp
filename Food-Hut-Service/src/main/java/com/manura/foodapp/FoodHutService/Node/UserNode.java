@@ -29,5 +29,5 @@ public class UserNode implements Serializable{
 	private Date passwordChangedAt;
 	private List<String> roles = new ArrayList<>();
 	private List<String> authorities = new ArrayList<>();
-	private String pic;
+	private String pic;//
 }

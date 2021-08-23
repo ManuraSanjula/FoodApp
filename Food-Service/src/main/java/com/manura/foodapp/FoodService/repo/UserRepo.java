@@ -7,7 +7,6 @@ import com.manura.foodapp.FoodService.entity.UserEntity;
 
 @Repository
 
-public interface UserRepo extends MongoRepository<UserEntity,Long> {
-    UserEntity findByPublicId(String publicId);
+public interface UserRepo extends MongoRepository<UserEntity,String> {
     UserEntity findByEmail(String publicId);
 }

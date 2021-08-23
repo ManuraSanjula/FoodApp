@@ -8,8 +8,11 @@ import java.util.Map;
 
 @Data
 public class FoodReq implements Serializable {
-    private static final long serialVersionUID = 2L;
-    String name;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 769785207831035578L;
+	String name;
     String description;
     String type;
     Double price;

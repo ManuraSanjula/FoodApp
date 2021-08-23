@@ -3,7 +3,6 @@ package com.manura.foodapp.FoodService.dto;
 import java.io.Serializable;
 import java.util.List;
 
-
 import lombok.Data;
 
 @Data
@@ -17,7 +16,6 @@ public class FoodHutDtoForMessaging implements Serializable{
     private String address;
     private Boolean open;
     private List<String> phoneNumbers;
-    private List<FoodDto> foods;
     private String image;
     private Double latitude;
     private Double longitude;

@@ -9,8 +9,8 @@ import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.manura.foodapp.FoodService.dto.FoodHutDto;
 import com.manura.foodapp.FoodService.dto.FoodHutDtoForMessaging;
+import com.manura.foodapp.FoodService.dto.FoodHutDtoForSubSaving;
 import com.manura.foodapp.FoodService.dto.UserDto;
 import com.manura.foodapp.FoodService.service.impl.FoodServiceImpl;
 
@@ -57,7 +57,7 @@ public class Sub {
 			Double longitude = foodHut.getLongitude();
 			GeoJsonPoint locationPoint = new GeoJsonPoint(longitude,latitude);
 			
-			FoodHutDto foodHutEntity = modelMapper.map(foodHut, FoodHutDto.class);
+			FoodHutDtoForSubSaving foodHutEntity = modelMapper.map(foodHut, FoodHutDtoForSubSaving.class);
 			foodHutEntity.setLocation(locationPoint);
 			serviceImpl.saveFoodHut(Mono.just(foodHutEntity)).subscribe();
 		
@@ -75,7 +75,7 @@ public class Sub {
 			Double longitude = foodHut.getLongitude();
 			GeoJsonPoint locationPoint = new GeoJsonPoint(longitude,latitude);
 			
-			FoodHutDto foodHutEntity = modelMapper.map(foodHut, FoodHutDto.class);
+			FoodHutDtoForSubSaving foodHutEntity = modelMapper.map(foodHut, FoodHutDtoForSubSaving.class);
 			foodHutEntity.setLocation(locationPoint);
 			serviceImpl.updateFoodHut(Mono.just(foodHutEntity),foodHutEntity.getId()).subscribe();
 		} catch (Exception e) {

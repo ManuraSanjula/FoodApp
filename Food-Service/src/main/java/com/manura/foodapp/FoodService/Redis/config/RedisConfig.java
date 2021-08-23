@@ -9,18 +9,18 @@ import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import com.manura.foodapp.FoodService.Redis.Model.CommentCachingRedis;
-import com.manura.foodapp.FoodService.Redis.Model.FoodCachingRedis;
+import com.manura.foodapp.FoodService.dto.FoodDto;
 import com.manura.foodapp.FoodService.entity.UserEntity;
 
 @Configuration
 public class RedisConfig {
 	@Bean
-	public ReactiveRedisTemplate<String, FoodCachingRedis> reactiveRedisTemplateForFood(ReactiveRedisConnectionFactory factory) {
+	public ReactiveRedisTemplate<String, FoodDto> reactiveRedisTemplateForFood(ReactiveRedisConnectionFactory factory) {
 		StringRedisSerializer keySerializer = new StringRedisSerializer();
-		Jackson2JsonRedisSerializer<FoodCachingRedis> valueSerializer = new Jackson2JsonRedisSerializer<>(FoodCachingRedis.class);
-		RedisSerializationContext.RedisSerializationContextBuilder<String, FoodCachingRedis> builder = RedisSerializationContext
+		Jackson2JsonRedisSerializer<FoodDto> valueSerializer = new Jackson2JsonRedisSerializer<>(FoodDto.class);
+		RedisSerializationContext.RedisSerializationContextBuilder<String, FoodDto> builder = RedisSerializationContext
 				.newSerializationContext(keySerializer);
-		RedisSerializationContext<String, FoodCachingRedis> context = builder.value(valueSerializer).build();
+		RedisSerializationContext<String, FoodDto> context = builder.value(valueSerializer).build();
 		return new ReactiveRedisTemplate<>(factory, context);
 	}
 	

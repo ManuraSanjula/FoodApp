@@ -49,7 +49,7 @@ public class TokenConverter {
 
 	public Mono<UserEntity> validateTokenSignature(String token) {
 		UserEntity userEntity = new UserEntity();
-		userEntity.setPublicId("");
+		userEntity.setId("");
 		try {
 			String decryptUserToken = decryptToken(token);
 			SignedJWT signedJWT = SignedJWT.parse(decryptUserToken);

@@ -13,8 +13,7 @@ import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
 import com.manura.foodapp.FoodHutService.Controller.Req.CommentReq;
-import com.manura.foodapp.FoodHutService.Controller.Req.FoodHutCreationReq;
-import com.manura.foodapp.FoodHutService.Controller.Req.FoodHutUpdateReq;
+import com.manura.foodapp.FoodHutService.Controller.Req.FoodHutReq;
 import com.manura.foodapp.FoodHutService.Controller.Res.FoodHutHalfRes;
 import com.manura.foodapp.FoodHutService.Error.Model.FoodHutError;
 import com.manura.foodapp.FoodHutService.Error.Model.Res.ErrorMessage;
@@ -35,7 +34,7 @@ public class RequestHandler {
 	private ModelMapper modelMapper = new ModelMapper();
 
 	public Mono<ServerResponse> saveFooHut(ServerRequest serverRequest) {
-		return serverRequest.bodyToMono(FoodHutCreationReq.class).publishOn(Schedulers.boundedElastic())
+		return serverRequest.bodyToMono(FoodHutReq.class).publishOn(Schedulers.boundedElastic())
 				.switchIfEmpty(Mono.error(new FoodHutError(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage())))
 				.subscribeOn(Schedulers.boundedElastic()).map(i -> {
 					FoodHutDto foodHutDto = modelMapper.map(i, FoodHutDto.class);
@@ -102,7 +101,7 @@ public class RequestHandler {
 	public Mono<ServerResponse> updateFoodHut(ServerRequest serverRequest) {
 		String id = serverRequest.pathVariable("id");
 
-		return serverRequest.bodyToMono(FoodHutUpdateReq.class).publishOn(Schedulers.boundedElastic())
+		return serverRequest.bodyToMono(FoodHutReq.class).publishOn(Schedulers.boundedElastic())
 				.subscribeOn(Schedulers.boundedElastic())
 				.switchIfEmpty(Mono.error(new FoodHutError(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage())))
 				.mapNotNull(req -> {

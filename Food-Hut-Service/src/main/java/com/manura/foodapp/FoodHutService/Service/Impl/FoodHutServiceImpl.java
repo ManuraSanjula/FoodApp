@@ -25,7 +25,7 @@ import com.manura.foodapp.FoodHutService.Node.Relationship.FoodHutHasComment;
 import com.manura.foodapp.FoodHutService.Node.Relationship.FoodHutHasFood;
 import com.manura.foodapp.FoodHutService.Redis.model.CommentCachingRedis;
 import com.manura.foodapp.FoodHutService.Controller.Req.CommentReq;
-import com.manura.foodapp.FoodHutService.Controller.Req.FoodHutUpdateReq;
+import com.manura.foodapp.FoodHutService.Controller.Req.FoodHutReq;
 import com.manura.foodapp.FoodHutService.Controller.Res.FoodHutHalfRes;
 import com.manura.foodapp.FoodHutService.Error.Model.FoodHutError;
 import com.manura.foodapp.FoodHutService.Service.FoodHutService;
@@ -97,7 +97,7 @@ public class FoodHutServiceImpl implements FoodHutService {
 	}
 
 	@Override
-	public Mono<FoodHutDto> update(String id, Mono<FoodHutUpdateReq> dto) {
+	public Mono<FoodHutDto> update(String id, Mono<FoodHutReq> dto) {
 		return dto.switchIfEmpty(Mono.error(new FoodHutError(ErrorMessages.COULD_NOT_UPDATE_RECORD.getErrorMessage())))
 				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
 				.mapNotNull(updateReq -> {
@@ -106,6 +106,15 @@ public class FoodHutServiceImpl implements FoodHutService {
 									Mono.error(new FoodHutError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
 							.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
 							.mapNotNull(i -> {
+								if (updateReq.getZip() != null) {
+									i.setZip(updateReq.getZip());
+								}
+								if (updateReq.getAddress() != null) {
+									i.setAddress(updateReq.getAddress());
+								}
+								if (updateReq.getOpen() != null) {
+									i.setOpen(updateReq.getOpen());
+								}
 								if (updateReq.getName() != null) {
 									i.setName(updateReq.getName());
 								}

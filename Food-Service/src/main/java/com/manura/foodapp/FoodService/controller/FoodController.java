@@ -51,19 +51,19 @@ public class FoodController {
 
 		if (type != null)
 			return foodServiceImpl.findByType(type,page,size).publishOn(Schedulers.boundedElastic())
-					.subscribeOn(Schedulers.boundedElastic()).map(i -> modelMapper.map(i, HalfFoodRes.class)).sort();
+					.subscribeOn(Schedulers.boundedElastic()).sort();
 
 		else if (name != null)
 			return foodServiceImpl.findByNames(name,page,size).publishOn(Schedulers.boundedElastic())
-					.subscribeOn(Schedulers.boundedElastic()).map(i -> modelMapper.map(i, HalfFoodRes.class)).sort();
+					.subscribeOn(Schedulers.boundedElastic()).sort();
 
 		else if (name != null && type != null)
 			return foodServiceImpl.findByTypeAndName(name, type,page,size).publishOn(Schedulers.boundedElastic())
-					.subscribeOn(Schedulers.boundedElastic()).map(i -> modelMapper.map(i, HalfFoodRes.class)).sort();
+					.subscribeOn(Schedulers.boundedElastic()).sort();
 
 		else
 			return foodServiceImpl.findAll(page,size).publishOn(Schedulers.boundedElastic())
-					.subscribeOn(Schedulers.boundedElastic()).map(i -> modelMapper.map(i, HalfFoodRes.class)).sort();
+					.subscribeOn(Schedulers.boundedElastic()).sort();
 	}
 
 	@GetMapping("/{id}")
@@ -154,7 +154,7 @@ public class FoodController {
 	}
 	
 	  @GetMapping("/location-near")
-	  public  Flux<FoodDto> getLocations(
+	  public  Flux<HalfFoodRes> getLocations(
 	    @RequestParam("lat") Double latitude,
 	    @RequestParam("long") Double longitude,
 	    @RequestParam("d") double distance) {

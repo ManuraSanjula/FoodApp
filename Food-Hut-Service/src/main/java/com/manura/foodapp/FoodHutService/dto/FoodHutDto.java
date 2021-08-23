@@ -11,6 +11,8 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode
 public class FoodHutDto implements Serializable {
 	private static final long serialVersionUID = 3900391630028803808L;
+	
+	
 	private String id;
 	private Integer zip;
 	private String name;
@@ -18,10 +20,14 @@ public class FoodHutDto implements Serializable {
 	private Integer ratingsQuantity;
 	private String summary;
 	private String description;
+	private String address;
+	private Boolean open;
 	private String imageCover;
 	private List<String> images;
 	private List<String> phoneNumbers;
 	private String opentAt;
+	
+	
 	private Set<FoodHutHasCommentDto> comment = new HashSet<>();
 	private Set<FoodHutHasFoodDto> foods = new HashSet<>();
 }

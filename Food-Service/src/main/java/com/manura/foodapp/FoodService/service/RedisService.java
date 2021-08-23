@@ -1,7 +1,6 @@
 package com.manura.foodapp.FoodService.service;
 
 import com.manura.foodapp.FoodService.Redis.Model.CommentCachingRedis;
-import com.manura.foodapp.FoodService.Redis.Model.FoodCachingRedis;
 import com.manura.foodapp.FoodService.dto.CommentsDto;
 import com.manura.foodapp.FoodService.dto.FoodCommentDto;
 import com.manura.foodapp.FoodService.dto.FoodDto;
@@ -13,7 +12,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 public interface RedisService {
-	public void save(FoodCachingRedis obj);
+	public void save(FoodDto obj);
 	public void saveComment(CommentCachingRedis obj);
 
 	public Mono<Void> addNewUser(UserEntity user);

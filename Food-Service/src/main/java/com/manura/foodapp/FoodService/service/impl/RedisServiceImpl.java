@@ -12,7 +12,6 @@ import org.springframework.data.redis.core.ReactiveValueOperations;
 import org.springframework.stereotype.Service;
 
 import com.manura.foodapp.FoodService.Redis.Model.CommentCachingRedis;
-import com.manura.foodapp.FoodService.Redis.Model.FoodCachingRedis;
 import com.manura.foodapp.FoodService.dto.CommentsDto;
 import com.manura.foodapp.FoodService.dto.FoodCommentDto;
 import com.manura.foodapp.FoodService.dto.FoodDto;
@@ -31,8 +30,8 @@ public class RedisServiceImpl implements RedisService {
 	private ModelMapper modelMapper = new ModelMapper();
 
 	@Autowired
-	private ReactiveRedisTemplate<String, FoodCachingRedis> reactiveRedisTemplateForFood;
-	private ReactiveValueOperations<String, FoodCachingRedis> reactiveRedisTemplateOpsFood;
+	private ReactiveRedisTemplate<String, FoodDto> reactiveRedisTemplateForFood;
+	private ReactiveValueOperations<String, FoodDto> reactiveRedisTemplateOpsFood;
 
 	@Autowired
 	private ReactiveRedisTemplate<String, CommentCachingRedis> reactiveRedisTemplateComment;
@@ -50,9 +49,9 @@ public class RedisServiceImpl implements RedisService {
 	}
 
 	@Override
-	public void save(FoodCachingRedis obj) {
+	public void save(FoodDto obj) {
 		try {
-			reactiveRedisTemplateOpsFood.set(obj.getName(), obj).publishOn(Schedulers.boundedElastic())
+			reactiveRedisTemplateOpsFood.set(obj.getId(), obj).publishOn(Schedulers.boundedElastic())
 					.subscribeOn(Schedulers.boundedElastic()).subscribe(i -> {
 
 					});
@@ -65,8 +64,7 @@ public class RedisServiceImpl implements RedisService {
 	public Mono<FoodDto> getFood(String name) {
 		try {
 			return reactiveRedisTemplateOpsFood.get(name).publishOn(Schedulers.boundedElastic())
-					.subscribeOn(Schedulers.boundedElastic()).map(i -> i.getFood())
-					.map(i -> modelMapper.map(i, FoodDto.class)).switchIfEmpty(Mono.empty());
+					.subscribeOn(Schedulers.boundedElastic()).switchIfEmpty(Mono.empty());
 		} catch (Exception e) {
 			return Mono.empty();
 		}
@@ -129,7 +127,7 @@ public class RedisServiceImpl implements RedisService {
 		try {
 			reactiveRedisTemplateOpsFood.get(key).publishOn(Schedulers.boundedElastic())
 					.subscribeOn(Schedulers.boundedElastic()).subscribe(i -> {
-						i.getFood().getFoodHuts().forEach(foodData -> {
+						i.getFoodHuts().forEach(foodData -> {
 							if (foodData.getId().equals(foodHutId)) {
 								foodData = food;
 							}
@@ -244,7 +242,7 @@ public class RedisServiceImpl implements RedisService {
 	@Override
 	public Mono<Void> addNewUser(UserEntity user) {
 		try {
-			reactiveRedisTemplateOpsUser.set(user.getPublicId(), user)
+			reactiveRedisTemplateOpsUser.set(user.getId(), user)
 			.publishOn(Schedulers.boundedElastic())
 			.subscribeOn(Schedulers.boundedElastic()).subscribe();
 			return Mono.empty();
@@ -265,7 +263,7 @@ public class RedisServiceImpl implements RedisService {
 				   usr.setPic(user.getPic());
 				   return usr;
 			   }).doOnNext(i->{
-				   reactiveRedisTemplateOpsUser.set(i.getPublicId(), i);
+				   reactiveRedisTemplateOpsUser.set(i.getId(), i);
 			   }).subscribe();
 		}catch (Exception e) {
 			// TODO: handle exception

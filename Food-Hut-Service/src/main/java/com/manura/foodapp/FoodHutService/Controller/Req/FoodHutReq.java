@@ -6,20 +6,23 @@ import java.util.List;
 import lombok.Data;
 
 @Data
-public class FoodHutCreationReq implements Serializable{
+public class FoodHutReq implements Serializable{
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = -3318000054209590026L;
-	private String name;
 	private Integer zip;
+	private String publicId;
+	private String name;
 	private Integer groupSizePerTable;
 	private Integer ratingsQuantity;
 	private String summary;
 	private String description;
+	private String address;
+	private Boolean open;
 	private String opentAt;
-	private Double latitude; 
 	private Double longitude;
+	private Double latitude; 
 	private  List<String> foodIds;
 	List<String> phoneNumbers;
 }

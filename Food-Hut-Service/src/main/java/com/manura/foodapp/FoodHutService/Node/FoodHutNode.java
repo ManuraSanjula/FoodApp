@@ -31,6 +31,7 @@ public class FoodHutNode implements Serializable{
 	@Id
 	@GeneratedValue
 	private Long id;
+	
 	private Integer zip;
 	private String publicId;
 	private String name;
@@ -38,6 +39,8 @@ public class FoodHutNode implements Serializable{
 	private Integer ratingsQuantity;
 	private String summary;
 	private String description;
+	private String address;
+	private Boolean open;
 	private String imageCover;
 	private List<String> images;
 	private List<String> phoneNumbers;
