@@ -191,9 +191,7 @@ public class FoodServiceImpl implements FoodService {
 										foodHutEntitiesArray.add(u);
 									});
 								}
-								if (!foodHutEntitiesArray.isEmpty()) {
-									i.setFoodHuts(foodHutEntitiesArray);
-								}
+								i.setFoodHuts(foodHutEntitiesArray);
 							}
 						});
 						Runnable event = () -> {
@@ -205,7 +203,18 @@ public class FoodServiceImpl implements FoodService {
 					}).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic()).map(i -> {
 						redisServiceImpl.updateCommentIFFoodUpdated(id, modelMapper.map(i, FoodCommentDto.class));
 						return i;
-					}).flatMap(fo -> Mono.just(foodRepo.save(fo))).map(i -> {
+					}).flatMap(fo -> Mono.just(foodRepo.save(fo))).doOnNext(i->{
+						Runnable updateFoodHut = () -> {
+							foodHutIds.forEach(fooIds -> {
+								Optional<FoodHutEntity> foodHutEntity = foodHutRepo.findById(fooIds);
+								if (foodHutEntity.isPresent()) {
+									foodHutEntity.get().getFoods().add(i);
+									foodHutRepo.save(foodHutEntity.get());
+								}
+							});
+						};
+						new Thread(updateFoodHut).start();
+					}).map(i -> {
 						return modelMapper.map(i, FoodDto.class);
 					});
 
@@ -471,12 +480,12 @@ public class FoodServiceImpl implements FoodService {
 	public Flux<HalfFoodRes> findByLocationNear(Point p, Distance d) {
 		return Flux.fromIterable(this.foodHutRepo.findByLocationNear(p, d)).publishOn(Schedulers.boundedElastic())
 				.subscribeOn(Schedulers.boundedElastic()).mapNotNull(i -> {
-				     List<FoodEntity> foods = new ArrayList<>();
+				     Set<FoodEntity> foods = new HashSet<>();
 				     foods.addAll(i.getFoods());
 				     return Flux.fromIterable(foods);
 				}).flatMap(i -> i).map(i -> modelMapper.map(i, HalfFoodRes.class)).publishOn(Schedulers.boundedElastic())
 				.subscribeOn(Schedulers.boundedElastic())
-				.switchIfEmpty(Flux.fromIterable(new ArrayList<>()));
+				.switchIfEmpty(Flux.fromIterable(new ArrayList<>())).distinct();
 	}
 
 	@Override

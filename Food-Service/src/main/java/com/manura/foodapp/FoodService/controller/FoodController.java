@@ -9,6 +9,7 @@ import org.springframework.data.geo.Metrics;
 import org.springframework.data.geo.Point;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.multipart.FilePart;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -111,6 +112,7 @@ public class FoodController {
 	}
 
 	@PostMapping
+	@PreAuthorize("hasRole('ADMIN')")
 	Mono<ResponseEntity<FoodDto>> insertFood(@RequestBody Mono<FoodReq> foodReq) {
 		return foodReq.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic()).flatMap(i -> {
 			if (i.getDescription() == null || i.getFoodHutsIds() == null || i.getType() == null || i.getPrice() == null

@@ -1,10 +1,13 @@
 package com.manura.foodapp.FoodService.controller.Model.Res;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+
 import java.io.Serializable;
 import java.util.Map;
 
 @Data
+@EqualsAndHashCode
 public class HalfFoodRes implements Serializable, Comparable<HalfFoodRes> {
     /**
 	 * 
