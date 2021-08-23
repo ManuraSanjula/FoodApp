@@ -146,6 +146,7 @@ public class FoodHutServiceImpl implements FoodHutService {
 													}
 												});
 									});
+									i.setFoods(foods);
 								}
 								if (updateReq.getLatitude() != null && updateReq.getLongitude() != null) {
 									Point location = new Point(updateReq.getLongitude(), updateReq.getLatitude());
