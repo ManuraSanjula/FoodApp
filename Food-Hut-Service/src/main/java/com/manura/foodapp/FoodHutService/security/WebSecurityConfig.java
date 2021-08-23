@@ -3,7 +3,6 @@ package com.manura.foodapp.FoodHutService.security;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -28,22 +27,18 @@ public class WebSecurityConfig {
 	private final Logger logger = LoggerFactory.getLogger(WebSecurityConfig.class);
 	private final TokenConverter tokenConverter;
 	
-	@Value("${app.public_routes}")
-    private String[] publicRoutes;
-	
-	@Value("${app.admin.routes}")
-    private String[] adimnRoutes;
-	
-	@Value("${app.roles}")
-    private String[] roles;
-	
 	@Bean
 	public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http, AuthenticationManager authManager) {
 		return http.authorizeExchange().pathMatchers(HttpMethod.OPTIONS).permitAll()
-				.pathMatchers(HttpMethod.GET,publicRoutes).permitAll()
-				.pathMatchers(HttpMethod.PUT,adimnRoutes).hasAnyRole(roles)
-				.pathMatchers(HttpMethod.POST,adimnRoutes).hasAnyAuthority(roles)
-
+				.pathMatchers(HttpMethod.GET,"/foodHuts/**").permitAll()
+				.pathMatchers(HttpMethod.POST,"/foodHuts").hasAnyAuthority("ROLE_ADMIN")
+				.pathMatchers(HttpMethod.PUT,"/foodHuts/{id}").hasAnyAuthority("ROLE_ADMIN")
+				.pathMatchers(HttpMethod.PUT,"/foodHuts/{id}/coverImage").hasAnyAuthority("ROLE_ADMIN")
+				.pathMatchers(HttpMethod.PUT,"/foodHuts/{id}/Images").hasAnyAuthority("ROLE_ADMIN")
+				.pathMatchers(HttpMethod.POST,"/foodHuts/{id}/comments").hasAnyAuthority("ROLE_USER","ROLE_ADMIN")
+				.pathMatchers(HttpMethod.DELETE,"/foodHuts/{foodHutId}/comments/{commentId}").hasAnyAuthority("ROLE_USER","ROLE_ADMIN")
+				.pathMatchers(HttpMethod.PUT,"/foodHuts/{foodHutId}/comments/{commentId}")
+				.hasAnyAuthority("ROLE_USER","ROLE_ADMIN")
 				.and().csrf()
 				.disable().httpBasic().disable().formLogin().disable().exceptionHandling()
 				.authenticationEntryPoint((swe, e) -> {
