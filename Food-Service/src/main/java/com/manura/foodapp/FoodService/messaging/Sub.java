@@ -28,7 +28,7 @@ public class Sub {
 
 	private static final Logger LOG = LoggerFactory.getLogger(Sub.class);
 
-	@RabbitListener(queues = "user_created-food")
+	@RabbitListener(queues = "user_created-food",concurrency = "20")
 	public void user_created_food(String message) {
 		try {
 			var user = objectMapper.readValue(message, UserDto.class);
@@ -38,7 +38,7 @@ public class Sub {
 		}
 	}
 	
-	@RabbitListener(queues = "user_updated-food")
+	@RabbitListener(queues = "user_updated-food",concurrency = "20")
 	public void user_updated_food(String message) {
 		try {
 			var user = objectMapper.readValue(message, UserDto.class);
@@ -49,7 +49,7 @@ public class Sub {
 		}
 	}
 	
-	@RabbitListener(queues = "foodHut_created-food")
+	@RabbitListener(queues = "foodHut_created-food",concurrency = "20")
 	public void foodHut_created_food(String message) {
 		try {
 			var foodHut = objectMapper.readValue(message, FoodHutDtoForMessaging.class);
@@ -67,7 +67,7 @@ public class Sub {
 		}
 	}
 	
-	@RabbitListener(queues = "foodHut_updated-food")
+	@RabbitListener(queues = "foodHut_updated-food",concurrency = "20")
 	public void foodHut_updated_food(String message) {
 		try {
 			var foodHut = objectMapper.readValue(message, FoodHutDtoForMessaging.class);

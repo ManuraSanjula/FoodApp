@@ -20,7 +20,7 @@ public class FoodHutReq implements Serializable{
 	private String description;
 	private String address;
 	private Boolean open;
-	private String opentAt;
+	private String openAt;
 	private Double longitude;
 	private Double latitude; 
 	private  List<String> foodIds;

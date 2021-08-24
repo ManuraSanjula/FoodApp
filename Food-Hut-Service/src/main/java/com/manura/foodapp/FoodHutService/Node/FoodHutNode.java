@@ -44,7 +44,7 @@ public class FoodHutNode implements Serializable{
 	private String imageCover;
 	private List<String> images;
 	private List<String> phoneNumbers;
-	private String opentAt;
+	private String openAt;
 
 	@Relationship(type = "FOODHUT_HAS_COMMENTS", direction = Relationship.Direction.OUTGOING)
 	private Set<FoodHutHasComment> comment = new HashSet<>();

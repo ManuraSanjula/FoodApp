@@ -5,6 +5,7 @@ import lombok.Data;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Data
 public class FoodDto implements Serializable,Comparable<FoodDto> {
@@ -24,7 +25,7 @@ public class FoodDto implements Serializable,Comparable<FoodDto> {
     String coverImage;
     List<String> images;
     Boolean offered;
-    List<FoodHutDto> foodHuts;
+    Set<FoodHutDto> foodHuts;
 	@Override
 	public int compareTo(FoodDto o) {
 		// TODO Auto-generated method stub

@@ -23,7 +23,7 @@ public class Sub {
 	
 	private static final Logger LOG = LoggerFactory.getLogger(Sub.class);
 	
-	@RabbitListener(queues = "user_created-Cart")
+	@RabbitListener(queues = "user_created-Cart",concurrency = "20")
 	public void user_created_Cart(String message) {
 		try {
 			var user = objectMapper.readValue(message, UserTable.class);
@@ -33,7 +33,7 @@ public class Sub {
 		}
 	}
 	
-	@RabbitListener(queues = "user_updated-Cart")
+	@RabbitListener(queues = "user_updated-Cart",concurrency = "20")
 	public void user_updated_Cart(String message) {
 		try {
 			var user = objectMapper.readValue(message, UserTable.class);
@@ -43,7 +43,7 @@ public class Sub {
 		}
 	}
 	
-	@RabbitListener(queues = "food_created-Cart")
+	@RabbitListener(queues = "food_created-Cart",concurrency = "20")
 	public void food_created_Cart(String message) {
 		try {
 			var food = objectMapper.readValue(message, FoodTable.class);
@@ -53,7 +53,7 @@ public class Sub {
 		}
 	}
 	
-	@RabbitListener(queues = "food_updated-Cart")
+	@RabbitListener(queues = "food_updated-Cart",concurrency = "20")
 	public void food_updated_Cart(String message) {
 		try {
 			var food = objectMapper.readValue(message, FoodTable.class);

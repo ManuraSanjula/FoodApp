@@ -17,7 +17,8 @@ import reactor.core.publisher.Mono;
  */
 @Repository
 public interface CartRepo extends R2dbcRepository<CartTable, Integer> {
-   Mono<CartTable> findByUserAndFood(String user,String food);
-   Flux<CartTable> findByUser(String user);
+   Mono<CartTable> findByUserNameAndFood(String user,String food);
+   Flux<CartTable> findByUserName(String user);
    Mono<CartTable> findByPublicId(String id);
+   Mono<Void> deleteByUserNameAndFood(String user,String food);
 }

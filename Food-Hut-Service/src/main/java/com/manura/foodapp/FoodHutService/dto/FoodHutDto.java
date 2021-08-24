@@ -25,7 +25,7 @@ public class FoodHutDto implements Serializable {
 	private String imageCover;
 	private List<String> images;
 	private List<String> phoneNumbers;
-	private String opentAt;
+	private String openAt;
 	
 	
 	private Set<FoodHutHasCommentDto> comment = new HashSet<>();

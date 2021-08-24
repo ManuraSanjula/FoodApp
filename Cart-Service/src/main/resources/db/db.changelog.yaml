@@ -206,7 +206,7 @@ databaseChangeLog:
                   constraints:
                     nullable: false  
               - column:
-                  name: user
+                  name: user_name
                   type: varchar(100)
                   defaultValue: ""
                   constraints:

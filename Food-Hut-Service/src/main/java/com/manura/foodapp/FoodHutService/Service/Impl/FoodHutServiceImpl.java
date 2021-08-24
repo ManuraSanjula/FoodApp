@@ -68,6 +68,7 @@ public class FoodHutServiceImpl implements FoodHutService {
 				.subscribeOn(Schedulers.boundedElastic()).mapNotNull(foodHut -> {
 					Point location = new Point(longitude, latitude);
 					Set<FoodHutHasFood> foods = new HashSet<>();
+					if(foodIds != null) {
 					foodIds.forEach(i -> {
 						foodRepo.findByPublicId(i).publishOn(Schedulers.boundedElastic())
 								.subscribeOn(Schedulers.boundedElastic()).subscribe(food -> {
@@ -77,12 +78,12 @@ public class FoodHutServiceImpl implements FoodHutService {
 										foods.add(foodHutHasFood);
 									}
 								});
-					});
+					});}
 					foodHut.setLocation(location);
-					foodHut.setPublicId(utils.generateId(80));
+					foodHut.setPublicId(utils.generateId(50));
 					foodHut.setFoods(foods);
 					foodHut.setComment(new HashSet<>());
-					foodHut.setImageCover("/food-hut/FoodHutCoverImage");
+					foodHut.setImageCover("/foodHut-image/FoodHutCoverImage");
 					foodHut.setRatingsQuantity(4);
 					foodHut.setImages(new ArrayList<>());
 					return foodHut;
@@ -130,22 +131,20 @@ public class FoodHutServiceImpl implements FoodHutService {
 								if (updateReq.getDescription() != null) {
 									i.setDescription(updateReq.getDescription());
 								}
-								if (updateReq.getOpentAt() != null) {
-									i.setOpentAt(updateReq.getOpentAt());
+								if (updateReq.getOpenAt() != null) {
+									i.setOpenAt(updateReq.getOpenAt());
 								}
 								if (updateReq.getFoodIds() != null) {
 									Set<FoodHutHasFood> foods = new HashSet<>();
 									foods.addAll(i.getFoods());
+									
 									updateReq.getFoodIds().forEach(j -> {
-										foodRepo.findByPublicId(j).publishOn(Schedulers.boundedElastic())
-												.subscribeOn(Schedulers.boundedElastic()).subscribe(food -> {
-													if (food != null) {
-														FoodHutHasFood foodHutHasFood = new FoodHutHasFood();
-														foodHutHasFood.setFood(food);
-														foods.add(foodHutHasFood);
-													}
-												});
+										FoodNode foodNode = foodRepo.findByPublicId(j).block();
+										FoodHutHasFood foodHutHasFood = new FoodHutHasFood();
+										foodHutHasFood.setFood(foodNode);
+										foods.add(foodHutHasFood);
 									});
+									
 									i.setFoods(foods);
 								}
 								if (updateReq.getLatitude() != null && updateReq.getLongitude() != null) {

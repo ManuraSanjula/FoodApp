@@ -1,8 +1,9 @@
 package com.manura.foodapp.FoodService.entity;
 
 import java.io.Serializable;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
@@ -27,7 +28,7 @@ public class FoodHutEntity implements Serializable, Comparable<FoodHutEntity> {
 	private List<String> phoneNumbers;
 	private String image;
 	@DBRef
-	private List<FoodEntity> foods = new ArrayList<FoodEntity>();
+	private Set<FoodEntity> foods = new HashSet<FoodEntity>();
 	@GeoSpatialIndexed(type = GeoSpatialIndexType.GEO_2DSPHERE)
 	private GeoJsonPoint location;
 

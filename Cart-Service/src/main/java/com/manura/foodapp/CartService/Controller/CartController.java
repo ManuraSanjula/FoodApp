@@ -2,6 +2,7 @@ package com.manura.foodapp.CartService.Controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,8 +24,8 @@ public class CartController {
   @Autowired
   private CartServiceImpl cartServiceImpl;
   
-   @PostMapping
-	Mono<ResponseEntity<CartDto>> insertCart(@RequestBody Mono<CartReq> foodReq) {
+    @PostMapping
+	Mono<ResponseEntity<String>> insertCart(@RequestBody Mono<CartReq> foodReq) {
 		return cartServiceImpl.saveCart(foodReq).map(ResponseEntity::ok)
 				.defaultIfEmpty(ResponseEntity.badRequest().build())
 				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
@@ -35,5 +36,11 @@ public class CartController {
   		return cartServiceImpl.getCart(user)
   				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
   	}
+    
+    @DeleteMapping("/{user}/{id}")
+   	Mono<ResponseEntity<Void>> deleteCart(@PathVariable String user,@PathVariable String id) {
+   		return cartServiceImpl.deleteCart(user, id).map(ResponseEntity::ok)
+   				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+   	}
   
 }

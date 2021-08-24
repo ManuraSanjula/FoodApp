@@ -109,14 +109,14 @@ public class FoodServiceImpl implements FoodService {
 
 	@Override
 	public Mono<FoodDto> save(Mono<FoodDto> foodDto, List<String> foodHutIds) {
-		List<FoodHutEntity> foodHutEntities = new ArrayList<FoodHutEntity>();
+		Set<FoodHutEntity> foodHutEntities = new HashSet<FoodHutEntity>();
 		return foodDto.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
 				.map(i -> modelMapper.map(i, FoodEntity.class)).map(i -> {
 					i.setPublicId(util.generateId(20));
 					i.setUnlikes(0);
 					i.setLikes(0);
 					i.setRating(3.0);
-					i.setCoverImage("FoodCoverImage");
+					i.setCoverImage("/food-image/FoodCoverImage");
 					i.setOffered(true);
 					i.setImages(new ArrayList<String>());
 					foodHutIds.forEach(id -> {
@@ -130,8 +130,8 @@ public class FoodServiceImpl implements FoodService {
 					return i;
 				}).flatMap(food -> Mono.just(foodRepo.save(food))).doOnNext(i->{
 					Runnable updateFoodHut = () -> {
-						foodHutIds.forEach(id -> {
-							Optional<FoodHutEntity> foodHutEntity = foodHutRepo.findById(id);
+						foodHutIds.forEach(foodId -> {
+							Optional<FoodHutEntity> foodHutEntity = foodHutRepo.findById(foodId);
 							if (foodHutEntity.isPresent()) {
 								foodHutEntity.get().getFoods().add(i);
 								foodHutRepo.save(foodHutEntity.get());
@@ -176,22 +176,17 @@ public class FoodServiceImpl implements FoodService {
 							}
 							if (foodHutIds != null) {
 								foodHutIds.forEach(foodHutId -> {
+									
 									foodHutEntities.addAll(i.getFoodHuts());
 									i.getFoodHuts().forEach(foodHut -> {
-										if (!foodHut.getId().equals(foodHutId)) {
-											Optional<FoodHutEntity> foodHutEntity = foodHutRepo.findById(foodHutId);
-											if (foodHutEntity.isPresent())
-												foodHutEntities.add(foodHutEntity.get());
-										}
+										Optional<FoodHutEntity> foodHutEntity = foodHutRepo.findById(foodHutId);
+										if (foodHutEntity.isPresent()) {
+											foodHutEntities.add(foodHutEntity.get());
+											
+										}	
 									});
 								});
-								List<FoodHutEntity> foodHutEntitiesArray = new ArrayList<FoodHutEntity>();
-								if (!foodHutEntities.isEmpty()) {
-									foodHutEntities.forEach(u -> {
-										foodHutEntitiesArray.add(u);
-									});
-								}
-								i.setFoodHuts(foodHutEntitiesArray);
+								i.setFoodHuts(foodHutEntities);
 							}
 						});
 						Runnable event = () -> {
@@ -203,15 +198,20 @@ public class FoodServiceImpl implements FoodService {
 					}).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic()).map(i -> {
 						redisServiceImpl.updateCommentIFFoodUpdated(id, modelMapper.map(i, FoodCommentDto.class));
 						return i;
-					}).flatMap(fo -> Mono.just(foodRepo.save(fo))).doOnNext(i->{
-						foodHutIds.forEach(g -> {
-							Optional<FoodHutEntity> foodHutEntity = foodHutRepo.findById(g);
-							if (foodHutEntity.isPresent()) {
-								foodHutEntity.get().getFoods().add(i);
-								foodHutRepo.save(foodHutEntity.get());
-							}
-						});
-					}).map(i -> {
+					}).flatMap(fo -> Mono.just(foodRepo.save(fo)))
+					.doOnNext(i->{
+						Runnable updateFoodHut = () -> {
+							foodHutIds.forEach(foodId -> {
+								Optional<FoodHutEntity> foodHutEntity = foodHutRepo.findById(foodId);
+								if (foodHutEntity.isPresent()) {
+									foodHutEntity.get().getFoods().add(i);
+									foodHutRepo.save(foodHutEntity.get());
+								}
+							});
+						};
+						new Thread(updateFoodHut).start();
+					})
+					.map(i -> {
 						return modelMapper.map(i, FoodDto.class);
 					});
 

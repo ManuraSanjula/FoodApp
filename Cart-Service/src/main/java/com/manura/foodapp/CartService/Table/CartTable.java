@@ -31,7 +31,7 @@ public class CartTable implements Serializable, Persistable<Integer> {
 	private Integer id;
 	private String publicId;
 	
-	private String user;
+	private String userName;
 	
 	private String food;
 

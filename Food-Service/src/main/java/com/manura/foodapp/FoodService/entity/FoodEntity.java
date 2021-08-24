@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
@@ -36,7 +37,7 @@ public class FoodEntity implements Serializable,Comparable<FoodEntity>{
     @DBRef(lazy = true)
     private List<CommentsEntity> comments;
     @DBRef(lazy = true)
-    private List<FoodHutEntity> foodHuts;
+    private Set<FoodHutEntity> foodHuts;
 	@Override
 	public int compareTo(FoodEntity o) {
 		// TODO Auto-generated method stub
