@@ -10,7 +10,6 @@ public class CartReq implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = 7966396970175121116L;
-	private String user;
 	private String food;
 	private Long count;
 }

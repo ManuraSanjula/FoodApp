@@ -1,5 +1,7 @@
 package com.manura.foodapp.CartService.Controller;
 
+import java.security.Principal;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -25,10 +27,15 @@ public class CartController {
   private CartServiceImpl cartServiceImpl;
   
     @PostMapping
-	Mono<ResponseEntity<String>> insertCart(@RequestBody Mono<CartReq> foodReq) {
-		return cartServiceImpl.saveCart(foodReq).map(ResponseEntity::ok)
-				.defaultIfEmpty(ResponseEntity.badRequest().build())
-				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+	Mono<ResponseEntity<String>> insertCart(@RequestBody Mono<CartReq> foodReq,Mono<Principal> principal) {
+    	
+    	return principal.map(Principal::getName).switchIfEmpty(Mono.just("Unauthorized"))
+    			.publishOn(Schedulers.boundedElastic())
+		     .subscribeOn(Schedulers.boundedElastic()).map(usr->{
+		    	 return cartServiceImpl.saveCart(foodReq,usr)
+		    			 .publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
+		    			 .map(ResponseEntity::ok);
+		     }).flatMap(i->i);
 	}
    
     @GetMapping("/{user}")
@@ -42,5 +49,5 @@ public class CartController {
    		return cartServiceImpl.deleteCart(user, id).map(ResponseEntity::ok)
    				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
    	}
-  
+ 
 }

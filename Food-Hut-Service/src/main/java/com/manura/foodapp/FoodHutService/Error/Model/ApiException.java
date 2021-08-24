@@ -4,7 +4,11 @@ import lombok.Getter;
 
 public class ApiException extends RuntimeException {
 
-    @Getter
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -6962160626046228297L;
+	@Getter
     protected String errorCode;
 
     public ApiException(String message, String errorCode) {

@@ -16,11 +16,13 @@ import reactor.core.publisher.Mono;
  *
  */
 public interface CartService {
-	Mono<String> saveCart(Mono<CartReq> cart);
+	Mono<String> saveCart(Mono<CartReq> cart,String email);
 	Flux<CartDto> getCart(String id);
 	Mono<Void> deleteCart(String user,String id);
 
 	Mono<UserTable> saveUser(Mono<UserTable> user);
+	
+	Mono<UserTable> getUser(String id);
 
 	Mono<UserTable> updateUser(String id,Mono<UserTable> user);
 	

@@ -47,19 +47,23 @@ public class CartServiceImpl implements CartService {
 	private Utils utils;
 
 	@Override
-	public Mono<String> saveCart(Mono<CartReq> cartReq) {
+	public Mono<String> saveCart(Mono<CartReq> cartReq,String email) {
 		return cartReq.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
 				.switchIfEmpty(Mono.error(new CartSerivceError(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage())))
 				.mapNotNull(i -> {
-					if (i.getFood() == null || i.getUser() == null) {
+					if (email == null || email.isBlank()) {
+						throw new CartSerivceError("Unauthorized");
+					}
+					if (i.getFood() == null) {
 						throw new CartSerivceError(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage());
 					}
+					
 					return foodRepo.findByPublicId(i.getFood()).publishOn(Schedulers.boundedElastic())
 							.subscribeOn(Schedulers.boundedElastic())
 							.switchIfEmpty(Mono.error(
 									new CartSerivceNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
 							.mapNotNull(food -> {
-								return userRepo.findByPublicId(i.getUser()).publishOn(Schedulers.boundedElastic())
+								return userRepo.findByEmail(email).publishOn(Schedulers.boundedElastic())
 										.subscribeOn(Schedulers.boundedElastic())
 										.switchIfEmpty(Mono.error(new CartSerivceNotFoundError(
 												ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
@@ -178,5 +182,11 @@ public class CartServiceImpl implements CartService {
 							}).flatMap(u -> u).publishOn(Schedulers.boundedElastic())
 							.subscribeOn(Schedulers.boundedElastic());
 				}).flatMap(u -> u).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+	}
+
+	@Override
+	public Mono<UserTable> getUser(String id) {
+		return userRepo.findByPublicId(id)
+				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
 }
