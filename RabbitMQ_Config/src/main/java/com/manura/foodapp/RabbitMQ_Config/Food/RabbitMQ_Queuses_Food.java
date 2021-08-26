@@ -24,6 +24,7 @@ public class RabbitMQ_Queuses_Food {
 		return new FanoutExchange("food-app-foodUpdated", true, false);
 	}
 
+	
 	@Bean
 	public Binding binding_foodUpdated_1() {
 		return BindingBuilder.bind(food_updated_Cart()).to(food_app_foodUpdated_Ex());
@@ -31,8 +32,19 @@ public class RabbitMQ_Queuses_Food {
 	
 	@Bean
 	public Binding binding_foodCreated_1() {
-		return BindingBuilder.bind(food_created_Cart()).to(food_app_foodUpdated_Ex());
+		return BindingBuilder.bind(food_created_Cart()).to(food_app_foodCreated_Ex());
 	}
+	
+	@Bean
+	public Binding binding_foodUpdated_2() {
+		return BindingBuilder.bind(food_updated_foodHut()).to(food_app_foodUpdated_Ex());
+	}
+	
+	@Bean
+	public Binding binding_foodCreated_2() {
+		return BindingBuilder.bind(food_created_foodHut()).to(food_app_foodCreated_Ex());
+	}
+	
 	
 
 	@Bean
@@ -61,16 +73,6 @@ public class RabbitMQ_Queuses_Food {
 		Map<String, Object> args = new HashMap<String, Object>();
 		args.put("x-dead-letter-exchange", "");
 		return new Queue("food_updated-foodHut", false, false, false, args);
-	}
-	
-	@Bean
-	public Binding binding_foodUpdated_2() {
-		return BindingBuilder.bind(food_updated_foodHut()).to(food_app_foodUpdated_Ex());
-	}
-	
-	@Bean
-	public Binding binding_foodCreated_2() {
-		return BindingBuilder.bind(food_created_foodHut()).to(food_app_foodUpdated_Ex());
 	}
 	
 }
