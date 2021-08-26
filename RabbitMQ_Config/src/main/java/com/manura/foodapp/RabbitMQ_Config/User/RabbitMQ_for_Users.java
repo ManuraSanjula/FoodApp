@@ -56,42 +56,42 @@ public class RabbitMQ_for_Users {
 	@Bean
 	public Queue user_created_food() {
 		Map<String, Object> args = new HashMap<String, Object>();
-		args.put("x-dead-letter-exchange", "");
+		args.put("x-dead-letter-exchange", "food_Error");
 		return new Queue("user_created-food", false, false, false, args);
 	}
 
 	@Bean
 	public Queue user_updated_food() {
 		Map<String, Object> args = new HashMap<String, Object>();
-		args.put("x-dead-letter-exchange", "");
+		args.put("x-dead-letter-exchange", "food_Error");
 		return new Queue("user_updated-food", false, false, false, args);
 	}
 
 	@Bean
 	public Queue user_created_Cart() {
 		Map<String, Object> args = new HashMap<String, Object>();
-		args.put("x-dead-letter-exchange", "");
+		args.put("x-dead-letter-exchange", "food_Error");
 		return new Queue("user_created-Cart", false, false, false, args);
 	}
 
 	@Bean
 	public Queue user_updated_Cart() {
 		Map<String, Object> args = new HashMap<String, Object>();
-		args.put("x-dead-letter-exchange", "");
+		args.put("x-dead-letter-exchange", "food_Error");
 		return new Queue("user_updated-Cart", false, false, false, args);
 	}
 
 	@Bean
 	public Queue user_created_foodHut() {
 		Map<String, Object> args = new HashMap<String, Object>();
-		args.put("x-dead-letter-exchange", "");
+		args.put("x-dead-letter-exchange", "food_Error");
 		return new Queue("user_created-foodHut", false, false, false, args);
 	}
 
 	@Bean
 	public Queue user_updated_foodHut() {
 		Map<String, Object> args = new HashMap<String, Object>();
-		args.put("x-dead-letter-exchange", "");
+		args.put("x-dead-letter-exchange", "food_Error");
 		return new Queue("user_updated-foodHut", false, false, false, args);
 	}
 

@@ -45,33 +45,31 @@ public class RabbitMQ_Queuses_Food {
 		return BindingBuilder.bind(food_created_foodHut()).to(food_app_foodCreated_Ex());
 	}
 	
-	
-
 	@Bean
 	public Queue food_created_Cart() {
 		Map<String, Object> args = new HashMap<String, Object>();
-		args.put("x-dead-letter-exchange", "");
+		args.put("x-dead-letter-exchange", "food_Error");
 		return new Queue("food_created-Cart", false, false, false, args);
 	}
 	
 	@Bean
 	public Queue food_updated_Cart() {
 		Map<String, Object> args = new HashMap<String, Object>();
-		args.put("x-dead-letter-exchange", "");
+		args.put("x-dead-letter-exchange", "food_Error");
 		return new Queue("food_updated-Cart", false, false, false, args);
 	}
 	
 	@Bean
 	public Queue food_created_foodHut() {
 		Map<String, Object> args = new HashMap<String, Object>();
-		args.put("x-dead-letter-exchange", "");
+		args.put("x-dead-letter-exchange", "food_Error");
 		return new Queue("food_created-foodHut", false, false, false, args);
 	}
 	
 	@Bean
 	public Queue food_updated_foodHut() {
 		Map<String, Object> args = new HashMap<String, Object>();
-		args.put("x-dead-letter-exchange", "");
+		args.put("x-dead-letter-exchange", "food_Error");
 		return new Queue("food_updated-foodHut", false, false, false, args);
 	}
 	

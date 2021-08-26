@@ -532,4 +532,16 @@ public class FoodServiceImpl implements FoodService {
 			return Mono.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage()));
 		}
 	}
+
+	@Override
+	public Flux<HalfFoodRes> search(String regex) {
+		String fullRegex = ("/^" + regex + "/");
+		return Flux.fromIterable(foodRepo.findFoodByRegexString(fullRegex))
+				.map(i -> modelMapper.map(i, HalfFoodRes.class)).publishOn(Schedulers.boundedElastic())
+				.subscribeOn(Schedulers.boundedElastic());
+	}
 }
+
+
+
+

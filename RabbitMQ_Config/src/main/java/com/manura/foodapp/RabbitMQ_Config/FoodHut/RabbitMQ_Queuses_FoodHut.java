@@ -37,14 +37,14 @@ public class RabbitMQ_Queuses_FoodHut {
 	@Bean
 	public Queue foodHut_created_food() {
 		Map<String, Object> args = new HashMap<String, Object>();
-		args.put("x-dead-letter-exchange", "");
+		args.put("x-dead-letter-exchange", "food_Error");
 		return new Queue("foodHut_created-food", false, false, false, args);
 	}
 	
 	@Bean
 	public Queue foodHut_updated_food() {
 		Map<String, Object> args = new HashMap<String, Object>();
-		args.put("x-dead-letter-exchange", "");
+		args.put("x-dead-letter-exchange", "food_Error");
 		return new Queue("foodHut_updated-food", false, false, false, args);
 	}
 }

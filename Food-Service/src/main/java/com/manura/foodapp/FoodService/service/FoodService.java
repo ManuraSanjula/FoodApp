@@ -19,6 +19,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 public interface FoodService {
+	    Flux<HalfFoodRes> search(String regex);
 	    Flux<HalfFoodRes> findAll(int page,int size);
 	    Flux<CommentsDto> findAllComment(String foodId);
 	    Flux<HalfFoodRes> findByTypeAndName(String type, String name,int page,int size);

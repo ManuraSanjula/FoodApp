@@ -1,9 +1,12 @@
 package com.manura.foodapp.FoodService.repo;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import com.manura.foodapp.FoodService.entity.FoodEntity;
@@ -23,4 +26,7 @@ public interface FoodRepo extends MongoRepository<FoodEntity, String> {
     
     @Aggregation(pipeline = { "{$group: { _id: $id, total: {$avg: $rating }}}" })
 	double avg();
+    
+    @Query("{$or : [{'name': { $regex: ?0, $options:'i' }}, {'description': { $regex: ?0, $options:'i' }}]}")
+    List<FoodEntity> findFoodByRegexString(final String regexString);
 }
