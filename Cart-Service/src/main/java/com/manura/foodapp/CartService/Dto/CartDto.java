@@ -1,4 +1,4 @@
-package com.manura.foodapp.CartService.Table.Dto;
+package com.manura.foodapp.CartService.Dto;
 
 import java.io.Serializable;
 

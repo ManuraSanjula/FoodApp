@@ -43,7 +43,7 @@ public class FoodController {
 
 	ModelMapper modelMapper = new ModelMapper();
 	
-	@GetMapping
+	@GetMapping("/search")
 	Flux<HalfFoodRes> serachFoods(@RequestParam(required = false, defaultValue = "") String regex){
 		return foodServiceImpl.search(regex)
 				.publishOn(Schedulers.boundedElastic())

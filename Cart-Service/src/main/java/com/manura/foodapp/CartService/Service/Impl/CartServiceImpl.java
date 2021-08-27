@@ -1,5 +1,8 @@
 package com.manura.foodapp.CartService.Service.Impl;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -9,9 +12,6 @@ import com.manura.foodapp.CartService.Service.CartService;
 import com.manura.foodapp.CartService.Table.CartTable;
 import com.manura.foodapp.CartService.Table.FoodTable;
 import com.manura.foodapp.CartService.Table.UserTable;
-import com.manura.foodapp.CartService.Table.Dto.CartDto;
-import com.manura.foodapp.CartService.Table.Dto.FoodDto;
-import com.manura.foodapp.CartService.Table.Dto.UserDto;
 import com.manura.foodapp.CartService.repo.CartRepo;
 import com.manura.foodapp.CartService.repo.FoodRepo;
 import com.manura.foodapp.CartService.repo.UserRepo;
@@ -22,6 +22,10 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import com.manura.foodapp.CartService.Controller.Req.Model.CartReq;
+import com.manura.foodapp.CartService.Dto.CartDto;
+import com.manura.foodapp.CartService.Dto.FoodDto;
+import com.manura.foodapp.CartService.Dto.RedisCartDto;
+import com.manura.foodapp.CartService.Dto.UserDto;
 import com.manura.foodapp.CartService.Error.Model.CartSerivceError;
 import com.manura.foodapp.CartService.Error.Model.CartSerivceNotFoundError;
 
@@ -46,8 +50,10 @@ public class CartServiceImpl implements CartService {
 	@Autowired
 	private Utils utils;
 
+	private RedisServiceImpl redisServiceImpl;
+
 	@Override
-	public Mono<String> saveCart(Mono<CartReq> cartReq,String email) {
+	public Mono<String> saveCart(Mono<CartReq> cartReq, String email) {
 		return cartReq.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
 				.switchIfEmpty(Mono.error(new CartSerivceError(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage())))
 				.mapNotNull(i -> {
@@ -57,7 +63,7 @@ public class CartServiceImpl implements CartService {
 					if (i.getFood() == null) {
 						throw new CartSerivceError(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage());
 					}
-					
+
 					return foodRepo.findByPublicId(i.getFood()).publishOn(Schedulers.boundedElastic())
 							.subscribeOn(Schedulers.boundedElastic())
 							.switchIfEmpty(Mono.error(
@@ -161,12 +167,10 @@ public class CartServiceImpl implements CartService {
 				.switchIfEmpty(saveFood(Mono.just(food.block().setAsNew())));
 	}
 
-	@Override
-	public Flux<CartDto> getCart(String id) {
-		return cartRepo.findByUserName(id)
-				.switchIfEmpty(
-						Flux.error(new CartSerivceNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
-				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic()).map(e -> {
+	private Flux<CartDto> cacheNotPresent(String id) {
+		List<CartDto> cartDtos = new ArrayList<>();
+		return cartRepo.findByUserName(id).switchIfEmpty(Flux.empty()).publishOn(Schedulers.boundedElastic())
+				.subscribeOn(Schedulers.boundedElastic()).map(e -> {
 					return foodRepo.findById(e.getFoodId()).publishOn(Schedulers.boundedElastic())
 							.subscribeOn(Schedulers.boundedElastic()).map(i -> {
 								return userRepo.findById(e.getUserId()).publishOn(Schedulers.boundedElastic())
@@ -177,16 +181,29 @@ public class CartServiceImpl implements CartService {
 											cart.setUser(modelMapper.map(d, UserDto.class));
 											cart.setCount(e.getCount());
 											cart.setPrice(e.getPrice());
+											cartDtos.add(cart);
 											return cart;
 										});
 							}).flatMap(u -> u).publishOn(Schedulers.boundedElastic())
 							.subscribeOn(Schedulers.boundedElastic());
-				}).flatMap(u -> u).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+				}).flatMap(u -> u).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
+				.doOnNext(i->{
+					RedisCartDto redisCartDto = new RedisCartDto();
+					redisCartDto.setUser(id);
+					redisCartDto.setCartDtos(cartDtos);
+					redisServiceImpl.save(redisCartDto).subscribe();
+				});
+	}
+
+	@Override
+	public Flux<CartDto> getCart(String id) {
+		return redisServiceImpl.get(id).switchIfEmpty(cacheNotPresent(id)).publishOn(Schedulers.boundedElastic())
+				.subscribeOn(Schedulers.boundedElastic());
 	}
 
 	@Override
 	public Mono<UserTable> getUser(String id) {
-		return userRepo.findByPublicId(id)
-				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+		return userRepo.findByPublicId(id).publishOn(Schedulers.boundedElastic())
+				.subscribeOn(Schedulers.boundedElastic());
 	}
 }

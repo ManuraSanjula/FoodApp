@@ -345,12 +345,10 @@ public class UserServiceImpl implements UserService {
 			ByteArrayOutputStream stream = new ByteArrayOutputStream(); // your output
 			BufferedImage bufferedImage = Scalr.resize(imBuff, Scalr.Method.AUTOMATIC, Scalr.Mode.AUTOMATIC, targetWidth, targetHeight,
 					Scalr.OP_ANTIALIAS);
-	//		BufferedImage bufferedImage =  Scalr.resize(imBuff, targetWidth);
 			try {
 				ImageIO.write(bufferedImage, "jpeg", stream);
 				InputStream inputStream = new ByteArrayInputStream(stream.toByteArray());
 				MultipartFile multipartFile = new MockMultipartFile("temp.jpg","temp.jpg","", inputStream);
-				//MultipartFile multipartFile =  new MultipartImage(stream.toByteArray(), "UserPic", "UserPic", "jpeg", size);
 				return multipartFile;
 			} catch (Exception e) {
 				return null;

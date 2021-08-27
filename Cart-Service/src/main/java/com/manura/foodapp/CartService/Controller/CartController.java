@@ -13,8 +13,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.manura.foodapp.CartService.Controller.Req.Model.CartReq;
+import com.manura.foodapp.CartService.Dto.CartDto;
 import com.manura.foodapp.CartService.Service.Impl.CartServiceImpl;
-import com.manura.foodapp.CartService.Table.Dto.CartDto;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
