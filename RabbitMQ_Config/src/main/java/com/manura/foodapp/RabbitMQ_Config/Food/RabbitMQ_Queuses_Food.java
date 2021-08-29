@@ -46,10 +46,34 @@ public class RabbitMQ_Queuses_Food {
 	}
 	
 	@Bean
+	public Binding binding_foodUpdated_3() {
+		return BindingBuilder.bind(food_updated_order()).to(food_app_foodUpdated_Ex());
+	}
+	
+	@Bean
+	public Binding binding_foodCreated_3() {
+		return BindingBuilder.bind(food_created_order()).to(food_app_foodCreated_Ex());
+	}
+	
+	@Bean
 	public Queue food_created_Cart() {
 		Map<String, Object> args = new HashMap<String, Object>();
 		args.put("x-dead-letter-exchange", "food_Error");
 		return new Queue("food_created-Cart", false, false, false, args);
+	}
+	
+	@Bean
+	public Queue food_updated_order() {
+		Map<String, Object> args = new HashMap<String, Object>();
+		args.put("x-dead-letter-exchange", "food_Error");
+		return new Queue("food_updated-order", false, false, false, args);
+	}
+	
+	@Bean
+	public Queue food_created_order() {
+		Map<String, Object> args = new HashMap<String, Object>();
+		args.put("x-dead-letter-exchange", "food_Error");
+		return new Queue("food_created-order", false, false, false, args);
 	}
 	
 	@Bean

@@ -39,6 +39,11 @@ public class RabbitMQ_for_Users {
 	}
 	
 	@Bean
+	public Binding binding_user_created_4() {
+		return BindingBuilder.bind(user_created_order()).to(food_app_userCreated_Ex());
+	}
+	
+	@Bean
 	public Binding binding_user_updated_1() {
 		return BindingBuilder.bind(user_updated_food()).to(food_app_userUpdated_Ex());
 	}
@@ -51,6 +56,11 @@ public class RabbitMQ_for_Users {
 	@Bean
 	public Binding binding_user_updated_3() {
 		return BindingBuilder.bind(user_updated_Cart()).to(food_app_userUpdated_Ex());
+	}
+	
+	@Bean
+	public Binding binding_user_updated_4() {
+		return BindingBuilder.bind(user_updated_order()).to(food_app_userUpdated_Ex());
 	}
 	
 	@Bean
@@ -67,6 +77,22 @@ public class RabbitMQ_for_Users {
 		return new Queue("user_updated-food", false, false, false, args);
 	}
 
+	
+	@Bean
+	public Queue user_created_order() {
+		Map<String, Object> args = new HashMap<String, Object>();
+		args.put("x-dead-letter-exchange", "food_Error");
+		return new Queue("user_created-order", false, false, false, args);
+	}
+
+	@Bean
+	public Queue user_updated_order() {
+		Map<String, Object> args = new HashMap<String, Object>();
+		args.put("x-dead-letter-exchange", "food_Error");
+		return new Queue("user_updated-order", false, false, false, args);
+	}
+
+	
 	@Bean
 	public Queue user_created_Cart() {
 		Map<String, Object> args = new HashMap<String, Object>();
