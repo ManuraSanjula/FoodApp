@@ -8,8 +8,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
-import com.manura.foodapp.OrderService.Error.Model.CartSerivceError;
-import com.manura.foodapp.OrderService.Error.Model.CartSerivceNotFoundError;
+import com.manura.foodapp.OrderService.Error.Model.OrderSerivceError;
+import com.manura.foodapp.OrderService.Error.Model.OrderSerivceNotFoundError;
 import com.manura.foodapp.OrderService.Error.Model.Res.ErrorMessage;
 
 import reactor.core.publisher.Mono;
@@ -17,15 +17,15 @@ import reactor.core.publisher.Mono;
 @ControllerAdvice
 public class ErrorController {
 
-    @ExceptionHandler(CartSerivceNotFoundError.class)
-    public Mono<ResponseEntity<ErrorMessage>> handleFoodNotFoundError(CartSerivceNotFoundError ex){
+    @ExceptionHandler(OrderSerivceNotFoundError.class)
+    public Mono<ResponseEntity<ErrorMessage>> handleFoodNotFoundError(OrderSerivceNotFoundError ex){
         
         ErrorMessage errorMessage = new ErrorMessage(new Date(), ex.getMessage());
         return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorMessage));
     }
 
-    @ExceptionHandler(CartSerivceError.class)
-    public Mono<ResponseEntity<ErrorMessage>> handleFoodError(CartSerivceError ex){
+    @ExceptionHandler(OrderSerivceError.class)
+    public Mono<ResponseEntity<ErrorMessage>> handleFoodError(OrderSerivceError ex){
         
         ErrorMessage errorMessage = new ErrorMessage(new Date(), ex.getMessage());
         return Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage));

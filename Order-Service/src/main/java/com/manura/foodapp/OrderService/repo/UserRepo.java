@@ -8,7 +8,7 @@ import com.manura.foodapp.OrderService.Table.UserTable;
 import reactor.core.publisher.Mono;
 
 @Repository
-public interface UserRepo extends ReactiveCassandraRepository<UserTable,Integer> {
+public interface UserRepo extends ReactiveCassandraRepository<UserTable,Long> {
 	 Mono<UserTable> findByPublicId(String publicId);
 	   Mono<UserTable> findByEmail(String emial);
 

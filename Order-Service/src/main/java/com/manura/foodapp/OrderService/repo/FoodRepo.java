@@ -8,7 +8,7 @@ import com.manura.foodapp.OrderService.Table.FoodTable;
 import reactor.core.publisher.Mono;
 
 @Repository
-public interface FoodRepo extends ReactiveCassandraRepository<FoodTable, Integer> {
+public interface FoodRepo extends ReactiveCassandraRepository<FoodTable, Long> {
 	   Mono<FoodTable> findByPublicId(String publicId);
 
 }

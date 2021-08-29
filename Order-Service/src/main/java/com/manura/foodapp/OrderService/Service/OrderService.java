@@ -1,6 +1,3 @@
-/**
- * 
- */
 package com.manura.foodapp.OrderService.Service;
 
 
@@ -18,15 +15,11 @@ import reactor.core.publisher.Mono;
  */
 public interface OrderService {
     Mono<UserTable> saveUser(Mono<UserTable> user);
-	
-    Mono<String> saveCart(Mono<OrderReq> cart,String email);
-	Flux<OrderDto> getCart(String id);
-	
+    Mono<String> saveOrder(Mono<OrderReq> cart,String email);
+	Flux<OrderDto> getOrder(String id);
 	Mono<UserTable> getUser(String id);
-
 	Mono<UserTable> updateUser(String id,Mono<UserTable> user);
-	
 	Mono<FoodTable> saveFood(Mono<FoodTable> food);
-
 	Mono<FoodTable> updateFood(String id,Mono<FoodTable> food);
+	Mono<String> confirmOrder(String id,String userId);
 }

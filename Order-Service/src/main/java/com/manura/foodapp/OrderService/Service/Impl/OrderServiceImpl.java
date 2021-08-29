@@ -3,16 +3,18 @@
  */
 package com.manura.foodapp.OrderService.Service.Impl;
 
-
+import java.util.UUID;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.manura.foodapp.OrderService.Error.Model.OrderSerivceNotFoundError;
 import com.manura.foodapp.OrderService.Service.OrderService;
 import com.manura.foodapp.OrderService.Table.FoodTable;
 import com.manura.foodapp.OrderService.Table.OrderTable;
 import com.manura.foodapp.OrderService.Table.UserTable;
+import com.manura.foodapp.OrderService.Utils.ErrorMessages;
 import com.manura.foodapp.OrderService.Utils.Utils;
 import com.manura.foodapp.OrderService.controller.Req.OrderReq;
 import com.manura.foodapp.OrderService.dto.FoodDto;
@@ -46,7 +48,11 @@ public class OrderServiceImpl implements OrderService {
 	@Override
 	public Mono<UserTable> saveUser(Mono<UserTable> user) {
 		try {
-			return user.flatMap(userRepo::save).publishOn(Schedulers.boundedElastic())
+			return user.doOnNext(i->{
+				UUID uuid = UUID.randomUUID();
+				Long id = (long) (uuid.variant()+uuid.version());
+				i.setId(id);
+			}).flatMap(userRepo::save).publishOn(Schedulers.boundedElastic())
 					.subscribeOn(Schedulers.boundedElastic());
 		} catch (Exception e) {
 			return Mono.empty();
@@ -80,7 +86,11 @@ public class OrderServiceImpl implements OrderService {
 
 	@Override
 	public Mono<FoodTable> saveFood(Mono<FoodTable> food) {
-		return food.flatMap(foodRepo::save).publishOn(Schedulers.boundedElastic())
+		return food.doOnNext(i->{
+			UUID uuid = UUID.randomUUID();
+			Long id = (long) (uuid.variant()+uuid.version());
+			i.setId(id);
+		}).flatMap(foodRepo::save).publishOn(Schedulers.boundedElastic())
 				.subscribeOn(Schedulers.boundedElastic());
 	}
 
@@ -100,35 +110,46 @@ public class OrderServiceImpl implements OrderService {
 	}
 
 	@Override
-	public Mono<String> saveCart(Mono<OrderReq> cart, String email) {
-		return cart.mapNotNull(i->{
-			return foodRepo.findByPublicId(i.getFood()).publishOn(Schedulers.boundedElastic())
+	public Mono<String> saveOrder(Mono<OrderReq> cart, String email) {
+		return cart
+				.switchIfEmpty(Mono.error(new OrderSerivceNotFoundError(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage())))
+				.mapNotNull(i->{
+			return foodRepo.findByPublicId(i.getFood())
+					.switchIfEmpty(Mono.error(new OrderSerivceNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
+					.publishOn(Schedulers.boundedElastic())
 					.subscribeOn(Schedulers.boundedElastic()).mapNotNull(food->{
-						return userRepo.findByEmail(email).map(user->{
+						return userRepo.findByEmail(email)
+								.switchIfEmpty(Mono.error(new OrderSerivceNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
+								.mapNotNull(user->{
 							OrderTable orderTable = new OrderTable();
+							orderTable.setAddress(user.getAddress());
 							orderTable.setPublicId(utils.generateAddressId(30));
 							orderTable.setUserName(user.getEmail());
 							orderTable.setFood(food.getPublicId());
-							orderTable.setUserId(user.getId());
-							orderTable.setFoodId(food.getId());
 							orderTable.setCount(i.getCount());
 							orderTable.setPrice((food.getPrice() * i.getCount()));
-							orderTable.setItem(food);
-							orderTable.setOwner(user);
+							orderTable.setStatus("processing");
+							orderTable.setTracking_Number(utils.generateAddressId(20));
 							return orderTable;
-						}).flatMap(orderRepo::save).mapNotNull(__->"Okay");
+						}).doOnNext(o->{
+							UUID uuid = UUID.randomUUID();
+							Long id = (long) (uuid.variant()+uuid.version());
+							o.setId(id);
+						}).flatMap(orderRepo::save).doOnNext(d->{
+							
+						}).mapNotNull(__->"Okay");
 					}).flatMap(__->__);
 		}).flatMap(i->i);
 	}
 
 	
 	@Override
-	public Flux<OrderDto> getCart(String id) {
+	public Flux<OrderDto> getOrder(String id) {
 		return orderRepo.findByUserName(id).switchIfEmpty(Flux.empty()).publishOn(Schedulers.boundedElastic())
 				.subscribeOn(Schedulers.boundedElastic()).map(e -> {
-					return foodRepo.findById(e.getFoodId()).publishOn(Schedulers.boundedElastic())
+					return foodRepo.findByPublicId(e.getFood()).publishOn(Schedulers.boundedElastic())
 							.subscribeOn(Schedulers.boundedElastic()).map(i -> {
-								return userRepo.findById(e.getUserId()).publishOn(Schedulers.boundedElastic())
+								return userRepo.findByPublicId(e.getUserName()).publishOn(Schedulers.boundedElastic())
 										.subscribeOn(Schedulers.boundedElastic()).map(d -> {
 											OrderDto cart = new OrderDto();
 											cart.setId(e.getPublicId());
@@ -140,7 +161,14 @@ public class OrderServiceImpl implements OrderService {
 										});
 							}).flatMap(u -> u).publishOn(Schedulers.boundedElastic())
 							.subscribeOn(Schedulers.boundedElastic());
-				}).flatMap(u -> u).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+				}).flatMap(u -> u).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
+				.switchIfEmpty(Flux.empty());
+	}
+
+	@Override
+	public Mono<String> confirmOrder(String id, String userId) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 	
 }

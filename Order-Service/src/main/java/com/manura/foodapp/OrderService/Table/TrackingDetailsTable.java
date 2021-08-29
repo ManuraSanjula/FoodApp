@@ -9,23 +9,16 @@ import org.springframework.data.cassandra.core.mapping.Table;
 
 import lombok.Data;
 
+@Table("TrackingDetails")
 @Data
-@Table("User")
-public class UserTable implements Serializable {
+public class TrackingDetailsTable implements Serializable {
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = -6049048397507165659L;
+	private static final long serialVersionUID = 8065973735562598805L;
 	@PrimaryKeyColumn(name = "id", ordinal = 0, type = PrimaryKeyType.CLUSTERED, ordering = Ordering.DESCENDING)
 	private Long id;
-	@PrimaryKeyColumn(name = "publicId", ordinal = 1, type = PrimaryKeyType.PARTITIONED)
-	private String publicId;
-	private String firstName;
-	private String lastName;
-	@PrimaryKeyColumn(name = "email", ordinal = 2, type = PrimaryKeyType.PARTITIONED)
-	private String email;
-	private Boolean active;
-	private Boolean emailVerify;
-	private String address;
-	private String pic;
+	private Long orderId;
+	private Long userId;
+	private String deliveryStatus;
 }

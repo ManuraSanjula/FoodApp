@@ -1,12 +1,12 @@
 package com.manura.foodapp.OrderService.Error.Model;
 
-public class CartSerivceNotFoundError extends RuntimeException {
+public class OrderSerivceNotFoundError extends RuntimeException {
     /**
 	 * 
 	 */
 	private static final long serialVersionUID = -1923959438688743817L;
 
-	public CartSerivceNotFoundError(String message) {
+	public OrderSerivceNotFoundError(String message) {
         super(message);
     }
 }
