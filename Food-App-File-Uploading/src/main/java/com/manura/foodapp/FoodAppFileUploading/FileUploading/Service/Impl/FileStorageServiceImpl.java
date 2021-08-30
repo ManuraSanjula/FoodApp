@@ -41,6 +41,9 @@ public class FileStorageServiceImpl implements FileStorageService {
 
 	@Value("${foodHut-file.upload-dir}")
 	private Path foodHutFileStorageLocation;
+	
+	@Value("${refund-file.upload-dir}")
+	private Path refundFileStorageLocation;
 
 	@Autowired
 	private RedisServiceImpl redisService;
@@ -168,7 +171,9 @@ public class FileStorageServiceImpl implements FileStorageService {
 			filePath = this.userFileStorageLocation.resolve(fileName).normalize();
 		} else if (type.equals("FoodHut")) {
 			filePath = this.foodHutFileStorageLocation.resolve(fileName).normalize();
-		} else {
+		} else if(type.equals("Refund")) {
+			filePath = this.refundFileStorageLocation.resolve(fileName).normalize();
+		}else {
 			filePath = this.foodFileStorageLocation.resolve(fileName).normalize();
 		}
 		try {
@@ -199,7 +204,10 @@ public class FileStorageServiceImpl implements FileStorageService {
 		} else if (type.equals("FoodHut")) {
 			return redisService.getResource(fileName).switchIfEmpty(loadFileAsResourceIfCacheNotPresent(fileName, type))
 					.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
-		} else {
+		} else if (type.equals("Refund")) {
+			return redisService.getResource(fileName).switchIfEmpty(loadFileAsResourceIfCacheNotPresent(fileName, type))
+					.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+		}else {
 			return redisService.getResource(fileName).switchIfEmpty(loadFileAsResourceIfCacheNotPresent(fileName, type))
 					.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 		}
@@ -217,6 +225,21 @@ public class FileStorageServiceImpl implements FileStorageService {
 			}).doOnComplete(() -> {
 				File image = new File(opPath.toAbsolutePath().toString());
 				addTextWatermark("Food-App", "jpeg", image, image);
+			}).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+		} catch (Exception e) {
+			return Flux.empty();
+		}
+	}
+
+	@Override
+	public Flux<String> uploadFileRefund(Path path, Flux<DataBuffer> bufferFlux, String fileName) {
+		try {
+			Path opPath = refundFileStorageLocation.resolve(path);
+
+			AsynchronousFileChannel channel = AsynchronousFileChannel.open(opPath, StandardOpenOption.CREATE,
+					StandardOpenOption.WRITE);
+			return DataBufferUtils.write(bufferFlux, channel).mapNotNull(i -> {
+				return fileName;
 			}).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 		} catch (Exception e) {
 			return Flux.empty();

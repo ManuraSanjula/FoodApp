@@ -15,15 +15,15 @@ import lombok.Data;
 @Table("Refund")
 public class RefundTable implements Serializable {
 	private static final long serialVersionUID = -6103550661489428597L;
-	@PrimaryKeyColumn(name = "id", ordinal = 0, type = PrimaryKeyType.CLUSTERED, ordering = Ordering.DESCENDING)
+	@PrimaryKeyColumn(name = "id", ordinal = 0, type = PrimaryKeyType.PARTITIONED, ordering = Ordering.DESCENDING)
 	private Long id;
 	
 	@PrimaryKeyColumn(name = "publicId", ordinal = 1, type = PrimaryKeyType.PARTITIONED)
 	private String publicId;
     private String reason;
     private Date date;
-    private Long orderId;
-    private Long userId;
+    private String orderId;
+    private String userId;
     private List<String> evidence;
     private Boolean success;
 	private String status;

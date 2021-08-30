@@ -10,6 +10,5 @@ import reactor.core.publisher.Mono;
 @Repository
 public interface UserRepo extends ReactiveCassandraRepository<UserTable,Long> {
 	 Mono<UserTable> findByPublicId(String publicId);
-	   Mono<UserTable> findByEmail(String emial);
-
+	 Mono<UserTable> findByEmail(String emial);
 }

@@ -16,7 +16,7 @@ public class FoodTable implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = -7507702972023215096L;
-	@PrimaryKeyColumn(name = "id", ordinal = 0, type = PrimaryKeyType.CLUSTERED, ordering = Ordering.DESCENDING)
+	@PrimaryKeyColumn(name = "id", ordinal = 0, type = PrimaryKeyType.PARTITIONED, ordering = Ordering.DESCENDING)
 	private Long id;
 	@PrimaryKeyColumn(name = "name", ordinal = 1, type = PrimaryKeyType.PARTITIONED)
 	private String name;

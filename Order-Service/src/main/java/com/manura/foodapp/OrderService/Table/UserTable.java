@@ -16,7 +16,7 @@ public class UserTable implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = -6049048397507165659L;
-	@PrimaryKeyColumn(name = "id", ordinal = 0, type = PrimaryKeyType.CLUSTERED, ordering = Ordering.DESCENDING)
+	@PrimaryKeyColumn(name = "id", ordinal = 0, type = PrimaryKeyType.PARTITIONED, ordering = Ordering.DESCENDING)
 	private Long id;
 	@PrimaryKeyColumn(name = "publicId", ordinal = 1, type = PrimaryKeyType.PARTITIONED)
 	private String publicId;
