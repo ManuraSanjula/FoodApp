@@ -30,7 +30,7 @@ public class WebSecurityConfig {
 	@Bean
 	public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http, AuthenticationManager authManager) {
 		return http.authorizeExchange().pathMatchers(HttpMethod.OPTIONS).permitAll()
-				.pathMatchers("/cart/**").hasAnyAuthority("ROLE_USER")
+				.pathMatchers("/orders/**").hasAnyAuthority("ROLE_USER")
 					.and().csrf()
 				.disable().httpBasic().disable().formLogin().disable().exceptionHandling()
 				.authenticationEntryPoint((swe, e) -> {

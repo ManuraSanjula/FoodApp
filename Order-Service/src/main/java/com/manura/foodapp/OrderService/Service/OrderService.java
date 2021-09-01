@@ -4,7 +4,9 @@ import org.springframework.http.codec.multipart.FilePart;
 
 import com.manura.foodapp.OrderService.Table.FoodTable;
 import com.manura.foodapp.OrderService.Table.UserTable;
+import com.manura.foodapp.OrderService.controller.Req.BillingAndDeliveryAddressReq;
 import com.manura.foodapp.OrderService.controller.Req.OrderReq;
+import com.manura.foodapp.OrderService.dto.BillingAndDeliveryAddressDto;
 import com.manura.foodapp.OrderService.dto.FullOrderDto;
 import com.manura.foodapp.OrderService.dto.OrderDto;
 import com.manura.foodapp.OrderService.dto.RefundDto;
@@ -30,4 +32,7 @@ public interface OrderService {
 			String email,
 			String reason,String userId,String orderId); 
 	Flux<RefundDto> getAllRefund(String userId);
+	Mono<String> setNewBillingAndDeliveryAddress(Mono<BillingAndDeliveryAddressReq> req);
+	Flux<BillingAndDeliveryAddressDto> getAllBillingAndDeliveryAddress(String user);
+	Mono<String> changeBillingAndDeliveryAddress(String user,Long billingId);
 }

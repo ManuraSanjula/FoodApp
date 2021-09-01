@@ -28,4 +28,5 @@ public class UserTable implements Serializable {
 	private Boolean emailVerify;
 	private String address;
 	private String pic;
+	private Long billingAndDeliveryAddress;
 }

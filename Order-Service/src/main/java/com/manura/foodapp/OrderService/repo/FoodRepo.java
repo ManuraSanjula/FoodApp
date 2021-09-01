@@ -1,5 +1,6 @@
 package com.manura.foodapp.OrderService.repo;
 
+import org.springframework.data.cassandra.repository.AllowFiltering;
 import org.springframework.data.cassandra.repository.ReactiveCassandraRepository;
 import org.springframework.stereotype.Repository;
 
@@ -9,6 +10,6 @@ import reactor.core.publisher.Mono;
 
 @Repository
 public interface FoodRepo extends ReactiveCassandraRepository<FoodTable, Long> {
-	   Mono<FoodTable> findByPublicId(String publicId);
-
+	@AllowFiltering
+	Mono<FoodTable> findByPublicId(String publicId);
 }

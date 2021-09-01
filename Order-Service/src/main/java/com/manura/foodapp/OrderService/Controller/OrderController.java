@@ -14,9 +14,11 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.manura.foodapp.OrderService.Service.Impl.OrderServiceImpl;
+import com.manura.foodapp.OrderService.controller.Req.BillingAndDeliveryAddressReq;
 import com.manura.foodapp.OrderService.controller.Req.OrderReq;
 import com.manura.foodapp.OrderService.dto.OrderDto;
 import com.manura.foodapp.OrderService.dto.RefundDto;
+import com.manura.foodapp.OrderService.dto.BillingAndDeliveryAddressDto;
 import com.manura.foodapp.OrderService.dto.FullOrderDto;
 
 import reactor.core.publisher.Flux;
@@ -51,7 +53,7 @@ public class OrderController {
 				.subscribeOn(Schedulers.boundedElastic());
 	}
 
-	@GetMapping("/{email}/{orderId}")
+	@GetMapping("/{email}/{orderId}/confirmOrder")
 	public Mono<String> confirmOrder(@PathVariable String email, @PathVariable String orderId) {
 		return orderServiceImpl.confirmOrder(email, orderId).publishOn(Schedulers.boundedElastic())
 				.subscribeOn(Schedulers.boundedElastic());
@@ -62,12 +64,29 @@ public class OrderController {
 		return orderServiceImpl.getAllRefund(email).publishOn(Schedulers.boundedElastic())
 				.subscribeOn(Schedulers.boundedElastic());
 	}
+	
+	@PostMapping("/{email}/newBillingAndDeliveryAddress")
+	Mono<String> setNewBillingAndDeliveryAddress(@RequestBody Mono<BillingAndDeliveryAddressReq> req) {
+		return orderServiceImpl.setNewBillingAndDeliveryAddress(req);
+	}
+	
+	@GetMapping("/{email}/allBillingAndDeliveryAddress")
+	Flux<BillingAndDeliveryAddressDto> getAllBillingAndDeliveryAddress(@PathVariable String email) {
+		return orderServiceImpl.getAllBillingAndDeliveryAddress(email);
+	}
 
 	@PostMapping("/{email}/refund")
 	public Mono<RefundDto> requestARefund(@RequestPart("email") String email, @RequestPart("reason") String reason,
 			@RequestPart("userId") String userId, @RequestPart("orderId") String orderId,
 			@RequestPart(name = "images", required = false) Flux<FilePart> fileParts) {
 		return orderServiceImpl.requestARefund(fileParts, email, reason, userId, orderId)
+				.publishOn(Schedulers.boundedElastic())
+				.subscribeOn(Schedulers.boundedElastic());
+	}
+	
+	@GetMapping("/{email}/changeBillingAndDeliveryAddress/{id}")
+	Mono<String> changeBillingAndDeliveryAddress(@PathVariable  String user,@PathVariable  Long id){
+		return orderServiceImpl.changeBillingAndDeliveryAddress(user, id)
 				.publishOn(Schedulers.boundedElastic())
 				.subscribeOn(Schedulers.boundedElastic());
 	}

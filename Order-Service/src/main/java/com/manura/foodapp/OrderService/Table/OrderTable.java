@@ -9,7 +9,7 @@ import org.springframework.data.cassandra.core.mapping.Table;
 import lombok.Data;
 
 @Data
-@Table("Order")
+@Table("orders")
 public class OrderTable implements Serializable {
 	
 	private static final long serialVersionUID = 1628047444012394138L;
@@ -33,6 +33,7 @@ public class OrderTable implements Serializable {
 	private String address;
 	
 	private String status;
-	private String tracking_Number;
+	private String trackingNumber;
+	private Long billingAndDeliveryAddress;
 }
 
