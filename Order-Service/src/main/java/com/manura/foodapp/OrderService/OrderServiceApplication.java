@@ -12,22 +12,22 @@ import org.springframework.beans.factory.annotation.Value;
 @SpringBootApplication
 public class OrderServiceApplication {
 	
-	@Value("${spring.mail.templates.path}")
-	private String mailTemplatesPath;
+//	@Value("${spring.mail.templates.path}")
+//	private String mailTemplatesPath;
 
 	public static void main(String[] args) {
 		SpringApplication.run(OrderServiceApplication.class, args);
 	}
 	
-	@Bean
-	public ITemplateResolver thymeleafTemplateResolver() {
-		FileTemplateResolver templateResolver = new FileTemplateResolver();
-		templateResolver.setPrefix(mailTemplatesPath);
-	    templateResolver.setSuffix(".html");
-	    templateResolver.setTemplateMode("HTML");
-	    templateResolver.setCharacterEncoding("UTF-8");
-	    return templateResolver;
-	}
+//	@Bean
+//	public ITemplateResolver thymeleafTemplateResolver() {
+//		FileTemplateResolver templateResolver = new FileTemplateResolver();
+//		templateResolver.setPrefix(mailTemplatesPath);
+//	    templateResolver.setSuffix(".html");
+//	    templateResolver.setTemplateMode("HTML");
+//	    templateResolver.setCharacterEncoding("UTF-8");
+//	    return templateResolver;
+//	}
 	
 	@Bean
     public ResourceBundleMessageSource emailMessageSource() {

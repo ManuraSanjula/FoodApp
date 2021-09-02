@@ -208,8 +208,8 @@ public class OrderServiceImpl implements OrderService {
 	}
 
 	@Override
-	public Mono<String> confirmOrder(String id, String userId) {
-		return orderRepo.findByUserNameAndFood(userId, id)
+	public Mono<String> confirmOrder(String userId, String orderId) {
+		return orderRepo.findByPublicId(orderId)
 				.switchIfEmpty(
 						Mono.error(new OrderSerivceNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
 				.doOnNext(i -> i.setStatus("delivered successfully")).flatMap(orderRepo::save)
@@ -219,7 +219,7 @@ public class OrderServiceImpl implements OrderService {
 
 	@Override
 	public Mono<FullOrderDto> getOneOrder(String userId, String orderId) {
-		return orderRepo.findByUserNameAndFood(userId, orderId).publishOn(Schedulers.boundedElastic())
+		return orderRepo.findByPublicId(orderId).publishOn(Schedulers.boundedElastic())
 				.switchIfEmpty(
 						Mono.error(new OrderSerivceNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
 				.subscribeOn(Schedulers.boundedElastic()).mapNotNull(order -> {
@@ -301,20 +301,21 @@ public class OrderServiceImpl implements OrderService {
 	}
 
 	@Override
-	public Mono<String> setNewBillingAndDeliveryAddress(Mono<BillingAndDeliveryAddressReq> req) {
+	public Mono<String> setNewBillingAndDeliveryAddress(Mono<BillingAndDeliveryAddressReq> req,String email) {
 		return req.map(i -> modelMapper.map(i, BillingAndDeliveryAddressTable.class))
 				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic()).flatMap(i -> {
-					return getUser(i.getUserId()).map(user -> {
+					return userRepo.findByEmail(email).map(user -> {
 						int min = 10;
 						long max = 100000000000000000L;
 						Long random_int = (long) Math.floor(Math.random() * (max - min + 1) + min);
 						i.setId(random_int);
-						i.setUserId(user.getPublicId());
+						i.setUserId(user.getEmail());
 						user.setBillingAndDeliveryAddress(i.getId());
 						userRepo.save(user).subscribe();
 						return i;
 					}).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
-				}).flatMap(billingAndDeliveryAddressRepo::save)
+				})
+				.flatMap(billingAndDeliveryAddressRepo::save)
 				.map(i -> "BillingAdress " + i.getBillingAdress() + "\n" + "DeliveryAdress " + i.getDeliveryAdress())
 				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
@@ -332,7 +333,7 @@ public class OrderServiceImpl implements OrderService {
 				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
 				.switchIfEmpty(
 						Mono.error(new OrderSerivceNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
-				.map(billing -> getUser(user)
+				.map(billing -> userRepo.findByEmail(user)
 						.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
 						.switchIfEmpty(Mono
 								.error(new OrderSerivceNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))

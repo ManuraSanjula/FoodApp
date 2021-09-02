@@ -27,5 +27,6 @@ public class BillingAndDeliveryAddressTable implements Serializable {
 	private Long id;
 	private String billingAdress;
 	private String deliveryAdress;
+	@PrimaryKeyColumn(name = "userId", ordinal = 1, type = PrimaryKeyType.PARTITIONED)
 	private String userId;
 }

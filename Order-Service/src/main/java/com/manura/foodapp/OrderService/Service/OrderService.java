@@ -27,12 +27,12 @@ public interface OrderService {
 	Mono<UserTable> updateUser(String id,Mono<UserTable> user);
 	Mono<FoodTable> saveFood(Mono<FoodTable> food);
 	Mono<FoodTable> updateFood(String id,Mono<FoodTable> food);
-	Mono<String> confirmOrder(String id,String userId);
+	Mono<String> confirmOrder(String userId,String orderId);
 	Mono<RefundDto> requestARefund(Flux<FilePart> filePartFlux,
 			String email,
 			String reason,String userId,String orderId); 
 	Flux<RefundDto> getAllRefund(String userId);
-	Mono<String> setNewBillingAndDeliveryAddress(Mono<BillingAndDeliveryAddressReq> req);
+	Mono<String> setNewBillingAndDeliveryAddress(Mono<BillingAndDeliveryAddressReq> req,String user);
 	Flux<BillingAndDeliveryAddressDto> getAllBillingAndDeliveryAddress(String user);
 	Mono<String> changeBillingAndDeliveryAddress(String user,Long billingId);
 }
