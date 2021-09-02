@@ -1,8 +1,8 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html xmlns:th="http://www.thymeleaf.org">
 
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <title>Email Template for Order Confirmation Email</title>
 
     <!-- Start Common CSS -->
@@ -90,7 +90,7 @@
                                             </tr>
                                             <tr>
                                                 <td style="font-size: 14px; line-height: 18px; color: #666666;">
-                                                    Phone: 310-807-6672 | Email: info@example.com
+                                                    Phone: xxx-xxx-xxxx | Email: info@example.com
                                                 </td>
                                             </tr>
                                             <tr>
@@ -123,33 +123,30 @@
                                                 </td>
                                             </tr>
                                             <tr>
-                                                <td
+                                                <td th:text="${name}"
                                                     style="width: 55%; font-size: 14px; line-height: 18px; color: #666666;">
-                                                    James C Painter
                                                 </td>
-                                                <td
+
+                                                <td th:text="${name}"
                                                     style="width: 45%; font-size: 14px; line-height: 18px; color: #666666;">
-                                                    James C Painter
                                                 </td>
                                             </tr>
                                             <tr>
-                                                <td
+                                                <td th:text="${delivery-address-one}"
                                                     style="width: 55%; font-size: 14px; line-height: 18px; color: #666666;">
-                                                    3939 Charles Street, Farmington Hills
                                                 </td>
-                                                <td
+                                                <td th:text="${billing-address-one}"
                                                     style="width: 45%; font-size: 14px; line-height: 18px; color: #666666;">
-                                                    3939 Charles Street, Farmington Hills
                                                 </td>
                                             </tr>
                                             <tr>
-                                                <td
+                                                <td th:text="${delivery-address-two}"
                                                     style="width: 55%; font-size: 14px; line-height: 18px; color: #666666; padding-bottom: 10px;">
-                                                    Michigan, 48335
+
                                                 </td>
-                                                <td
+                                                <td th:text="${billing-address-two}"
                                                     style="width: 45%; font-size: 14px; line-height: 18px; color: #666666; padding-bottom: 10px;">
-                                                    Michigan, 48335
+
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -166,38 +163,28 @@
                                         <tbody>
                                             <tr>
                                                 <td rowspan="4" style="padding-right: 10px; padding-bottom: 10px;">
-                                                    <img style="height: 80px;" src="images/product-1.jpg"
+                                                    <img style="height: 80px;" th:src="${image-url}"
                                                         alt="Product Image" />
                                                 </td>
-                                                <td colspan="2"
+                                                <td colspan="2" th:text="${food-name}"
                                                     style="font-size: 14px; font-weight: bold; color: #666666; padding-bottom: 5px;">
-                                                    Lorem ipsum dolor sit amet
                                                 </td>
                                             </tr>
                                             <tr>
-                                                <td
+                                                <td th:text="${food-count}"
                                                     style="font-size: 14px; line-height: 18px; color: #757575; width: 440px;">
-                                                    Quantity: 100
                                                 </td>
                                                 <td style="width: 130px;"></td>
                                             </tr>
                                             <tr>
-                                                <td style="font-size: 14px; line-height: 18px; color: #757575;">
-                                                    Color: White & Blue
-                                                </td>
-                                                <td
+                                                <td th:text="${food-price}"
                                                     style="font-size: 14px; line-height: 18px; color: #757575; text-align: right;">
-                                                    $1.23 Per Unit
                                                 </td>
                                             </tr>
                                             <tr>
                                                 <td
-                                                    style="font-size: 14px; line-height: 18px; color: #757575; padding-bottom: 10px;">
-                                                    Size: XL
-                                                </td>
-                                                <td
                                                     style="font-size: 14px; line-height: 18px; color: #757575; text-align: right; padding-bottom: 10px;">
-                                                    <b style="color: #666666;">$1,234.50</b> Total
+                                                    <b style="color: #666666;" th:text="${food-total-price}"></b> Total
                                                 </td>
                                             </tr>
                                         </tbody>
