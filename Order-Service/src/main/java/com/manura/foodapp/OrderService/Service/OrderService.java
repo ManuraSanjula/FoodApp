@@ -3,6 +3,7 @@ package com.manura.foodapp.OrderService.Service;
 import org.springframework.http.codec.multipart.FilePart;
 
 import com.manura.foodapp.OrderService.Table.FoodTable;
+import com.manura.foodapp.OrderService.Table.OrderTable;
 import com.manura.foodapp.OrderService.Table.UserTable;
 import com.manura.foodapp.OrderService.controller.Req.BillingAndDeliveryAddressReq;
 import com.manura.foodapp.OrderService.controller.Req.OrderReq;
@@ -35,4 +36,7 @@ public interface OrderService {
 	Mono<String> setNewBillingAndDeliveryAddress(Mono<BillingAndDeliveryAddressReq> req,String user);
 	Flux<BillingAndDeliveryAddressDto> getAllBillingAndDeliveryAddress(String user);
 	Mono<String> changeBillingAndDeliveryAddress(String user,Long billingId);
+	void Send_OrderInformation_Email_And_PDF_Single(Mono<OrderTable> order,String email);
+	void Send_OrderInformation_Email_And_PDF_Many(Mono<OrderTable> order,String email);
+
 }

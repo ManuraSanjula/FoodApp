@@ -1,9 +1,9 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns:th="http://www.thymeleaf.org">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns:th="http://www.thymeleaf.org" xmlns="http://www.w3.org/1999/xhtml">
 
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <title>Email Template for Order Confirmation Email</title>
+    <title>Order Information</title>
 
     <!-- Start Common CSS -->
     <style type="text/css">
@@ -132,14 +132,14 @@
                                                 </td>
                                             </tr>
                                             <tr>
-                                                <td th:text="${delivery-address-one}"
+                                                <td th:text="${deliveryAddress}"
                                                     style="width: 55%; font-size: 14px; line-height: 18px; color: #666666;">
                                                 </td>
-                                                <td th:text="${billing-address-one}"
+                                                <td th:text="${billingAddress}"
                                                     style="width: 45%; font-size: 14px; line-height: 18px; color: #666666;">
                                                 </td>
                                             </tr>
-                                            <tr>
+                                            <!-- <tr>
                                                 <td th:text="${delivery-address-two}"
                                                     style="width: 55%; font-size: 14px; line-height: 18px; color: #666666; padding-bottom: 10px;">
 
@@ -148,7 +148,7 @@
                                                     style="width: 45%; font-size: 14px; line-height: 18px; color: #666666; padding-bottom: 10px;">
 
                                                 </td>
-                                            </tr>
+                                            </tr> -->
                                         </tbody>
                                     </table>
                                 </td>
@@ -163,28 +163,28 @@
                                         <tbody>
                                             <tr>
                                                 <td rowspan="4" style="padding-right: 10px; padding-bottom: 10px;">
-                                                    <img style="height: 80px;" th:src="${image-url}"
+                                                    <img style="height: 80px;" th:src="${image}"
                                                         alt="Product Image" />
                                                 </td>
-                                                <td colspan="2" th:text="${food-name}"
+                                                <td colspan="2" th:text="${foodName}"
                                                     style="font-size: 14px; font-weight: bold; color: #666666; padding-bottom: 5px;">
                                                 </td>
                                             </tr>
                                             <tr>
-                                                <td th:text="${food-count}"
+                                                <td th:text="${foodCount}"
                                                     style="font-size: 14px; line-height: 18px; color: #757575; width: 440px;">
                                                 </td>
                                                 <td style="width: 130px;"></td>
                                             </tr>
                                             <tr>
-                                                <td th:text="${food-price}"
+                                                <td th:text="${foodPrice}"
                                                     style="font-size: 14px; line-height: 18px; color: #757575; text-align: right;">
                                                 </td>
                                             </tr>
                                             <tr>
                                                 <td
                                                     style="font-size: 14px; line-height: 18px; color: #757575; text-align: right; padding-bottom: 10px;">
-                                                    <b style="color: #666666;" th:text="${food-total-price}"></b> Total
+                                                    <b style="color: #666666;" th:text="${orderTotalPrice}"></b> Total
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -202,49 +202,8 @@
                                                 <td style="font-size: 14px; line-height: 18px; color: #666666;">
                                                     Sub-Total:
                                                 </td>
-                                                <td
+                                                <td th:text="${orderTotalPrice}"
                                                     style="font-size: 14px; line-height: 18px; color: #666666; width: 130px; text-align: right;">
-                                                    $1,234.50
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td
-                                                    style="font-size: 14px; line-height: 18px; color: #666666; padding-bottom: 10px; border-bottom: 1px solid #eeeeee;">
-                                                    Shipping Fee:
-                                                </td>
-                                                <td
-                                                    style="font-size: 14px; line-height: 18px; color: #666666; padding-bottom: 10px; border-bottom: 1px solid #eeeeee; text-align: right;">
-                                                    $10.20
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td
-                                                    style="font-size: 14px; font-weight: bold; line-height: 18px; color: #666666; padding-top: 10px;">
-                                                    Order Total
-                                                </td>
-                                                <td
-                                                    style="font-size: 14px; font-weight: bold; line-height: 18px; color: #666666; padding-top: 10px; text-align: right;">
-                                                    $1,234.50
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td
-                                                    style="font-size: 14px; font-weight: bold; line-height: 18px; color: #666666;">
-                                                    Payment Term:
-                                                </td>
-                                                <td
-                                                    style="font-size: 14px; font-weight: bold; line-height: 18px; color: #666666; text-align: right;">
-                                                    100%
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td
-                                                    style="font-size: 14px; font-weight: bold; line-height: 18px; color: #666666; padding-bottom: 10px;">
-                                                    Deposit Amount
-                                                </td>
-                                                <td
-                                                    style="font-size: 14px; font-weight: bold; line-height: 18px; color: #666666; text-align: right; padding-bottom: 10px;">
-                                                    $1,234.50
                                                 </td>
                                             </tr>
                                         </tbody>

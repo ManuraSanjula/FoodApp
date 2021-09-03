@@ -1,16 +1,30 @@
 package com.manura.foodapp.OrderService.Service.Impl;
 
+import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.messaging.rsocket.RSocketRequester;
 import org.springframework.stereotype.Service;
+import org.thymeleaf.context.Context;
 import org.thymeleaf.spring5.SpringTemplateEngine;
 
+import com.amazonaws.regions.Regions;
+import com.amazonaws.services.simpleemail.AmazonSimpleEmailService;
+import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceClientBuilder;
+import com.amazonaws.services.simpleemail.model.Body;
+import com.amazonaws.services.simpleemail.model.Content;
+import com.amazonaws.services.simpleemail.model.Destination;
+import com.amazonaws.services.simpleemail.model.Message;
+import com.amazonaws.services.simpleemail.model.SendEmailRequest;
+import com.amazonaws.services.simpleemail.model.SendEmailResult;
 import com.manura.foodapp.OrderService.Error.Model.OrderSerivceNotFoundError;
 import com.manura.foodapp.OrderService.Service.OrderService;
 import com.manura.foodapp.OrderService.Table.BillingAndDeliveryAddressTable;
@@ -67,8 +81,8 @@ public class OrderServiceImpl implements OrderService {
 	private Mono<RSocketRequester> rSocketRequester;
 	private ModelMapper modelMapper = new ModelMapper();
 	@Autowired
-	private SpringTemplateEngine thymeleafTemplateEngine;
-
+    private SpringTemplateEngine thymeleafTemplateEngine;
+	final String FROM = "w.m.manurasanjula12345@gmail.com";
 
 	@Override
 	public Mono<UserTable> saveUser(Mono<UserTable> user) {
@@ -186,6 +200,9 @@ public class OrderServiceImpl implements OrderService {
 
 											trackingDetailsTable.setId(random_int);
 											trackingDetailsRepo.save(trackingDetailsTable).subscribe();
+											Runnable orderInformation = () -> Send_OrderInformation_Email_And_PDF_Single(
+													Mono.just(d),d.getUserName());
+											new Thread(orderInformation).start();
 										}).mapNotNull(__ -> "Okay");
 							}).flatMap(__ -> __);
 				}).flatMap(__ -> __);
@@ -301,7 +318,7 @@ public class OrderServiceImpl implements OrderService {
 	}
 
 	@Override
-	public Mono<String> setNewBillingAndDeliveryAddress(Mono<BillingAndDeliveryAddressReq> req,String email) {
+	public Mono<String> setNewBillingAndDeliveryAddress(Mono<BillingAndDeliveryAddressReq> req, String email) {
 		return req.map(i -> modelMapper.map(i, BillingAndDeliveryAddressTable.class))
 				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic()).flatMap(i -> {
 					return userRepo.findByEmail(email).map(user -> {
@@ -314,8 +331,7 @@ public class OrderServiceImpl implements OrderService {
 						userRepo.save(user).subscribe();
 						return i;
 					}).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
-				})
-				.flatMap(billingAndDeliveryAddressRepo::save)
+				}).flatMap(billingAndDeliveryAddressRepo::save)
 				.map(i -> "BillingAdress " + i.getBillingAdress() + "\n" + "DeliveryAdress " + i.getDeliveryAdress())
 				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
@@ -329,20 +345,83 @@ public class OrderServiceImpl implements OrderService {
 
 	@Override
 	public Mono<String> changeBillingAndDeliveryAddress(String user, Long billingId) {
-		return billingAndDeliveryAddressRepo.findById(billingId)
-				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
+		return billingAndDeliveryAddressRepo.findById(billingId).publishOn(Schedulers.boundedElastic())
+				.subscribeOn(Schedulers.boundedElastic())
 				.switchIfEmpty(
 						Mono.error(new OrderSerivceNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
-				.map(billing -> userRepo.findByEmail(user)
-						.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
+				.map(billing -> userRepo.findByEmail(user).publishOn(Schedulers.boundedElastic())
+						.subscribeOn(Schedulers.boundedElastic())
 						.switchIfEmpty(Mono
 								.error(new OrderSerivceNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
 						.map(i -> {
 							i.setBillingAndDeliveryAddress(billing.getId());
 							return i;
 						}))
-				.flatMap(__ -> __).map(userRepo::save).map(__ -> "Done")
-				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+				.flatMap(__ -> __).map(userRepo::save).map(__ -> "Done").publishOn(Schedulers.boundedElastic())
+				.subscribeOn(Schedulers.boundedElastic());
+
+	}
+
+	@Override
+	public void Send_OrderInformation_Email_And_PDF_Single(Mono<OrderTable> order,String email) {
+		order.map(i -> {
+			Long billingAndDeliveryAddress = i.getBillingAndDeliveryAddress();
+			String foodId = i.getFood();
+			String userName = i.getUserName();
+
+			return userRepo.findByEmail(userName).publishOn(Schedulers.boundedElastic())
+					.subscribeOn(Schedulers.boundedElastic()).map(user -> {
+						return foodRepo.findByPublicId(foodId).publishOn(Schedulers.boundedElastic())
+								.subscribeOn(Schedulers.boundedElastic()).map(food -> {
+									return billingAndDeliveryAddressRepo.findById(billingAndDeliveryAddress)
+											.publishOn(Schedulers.boundedElastic())
+											.subscribeOn(Schedulers.boundedElastic()).map(billing -> {
+												Map<String, Object> data = new HashMap<>();
+
+												data.put("name", user.getEmail());
+												data.put("deliveryAddress", billing.getDeliveryAdress());
+												data.put("billingAddress", billing.getBillingAdress());
+
+												try {
+													System.out.println(InetAddress.getLocalHost().getHostAddress() +":8081" + food.getCoverImage());
+													data.put("image",(InetAddress.getLocalHost().getHostAddress() +":8081" + food.getCoverImage()));
+												}catch (Exception e) {
+													data.put("image",food.getCoverImage());
+												}
+												data.put("foodName", food.getName());
+												data.put("foodCount", i.getCount());
+												data.put("foodPrice", food.getPrice());
+												data.put("orderTotalPrice", i.getPrice());
+
+												Context thymeleafContext = new Context();
+												thymeleafContext.setVariables(data);
+
+												String htmlBody = thymeleafTemplateEngine.process("SingleOrder",
+														thymeleafContext);
+												return htmlBody;
+											});
+								}).flatMap(__ -> __);
+					}).flatMap(__ -> __);
+		}).flatMap(__ -> __).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
+				.subscribe(html->{
+					AmazonSimpleEmailService client = AmazonSimpleEmailServiceClientBuilder.standard().withRegion(Regions.AP_SOUTH_1)
+							.build();
+					SendEmailRequest request = new SendEmailRequest()
+							.withDestination(new Destination().withToAddresses(email))
+							.withMessage(new Message()
+									.withBody(new Body().withHtml(new Content().withCharset("UTF-8").withData(html))
+											.withText(new Content().withCharset("UTF-8").withData(html.replaceAll("\\<.*?\\>", ""))))
+									.withSubject(new Content().withCharset("UTF-8").withData("Order Information")))
+							.withSource(FROM);
+
+					client.sendEmail(request);
+					SendEmailResult result = client.sendEmail(request);
+ 
+				});
+	}
+
+	@Override
+	public void Send_OrderInformation_Email_And_PDF_Many(Mono<OrderTable> order,String email) {
 
 	}
 }
