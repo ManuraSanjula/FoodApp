@@ -2,7 +2,6 @@ package com.manura.foodapp.OrderService.Service.Impl;
 
 import java.net.InetAddress;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -15,7 +14,6 @@ import org.springframework.messaging.rsocket.RSocketRequester;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring5.SpringTemplateEngine;
-
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailService;
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceClientBuilder;
@@ -83,6 +81,8 @@ public class OrderServiceImpl implements OrderService {
 	@Autowired
     private SpringTemplateEngine thymeleafTemplateEngine;
 	final String FROM = "w.m.manurasanjula12345@gmail.com";
+	@Autowired
+	private RedisServiceImpl redisServiceImpl;
 
 	@Override
 	public Mono<UserTable> saveUser(Mono<UserTable> user) {
@@ -201,7 +201,7 @@ public class OrderServiceImpl implements OrderService {
 											trackingDetailsTable.setId(random_int);
 											trackingDetailsRepo.save(trackingDetailsTable).subscribe();
 											Runnable orderInformation = () -> Send_OrderInformation_Email_And_PDF_Single(
-													Mono.just(d),d.getUserName());
+													Mono.just(d),d.getUserName(),d.getPublicId());
 											new Thread(orderInformation).start();
 										}).mapNotNull(__ -> "Okay");
 							}).flatMap(__ -> __);
@@ -363,7 +363,7 @@ public class OrderServiceImpl implements OrderService {
 	}
 
 	@Override
-	public void Send_OrderInformation_Email_And_PDF_Single(Mono<OrderTable> order,String email) {
+	public void Send_OrderInformation_Email_And_PDF_Single(Mono<OrderTable> order,String email,String orderId) {
 		order.map(i -> {
 			Long billingAndDeliveryAddress = i.getBillingAndDeliveryAddress();
 			String foodId = i.getFood();
@@ -383,10 +383,9 @@ public class OrderServiceImpl implements OrderService {
 												data.put("billingAddress", billing.getBillingAdress());
 
 												try {
-													System.out.println(InetAddress.getLocalHost().getHostAddress() +":8081" + food.getCoverImage());
-													data.put("image",(InetAddress.getLocalHost().getHostAddress() +":8081" + food.getCoverImage()));
+													data.put("imgUrl",("http://"+InetAddress.getLocalHost().getHostAddress() +":8081" + food.getCoverImage()));
 												}catch (Exception e) {
-													data.put("image",food.getCoverImage());
+													data.put("order.imgUrl",food.getCoverImage());
 												}
 												data.put("foodName", food.getName());
 												data.put("foodCount", i.getCount());
@@ -404,6 +403,11 @@ public class OrderServiceImpl implements OrderService {
 					}).flatMap(__ -> __);
 		}).flatMap(__ -> __).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
 				.subscribe(html->{
+					try {
+						byte[] asByteArray = utils.getAllBytesPdf(html, orderId);
+						redisServiceImpl.savePdf(asByteArray, orderId);
+					}catch (Exception e) {
+					}
 					AmazonSimpleEmailService client = AmazonSimpleEmailServiceClientBuilder.standard().withRegion(Regions.AP_SOUTH_1)
 							.build();
 					SendEmailRequest request = new SendEmailRequest()
@@ -413,15 +417,12 @@ public class OrderServiceImpl implements OrderService {
 											.withText(new Content().withCharset("UTF-8").withData(html.replaceAll("\\<.*?\\>", ""))))
 									.withSubject(new Content().withCharset("UTF-8").withData("Order Information")))
 							.withSource(FROM);
-
-					client.sendEmail(request);
 					SendEmailResult result = client.sendEmail(request);
- 
 				});
 	}
 
 	@Override
-	public void Send_OrderInformation_Email_And_PDF_Many(Mono<OrderTable> order,String email) {
+	public void Send_OrderInformation_Email_And_PDF_Many(Mono<OrderTable> order,String email,String orderId) {
 
 	}
 }

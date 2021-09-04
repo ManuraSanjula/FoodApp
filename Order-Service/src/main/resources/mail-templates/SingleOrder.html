@@ -72,7 +72,7 @@
                                         <tbody>
                                             <tr>
                                                 <td style="padding-bottom: 10px;">
-                                                    <img width="200" height="200"
+                                                    <img width="90" height="90"
                                                         src="https://media.istockphoto.com/vectors/restaurant-logo-vector-id1156053620?k=20&m=1156053620&s=612x612&w=0&h=kF_G__vFlGdkdJKHbYXuMfPbnQgvaNM4Gxwl9a2tS5I="
                                                         alt="PapaChina" />
 
@@ -163,8 +163,8 @@
                                         <tbody>
                                             <tr>
                                                 <td rowspan="4" style="padding-right: 10px; padding-bottom: 10px;">
-                                                    <img style="height: 80px;" th:src="${image}"
-                                                        alt="Product Image" />
+                                                  
+                                                    <img th:attr="src=${imgUrl},title=image,alt=image" height="80" width="80"/><br/> 
                                                 </td>
                                                 <td colspan="2" th:text="${foodName}"
                                                     style="font-size: 14px; font-weight: bold; color: #666666; padding-bottom: 5px;">

@@ -6,6 +6,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -33,7 +34,7 @@ public class ServerHttpBearerAuthenticationConverter implements Function<ServerW
 
 	@Override
 	public Mono<Authentication> apply(ServerWebExchange serverWebExchange) {
-		return Mono.justOrEmpty(serverWebExchange).flatMap(ServerHttpBearerAuthenticationConverter::extract)
+		return Mono.justOrEmpty(serverWebExchange).flatMap(ServerHttpBearerAuthenticationConverter::extractToken)
 				.filter(matchBearerLength).flatMap(isolateBearerValue).flatMap(user -> {
 					List<GrantedAuthority> authorities = new ArrayList<>();
 					authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
@@ -44,7 +45,23 @@ public class ServerHttpBearerAuthenticationConverter implements Function<ServerW
 				});
 	}
 
-	public static Mono<String> extract(ServerWebExchange serverWebExchange) {
-		return Mono.justOrEmpty(serverWebExchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION));
+	public static Mono<String> extractToken(ServerWebExchange serverWebExchange) {
+		 ServerHttpRequest request = serverWebExchange.getRequest();
+
+		String tokenFromBody = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+	    String authJwt = request.getQueryParams().getFirst("token");
+	    if(tokenFromBody == null) {
+			return Mono.justOrEmpty(authJwt);
+	    }else {
+			return Mono.justOrEmpty(tokenFromBody);
+	    }
 	}
 }
+
+
+
+
+
+
+
+

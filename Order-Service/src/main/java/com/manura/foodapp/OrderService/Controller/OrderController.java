@@ -1,10 +1,12 @@
 package com.manura.foodapp.OrderService.Controller;
 
 import java.security.Principal;
-
+import org.springframework.http.MediaType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.multipart.FilePart;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,17 +17,59 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.manura.foodapp.OrderService.Error.Model.OrderSerivceError;
 import com.manura.foodapp.OrderService.Service.Impl.OrderServiceImpl;
+import com.manura.foodapp.OrderService.Service.Impl.RedisServiceImpl;
 import com.manura.foodapp.OrderService.Utils.ErrorMessages;
 import com.manura.foodapp.OrderService.controller.Req.BillingAndDeliveryAddressReq;
 import com.manura.foodapp.OrderService.controller.Req.OrderReq;
 import com.manura.foodapp.OrderService.dto.OrderDto;
 import com.manura.foodapp.OrderService.dto.RefundDto;
+
+
 import com.manura.foodapp.OrderService.dto.BillingAndDeliveryAddressDto;
 import com.manura.foodapp.OrderService.dto.FullOrderDto;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+@Controller
+@RequestMapping("/orders")
+class PdfController{
+	
+	@SuppressWarnings("unused")
+	private class  PdfControllerException extends RuntimeException{
+
+		private static final long serialVersionUID = 3588856919244065687L;
+		public PdfControllerException(String message) {
+	        super(message);
+	    }
+	}
+
+	@Autowired
+	private RedisServiceImpl redisServiceImpl;
+	
+	
+	@GetMapping(path = "/pdf/{orderId}", produces = "application/pdf")
+	Mono<HttpEntity<byte[]>> getPDF(@PathVariable String orderId) {
+		
+	return redisServiceImpl.getPdfAsByteArray(orderId).map(i->{
+			HttpHeaders header = new HttpHeaders();
+		    header.setContentType(MediaType.APPLICATION_PDF);
+		   // header.set(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename=" +orderId );
+		    header.setContentLength(i.length);
+		    return  new HttpEntity<byte[]>(i, header);
+		});
+	}
+	
+	@ExceptionHandler(PdfControllerException.class)
+	Mono<String> pdfControllerException(PdfControllerException ex){
+		return Mono.just("notFound")
+				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+	}
+
+
+}
 
 @RestController
 @RequestMapping("/orders")
@@ -46,7 +90,7 @@ public class OrderController {
 					});
 				}).flatMap(__ -> __).flatMap(__ -> __).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
-
+	
 	@GetMapping("/{email}")
 	public Flux<OrderDto> allOrders(@PathVariable String email, Mono<Principal> principal) {
 		return principal.map(Principal::getName).map(user -> {
