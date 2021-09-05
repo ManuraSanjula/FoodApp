@@ -12,7 +12,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.web.server.ServerWebExchange;
-
 import com.manura.foodapp.OrderService.Utils.TokenConverter;
 import com.manura.foodapp.OrderService.security.auth.UserPrincipal;
 
@@ -37,9 +36,14 @@ public class ServerHttpBearerAuthenticationConverter implements Function<ServerW
 		return Mono.justOrEmpty(serverWebExchange).flatMap(ServerHttpBearerAuthenticationConverter::extractToken)
 				.filter(matchBearerLength).flatMap(isolateBearerValue).flatMap(user -> {
 					List<GrantedAuthority> authorities = new ArrayList<>();
-					authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
 					return tokenConverter.validateTokenSignature(user).map(u -> {
 						var principal = new UserPrincipal(u.getPublicId(), u.getEmail());
+						u.getRoles().forEach(role -> {
+							authorities.add(new SimpleGrantedAuthority(role));
+						});
+						u.getAuthorities().forEach(aut -> {
+							authorities.add(new SimpleGrantedAuthority(aut));
+						});
 						return Mono.justOrEmpty(new UsernamePasswordAuthenticationToken(principal, null, authorities));
 					}).flatMap(i -> i);
 				});

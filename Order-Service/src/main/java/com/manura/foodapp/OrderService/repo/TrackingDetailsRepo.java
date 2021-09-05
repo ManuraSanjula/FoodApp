@@ -11,5 +11,5 @@ import reactor.core.publisher.Mono;
 @Repository
 public interface TrackingDetailsRepo extends ReactiveCassandraRepository<TrackingDetailsTable, Long> {
 	@AllowFiltering
-	Mono<TrackingDetailsTable> findByOrderId(Long orderId);
+	Mono<TrackingDetailsTable> findByOrderId(String orderId);
 }

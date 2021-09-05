@@ -31,6 +31,8 @@ public class WebSecurityConfig {
 	public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http, AuthenticationManager authManager) {
 		return http.authorizeExchange().pathMatchers(HttpMethod.OPTIONS).permitAll()
 				.pathMatchers("/orders/pdf/{orderId}").permitAll()
+				.pathMatchers("/orders/order-confrim-web").permitAll()
+				.pathMatchers("/orders/order-completed/{email}/{orderId}").hasAnyAuthority("ROLE_DELIVERY")
 				.pathMatchers("/orders/**").hasAnyAuthority("ROLE_USER")
 					.and().csrf()
 				.disable().httpBasic().disable().formLogin().disable().exceptionHandling()

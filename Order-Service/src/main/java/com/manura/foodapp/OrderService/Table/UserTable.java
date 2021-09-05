@@ -1,6 +1,8 @@
 package com.manura.foodapp.OrderService.Table;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.data.cassandra.core.cql.Ordering;
 import org.springframework.data.cassandra.core.cql.PrimaryKeyType;
@@ -29,4 +31,6 @@ public class UserTable implements Serializable {
 	private String address;
 	private String pic;
 	private Long billingAndDeliveryAddress;
+	private List<String> roles = new ArrayList<>();
+	private List<String> authorities = new ArrayList<>();
 }

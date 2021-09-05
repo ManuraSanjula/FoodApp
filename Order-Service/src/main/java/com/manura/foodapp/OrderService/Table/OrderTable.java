@@ -35,5 +35,7 @@ public class OrderTable implements Serializable {
 	private String status;
 	private String trackingNumber;
 	private Long billingAndDeliveryAddress;
+	private Boolean orderAccepted;
+	private Boolean orderRecive;
 }
 

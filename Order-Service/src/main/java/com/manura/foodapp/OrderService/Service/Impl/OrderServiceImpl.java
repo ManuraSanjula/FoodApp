@@ -22,7 +22,6 @@ import com.amazonaws.services.simpleemail.model.Content;
 import com.amazonaws.services.simpleemail.model.Destination;
 import com.amazonaws.services.simpleemail.model.Message;
 import com.amazonaws.services.simpleemail.model.SendEmailRequest;
-import com.amazonaws.services.simpleemail.model.SendEmailResult;
 import com.manura.foodapp.OrderService.Error.Model.OrderSerivceNotFoundError;
 import com.manura.foodapp.OrderService.Service.OrderService;
 import com.manura.foodapp.OrderService.Table.BillingAndDeliveryAddressTable;
@@ -33,6 +32,7 @@ import com.manura.foodapp.OrderService.Table.UserTable;
 import com.manura.foodapp.OrderService.Table.RefundTable;
 
 import com.manura.foodapp.OrderService.Utils.ErrorMessages;
+import com.manura.foodapp.OrderService.Utils.TokenCreator;
 import com.manura.foodapp.OrderService.Utils.Utils;
 import com.manura.foodapp.OrderService.controller.Req.BillingAndDeliveryAddressReq;
 import com.manura.foodapp.OrderService.controller.Req.OrderReq;
@@ -49,6 +49,7 @@ import com.manura.foodapp.OrderService.repo.OrderRepo;
 import com.manura.foodapp.OrderService.repo.RefundRepo;
 import com.manura.foodapp.OrderService.repo.TrackingDetailsRepo;
 import com.manura.foodapp.OrderService.repo.UserRepo;
+import com.nimbusds.jwt.SignedJWT;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -79,10 +80,12 @@ public class OrderServiceImpl implements OrderService {
 	private Mono<RSocketRequester> rSocketRequester;
 	private ModelMapper modelMapper = new ModelMapper();
 	@Autowired
-    private SpringTemplateEngine thymeleafTemplateEngine;
+	private SpringTemplateEngine thymeleafTemplateEngine;
 	final String FROM = "w.m.manurasanjula12345@gmail.com";
 	@Autowired
 	private RedisServiceImpl redisServiceImpl;
+	@Autowired
+	private TokenCreator tokenCreator;
 
 	@Override
 	public Mono<UserTable> saveUser(Mono<UserTable> user) {
@@ -201,7 +204,7 @@ public class OrderServiceImpl implements OrderService {
 											trackingDetailsTable.setId(random_int);
 											trackingDetailsRepo.save(trackingDetailsTable).subscribe();
 											Runnable orderInformation = () -> Send_OrderInformation_Email_And_PDF_Single(
-													Mono.just(d),d.getUserName(),d.getPublicId());
+													Mono.just(d), d.getUserName(), d.getPublicId());
 											new Thread(orderInformation).start();
 										}).mapNotNull(__ -> "Okay");
 							}).flatMap(__ -> __);
@@ -225,13 +228,21 @@ public class OrderServiceImpl implements OrderService {
 	}
 
 	@Override
-	public Mono<String> confirmOrder(String userId, String orderId) {
-		return orderRepo.findByPublicId(orderId)
-				.switchIfEmpty(
-						Mono.error(new OrderSerivceNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
-				.doOnNext(i -> i.setStatus("delivered successfully")).flatMap(orderRepo::save)
-				.map(i -> "Thank you for Ordering").publishOn(Schedulers.boundedElastic())
-				.subscribeOn(Schedulers.boundedElastic());
+	public Mono<Boolean> confirmOrder(String userId, String orderId) {
+		return orderRepo.findByPublicId(orderId).doOnNext(i -> {
+			i.setStatus("Ordering conformation successfully");
+			i.setOrderRecive(true);
+		}).flatMap(orderRepo::save).mapNotNull(i -> Mono.just(true)).publishOn(Schedulers.boundedElastic())
+				.subscribeOn(Schedulers.boundedElastic()).flatMap(__ -> __)
+				.doOnNext(i->{
+					userRepo.findByEmail(userId).subscribe(user->{
+						Context thymeleafContext = new Context();
+						String htmlBody = thymeleafTemplateEngine.process("OrderConfirmation",
+								thymeleafContext);
+						sendMail(user.getEmail(), htmlBody);
+					});
+				})
+				.switchIfEmpty(Mono.just(false));
 	}
 
 	@Override
@@ -240,7 +251,7 @@ public class OrderServiceImpl implements OrderService {
 				.switchIfEmpty(
 						Mono.error(new OrderSerivceNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
 				.subscribeOn(Schedulers.boundedElastic()).mapNotNull(order -> {
-					return trackingDetailsRepo.findByOrderId(order.getId()).publishOn(Schedulers.boundedElastic())
+					return trackingDetailsRepo.findByOrderId(order.getPublicId()).publishOn(Schedulers.boundedElastic())
 							.subscribeOn(Schedulers.boundedElastic()).mapNotNull(tracking -> {
 								return foodRepo.findByPublicId(order.getFood()).publishOn(Schedulers.boundedElastic())
 										.subscribeOn(Schedulers.boundedElastic()).mapNotNull(food -> {
@@ -363,7 +374,7 @@ public class OrderServiceImpl implements OrderService {
 	}
 
 	@Override
-	public void Send_OrderInformation_Email_And_PDF_Single(Mono<OrderTable> order,String email,String orderId) {
+	public void Send_OrderInformation_Email_And_PDF_Single(Mono<OrderTable> order, String email, String orderId) {
 		order.map(i -> {
 			Long billingAndDeliveryAddress = i.getBillingAndDeliveryAddress();
 			String foodId = i.getFood();
@@ -383,9 +394,11 @@ public class OrderServiceImpl implements OrderService {
 												data.put("billingAddress", billing.getBillingAdress());
 
 												try {
-													data.put("imgUrl",("http://"+InetAddress.getLocalHost().getHostAddress() +":8081" + food.getCoverImage()));
-												}catch (Exception e) {
-													data.put("order.imgUrl",food.getCoverImage());
+													data.put("imgUrl",
+															("http://" + InetAddress.getLocalHost().getHostAddress()
+																	+ ":8081" + food.getCoverImage()));
+												} catch (Exception e) {
+													data.put("order.imgUrl", food.getCoverImage());
 												}
 												data.put("foodName", food.getName());
 												data.put("foodCount", i.getCount());
@@ -402,27 +415,83 @@ public class OrderServiceImpl implements OrderService {
 								}).flatMap(__ -> __);
 					}).flatMap(__ -> __);
 		}).flatMap(__ -> __).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
-				.subscribe(html->{
+				.subscribe(html -> {
 					try {
 						byte[] asByteArray = utils.getAllBytesPdf(html, orderId);
 						redisServiceImpl.savePdf(asByteArray, orderId);
-					}catch (Exception e) {
+					} catch (Exception e) {
 					}
-					AmazonSimpleEmailService client = AmazonSimpleEmailServiceClientBuilder.standard().withRegion(Regions.AP_SOUTH_1)
-							.build();
-					SendEmailRequest request = new SendEmailRequest()
-							.withDestination(new Destination().withToAddresses(email))
-							.withMessage(new Message()
-									.withBody(new Body().withHtml(new Content().withCharset("UTF-8").withData(html))
-											.withText(new Content().withCharset("UTF-8").withData(html.replaceAll("\\<.*?\\>", ""))))
-									.withSubject(new Content().withCharset("UTF-8").withData("Order Information")))
-							.withSource(FROM);
-					SendEmailResult result = client.sendEmail(request);
+					sendMail(email, html);
 				});
 	}
 
-	@Override
-	public void Send_OrderInformation_Email_And_PDF_Many(Mono<OrderTable> order,String email,String orderId) {
+	private void sendMail(String email, String html) {
+		AmazonSimpleEmailService client = AmazonSimpleEmailServiceClientBuilder.standard()
+				.withRegion(Regions.AP_SOUTH_1).build();
+		SendEmailRequest request = new SendEmailRequest().withDestination(new Destination().withToAddresses(email))
+				.withMessage(
+						new Message()
+								.withBody(new Body().withHtml(new Content().withCharset("UTF-8").withData(html))
+										.withText(new Content().withCharset("UTF-8")
+												.withData(html.replaceAll("\\<.*?\\>", ""))))
+								.withSubject(new Content().withCharset("UTF-8").withData("Order Information")))
+				.withSource(FROM);
+		client.sendEmail(request);
+	}
 
+	@Override
+	public void Send_OrderInformation_Email_And_PDF_Many(Mono<OrderTable> order, String email, String orderId) {
+
+	}
+
+	@Override
+	public Mono<String> orderCompleted(String userId, String orderId) {
+		return trackingDetailsRepo.findByOrderId(orderId)
+				.switchIfEmpty(
+						Mono.error(new OrderSerivceNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
+				.doOnNext(i -> {
+					i.setOrderDelivered(true);
+					i.setDeliveryStatus("Delivered successfully");
+				}).flatMap(trackingDetailsRepo::save)
+				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic()).doOnNext(i -> {
+					userRepo.findByEmail(userId)
+							.subscribe(user -> {
+								String token = "";
+								try {
+									SignedJWT createSignedJWT = tokenCreator.createSignedJWT(user.getEmail());
+									token = tokenCreator.encryptToken(createSignedJWT);
+								} catch (Exception e) {
+
+								}
+								Map<String, Object> data = new HashMap<>();
+								String uri = ("http://localhost:8085/orders/order-confrim-web?token=" + token + "&user="
+										+ userId + "&orderId=" + orderId);
+								data.put("url", uri);
+								String text = "Your" + " " + i.getOrderId() + "order is completed!";
+								data.put("emailText", text);
+								Context thymeleafContext = new Context();
+								thymeleafContext.setVariables(data);
+								String htmlBody = thymeleafTemplateEngine.process("ShopOrderCompleted",
+										thymeleafContext);
+								sendMail(user.getEmail(), htmlBody);
+							});
+				}).map(__ -> "Delivered successfully");
+	}
+
+	@Override
+	public Mono<String> orderAccepted(String userId, String orderId) {
+		return orderRepo.findByPublicId(orderId).doOnNext(i -> {
+			i.setOrderAccepted(true);
+		}).flatMap(orderRepo::save).mapNotNull(i -> Mono.just("")).publishOn(Schedulers.boundedElastic())
+				.subscribeOn(Schedulers.boundedElastic()).flatMap(__ -> __)
+				.doOnNext(i->{
+					userRepo.findByEmail(userId).subscribe(user->{
+						Context thymeleafContext = new Context();
+						String htmlBody = thymeleafTemplateEngine.process("OrderConfirmation",
+								thymeleafContext);
+						sendMail(user.getEmail(), htmlBody);
+					});
+				})
+				.switchIfEmpty(Mono.just(""));
 	}
 }

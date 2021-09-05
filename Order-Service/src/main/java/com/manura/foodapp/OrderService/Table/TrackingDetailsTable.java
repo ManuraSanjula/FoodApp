@@ -23,4 +23,6 @@ public class TrackingDetailsTable implements Serializable {
 	@PrimaryKeyColumn(name = "userId", ordinal = 0, type = PrimaryKeyType.PARTITIONED, ordering = Ordering.DESCENDING)
 	private String userId;
 	private String deliveryStatus;
+	private Boolean orderDelivered;
+
 }

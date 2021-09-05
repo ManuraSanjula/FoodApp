@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.manura.foodapp.OrderService.Controller.Res.OperationStatusModel;
 import com.manura.foodapp.OrderService.Error.Model.OrderSerivceError;
 import com.manura.foodapp.OrderService.Service.Impl.OrderServiceImpl;
 import com.manura.foodapp.OrderService.Service.Impl.RedisServiceImpl;
@@ -23,8 +24,6 @@ import com.manura.foodapp.OrderService.controller.Req.BillingAndDeliveryAddressR
 import com.manura.foodapp.OrderService.controller.Req.OrderReq;
 import com.manura.foodapp.OrderService.dto.OrderDto;
 import com.manura.foodapp.OrderService.dto.RefundDto;
-
-
 import com.manura.foodapp.OrderService.dto.BillingAndDeliveryAddressDto;
 import com.manura.foodapp.OrderService.dto.FullOrderDto;
 
@@ -56,10 +55,15 @@ class PdfController{
 	return redisServiceImpl.getPdfAsByteArray(orderId).map(i->{
 			HttpHeaders header = new HttpHeaders();
 		    header.setContentType(MediaType.APPLICATION_PDF);
-		   // header.set(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename=" +orderId );
 		    header.setContentLength(i.length);
 		    return  new HttpEntity<byte[]>(i, header);
 		});
+	}
+	
+	@GetMapping("/order-confrim-web")
+	Mono<String> orderConfrimWeb(PdfControllerException ex){
+		return Mono.just("OrderConfirmWeb")
+				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
 	
 	@ExceptionHandler(PdfControllerException.class)
@@ -114,17 +118,44 @@ public class OrderController {
 					.subscribeOn(Schedulers.boundedElastic());
 		}).flatMap(__ -> __).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
-
-	@GetMapping("/{email}/{orderId}/confirmOrder")
-	public Mono<String> confirmOrder(@PathVariable String email, @PathVariable String orderId,
+	
+	@GetMapping("/order-completed/{email}/{orderId}")
+	public Mono<String> orderCompleted(@PathVariable String email, @PathVariable String orderId,
 			Mono<Principal> principal) {
 		return principal.map(Principal::getName).map(user -> {
 			if (!user.equals(email)) {
 				throw new OrderSerivceError(ErrorMessages.AUTHENTICATION_FAILED.getErrorMessage());
 			}
-			return orderServiceImpl.confirmOrder(email, orderId).publishOn(Schedulers.boundedElastic())
+			return orderServiceImpl.orderCompleted(email, orderId).publishOn(Schedulers.boundedElastic())
 					.subscribeOn(Schedulers.boundedElastic());
 		}).flatMap(__ -> __).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+	}
+
+	@GetMapping("/{email}/{orderId}/confirmOrder")
+	public Mono<OperationStatusModel> confirmOrder(@PathVariable String email, @PathVariable String orderId,
+			Mono<Principal> principal) {
+		
+		return principal.map(Principal::getName).map(user -> {
+			if (!user.equals(email)) {
+				throw new OrderSerivceError(ErrorMessages.AUTHENTICATION_FAILED.getErrorMessage());
+			}
+			return orderServiceImpl.confirmOrder(email, orderId).publishOn(Schedulers.boundedElastic())
+					.subscribeOn(Schedulers.boundedElastic()).map(i->{
+						if(i) {
+							OperationStatusModel returnValue = new OperationStatusModel();
+							returnValue.setOperationName("ORDER_CONFRIM");
+							returnValue.setOperationResult("SUCCESS");
+							return returnValue;
+						}else {
+							OperationStatusModel returnValue = new OperationStatusModel();
+							returnValue.setOperationName("ORDER_CONFRIM");
+							returnValue.setOperationResult("FAIL");
+							return returnValue;
+						}
+					});
+		}).flatMap(__ -> __).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+		 
+		 
 	}
 
 	@GetMapping("/{email}/refund")
@@ -192,5 +223,4 @@ public class OrderController {
 		}).flatMap(__ -> __).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 
 	}
-
 }

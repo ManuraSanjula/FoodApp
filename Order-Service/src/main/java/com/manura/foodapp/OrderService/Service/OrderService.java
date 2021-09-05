@@ -28,7 +28,14 @@ public interface OrderService {
 	Mono<UserTable> updateUser(String id,Mono<UserTable> user);
 	Mono<FoodTable> saveFood(Mono<FoodTable> food);
 	Mono<FoodTable> updateFood(String id,Mono<FoodTable> food);
-	Mono<String> confirmOrder(String userId,String orderId);
+	
+	Mono<String> orderCompleted(String userId,String orderId);
+	
+	Mono<String> orderAccepted(String userId,String orderId);
+
+	
+	Mono<Boolean> confirmOrder(String userId,String orderId);
+
 	Mono<RefundDto> requestARefund(Flux<FilePart> filePartFlux,
 			String email,
 			String reason,String userId,String orderId); 
