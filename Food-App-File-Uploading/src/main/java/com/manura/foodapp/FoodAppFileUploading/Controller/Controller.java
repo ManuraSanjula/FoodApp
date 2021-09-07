@@ -47,6 +47,15 @@ public class Controller {
 				.map(ResponseEntity::ok);
 
 	}
+	
+	@GetMapping(value = "/refund-image/{fileName:.+}", produces = MediaType.IMAGE_JPEG_VALUE)
+	public Mono<ResponseEntity<Resource>> getRefundImage(@PathVariable String fileName) {		
+		return fileStorageService.loadFileAsResource(fileName+".jpeg","Refund").
+				publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
+				.switchIfEmpty(Mono.error(new ImageNotFoundError("")))
+				.map(ResponseEntity::ok);
+
+	}
 
 	@RequestMapping("/**")
 	Mono<String> notFound() {

@@ -13,7 +13,7 @@ public class RefundDto implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = -4210045108215130712L;
-	private String id;
+	private Long id;
     private String reason;
     private Date date;
     private List<String> evidence;

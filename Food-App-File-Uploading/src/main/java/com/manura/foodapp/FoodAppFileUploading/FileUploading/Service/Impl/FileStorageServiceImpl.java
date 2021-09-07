@@ -240,6 +240,9 @@ public class FileStorageServiceImpl implements FileStorageService {
 					StandardOpenOption.WRITE);
 			return DataBufferUtils.write(bufferFlux, channel).mapNotNull(i -> {
 				return fileName;
+			}).doOnComplete(() -> {
+				File image = new File(opPath.toAbsolutePath().toString());
+				addTextWatermark("Food-App", "jpeg", image, image);
 			}).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 		} catch (Exception e) {
 			return Flux.empty();

@@ -302,37 +302,47 @@ public class OrderServiceImpl implements OrderService {
 	}
 
 	@Override
-	public Mono<RefundDto> requestARefund(Flux<FilePart> filePartFlux, String email, String reason, String userId,
+	public Mono<Boolean> requestARefund(Flux<FilePart> filePartFlux, String email, String reason,
 			String orderId) {
 		List<String> images = new ArrayList<>();
 		return Mono.just(new RefundTable()).publishOn(Schedulers.boundedElastic())
-				.subscribeOn(Schedulers.boundedElastic()).map(i -> {
-					filePartFlux.map(file -> {
-						String image = this.rSocketRequester
-								.map(rsocket -> rsocket.route("file.upload.refund").data(file.content()))
-								.mapNotNull(r -> r.retrieveFlux(String.class)).flatMapMany(s -> s).distinct()
-								.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
-								.blockFirst();
-						return image;
-					}).subscribe(images::add);
+				.subscribeOn(Schedulers.boundedElastic()).flatMap(i -> {
+					return userRepo.findByEmail(email)
+							.switchIfEmpty(Mono.error(
+									new OrderSerivceNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
+							.flatMap(user->{
+						return orderRepo.findByPublicId(orderId)
+								.switchIfEmpty(Mono.error(
+										new OrderSerivceNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
+								.map(order->{
+							filePartFlux.map(file -> {
+								String image = this.rSocketRequester
+										.map(rsocket -> rsocket.route("file.upload.refund").data(file.content()))
+										.mapNotNull(r -> r.retrieveFlux(String.class)).flatMapMany(s -> s).distinct()
+										.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
+										.blockFirst();
+								return ("/refund-image/" + image);
+							}).subscribe(images::add);
 
-					int min = 10;
-					long max = 100000000000000000L;
-					Long random_int = (long) Math.floor(Math.random() * (max - min + 1) + min);
+							int min = 10;
+							long max = 100000000000000000L;
+							Long random_int = (long) Math.floor(Math.random() * (max - min + 1) + min);
 
-					i.setId(random_int);
-					i.setPublicId(utils.generateId(20));
-					i.setReason(reason);
-					i.setDate(new Date());
-					i.setOrderId(orderId);
-					i.setUserId(userId);
-					i.setSuccess(false);
-					i.setStatus("Pending");
-					return i;
+							i.setId(random_int);
+							i.setPublicId(utils.generateId(20));
+							i.setReason(reason);
+							i.setDate(new Date());
+							i.setOrderId(order.getPublicId());
+							i.setUserId(user.getEmail());
+							i.setSuccess(false);
+							i.setStatus("Pending");
+							return i;
+						});
+					});
 				}).map(i -> {
 					i.setEvidence(images);
 					return i;
-				}).flatMap(refundRepo::save).map(i -> modelMapper.map(i, RefundDto.class))
+				}).flatMap(refundRepo::save).map(i ->true)
 				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 
 	}

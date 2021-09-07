@@ -27,5 +27,5 @@ public class RefundTable implements Serializable {
     private List<String> evidence;
     private Boolean success;
 	private String status;
-    
+    private String feedBackFromCompany;
 }

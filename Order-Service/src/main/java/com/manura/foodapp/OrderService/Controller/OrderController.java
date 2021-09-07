@@ -283,17 +283,30 @@ public class OrderController {
 		}).flatMapMany(__ -> __).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
 
-	@PostMapping("/{email}/refund")
-	public Mono<RefundDto> requestARefund(@RequestPart("email") String email, @RequestPart("reason") String reason,
-			@RequestPart("userId") String userId, @RequestPart("orderId") String orderId,
+	@PostMapping("/{email}/{orderId}/refund")
+	public Mono<OperationStatusModel> requestARefund(@PathVariable("email") String email, @RequestPart("reason") String reason,
+			@PathVariable("orderId") String orderId,
 			@RequestPart(name = "images", required = false) Flux<FilePart> fileParts, Mono<Principal> principal) {
 
 		return principal.map(Principal::getName).map(user -> {
 			if (!user.equals(email)) {
 				throw new OrderSerivceError(ErrorMessages.AUTHENTICATION_FAILED.getErrorMessage());
 			}
-			return orderServiceImpl.requestARefund(fileParts, email, reason, userId, orderId)
-					.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+			return orderServiceImpl.requestARefund(fileParts, email, reason, orderId)
+					.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
+					.map(i->{
+						if(i) {
+							OperationStatusModel returnValue = new OperationStatusModel();
+							returnValue.setOperationName("REFUND_COMPLETED");
+							returnValue.setOperationResult("SUCCESS");
+							return returnValue;
+						}else {
+							OperationStatusModel returnValue = new OperationStatusModel();
+							returnValue.setOperationName("REFUND_COMPLETED");
+							returnValue.setOperationResult("FAIL");
+							return returnValue;
+						}
+					});
 		}).flatMap(__ -> __).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 
 	}
