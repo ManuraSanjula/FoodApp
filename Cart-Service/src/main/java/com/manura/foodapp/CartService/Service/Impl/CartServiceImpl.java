@@ -85,8 +85,6 @@ public class CartServiceImpl implements CartService {
 												cart.setFoodId(food.getId());
 												cart.setCount(i.getCount());
 												cart.setPrice((food.getPrice() * i.getCount()));
-												cart.setItem(food);
-												cart.setOwner(user);
 												return cartRepo.save(cart);
 											} else {
 												cartTable.setCount((cartTable.getCount() + 1));

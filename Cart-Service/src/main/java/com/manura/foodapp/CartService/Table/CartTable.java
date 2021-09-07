@@ -34,13 +34,7 @@ public class CartTable implements Serializable, Persistable<Integer> {
 	private String userName;
 	
 	private String food;
-
-	@Transient
-	private FoodTable item;
-
-	@Transient
-	private UserTable owner;
-
+	
 	@Transient
 	private boolean CartTable;
 

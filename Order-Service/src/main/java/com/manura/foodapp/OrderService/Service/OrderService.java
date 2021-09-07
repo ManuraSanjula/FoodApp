@@ -8,6 +8,7 @@ import com.manura.foodapp.OrderService.Table.UserTable;
 import com.manura.foodapp.OrderService.controller.Req.BillingAndDeliveryAddressReq;
 import com.manura.foodapp.OrderService.controller.Req.OrderReq;
 import com.manura.foodapp.OrderService.dto.BillingAndDeliveryAddressDto;
+import com.manura.foodapp.OrderService.dto.CartDto;
 import com.manura.foodapp.OrderService.dto.FullOrderDto;
 import com.manura.foodapp.OrderService.dto.OrderDto;
 import com.manura.foodapp.OrderService.dto.RefundDto;
@@ -22,6 +23,8 @@ import reactor.core.publisher.Mono;
 public interface OrderService {
     Mono<UserTable> saveUser(Mono<UserTable> user);
     Mono<Boolean> saveOrder(Mono<OrderReq> cart,String email);
+    Flux<Boolean> saveManyOrder(Flux<CartDto> cart,String email);
+
 	Flux<OrderDto> getOrder(String id);
 	Mono<FullOrderDto> getOneOrder(String userId,String orderId);
 	Mono<UserTable> getUser(String id);

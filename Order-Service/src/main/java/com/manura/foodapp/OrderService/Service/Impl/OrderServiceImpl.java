@@ -37,6 +37,7 @@ import com.manura.foodapp.OrderService.Utils.Utils;
 import com.manura.foodapp.OrderService.controller.Req.BillingAndDeliveryAddressReq;
 import com.manura.foodapp.OrderService.controller.Req.OrderReq;
 import com.manura.foodapp.OrderService.dto.BillingAndDeliveryAddressDto;
+import com.manura.foodapp.OrderService.dto.CartDto;
 import com.manura.foodapp.OrderService.dto.FoodDto;
 import com.manura.foodapp.OrderService.dto.FullOrderDto;
 import com.manura.foodapp.OrderService.dto.OrderDto;
@@ -178,7 +179,9 @@ public class OrderServiceImpl implements OrderService {
 														orderTable.setAddress(user.getAddress());
 														orderTable.setPublicId(utils.generateAddressId(30));
 														orderTable.setUserName(user.getEmail());
-														orderTable.setFood(food.getPublicId());
+														List<String> foodId = new ArrayList<>();
+														foodId.add(food.getPublicId());
+														orderTable.setFoods(foodId);
 														orderTable.setCount(i.getCount());
 														orderTable.setPrice((food.getPrice() * i.getCount()));
 														orderTable.setStatus("processing");
@@ -196,11 +199,9 @@ public class OrderServiceImpl implements OrderService {
 											trackingDetailsTable.setUserId(email);
 											trackingDetailsTable.setOrderId(d.getPublicId());
 											trackingDetailsTable.setDeliveryStatus("Not Delivered");
-
 											int min = 10;
 											long max = 100000000000000000L;
 											Long random_int = (long) Math.floor(Math.random() * (max - min + 1) + min);
-
 											trackingDetailsTable.setId(random_int);
 											trackingDetailsRepo.save(trackingDetailsTable).subscribe();
 											Runnable orderInformation = () -> Send_OrderInformation_Email_And_PDF_Single(
@@ -215,8 +216,10 @@ public class OrderServiceImpl implements OrderService {
 	public Flux<OrderDto> getOrder(String id) {
 		return orderRepo.findByUserName(id).publishOn(Schedulers.boundedElastic())
 				.subscribeOn(Schedulers.boundedElastic()).map(e -> {
-					return foodRepo.findByPublicId(e.getFood()).publishOn(Schedulers.boundedElastic())
-							.subscribeOn(Schedulers.boundedElastic()).map(i -> {
+					return Flux.fromIterable(e.getFoods())
+							.publishOn(Schedulers.boundedElastic())
+							.subscribeOn(Schedulers.boundedElastic())
+							.map(i -> {
 								OrderDto cart = new OrderDto();
 								cart.setId(e.getPublicId());
 								cart.setFood(modelMapper.map(i, FoodDto.class));
@@ -224,7 +227,7 @@ public class OrderServiceImpl implements OrderService {
 								cart.setPrice(e.getPrice());
 								return cart;
 							}).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
-				}).flatMap(u -> u).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+				}).flatMap(__ -> __).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
 
 	@Override
@@ -287,7 +290,8 @@ public class OrderServiceImpl implements OrderService {
 	public Flux<RefundDto> getAllRefund(String userId) {
 		return refundRepo.findByUserId(userId).publishOn(Schedulers.boundedElastic())
 				.subscribeOn(Schedulers.boundedElastic()).map(i -> {
-					return orderRepo.findByPublicId(i.getOrderId()).map(order -> {
+					Flux.fromIterable(i.getOrderId());
+					return orderRepo.findByPublicId().map(order -> {
 						return foodRepo.findByPublicId(order.getFood()).publishOn(Schedulers.boundedElastic())
 								.subscribeOn(Schedulers.boundedElastic()).mapNotNull(food -> {
 									FoodDto foodDto = modelMapper.map(food, FoodDto.class);
@@ -323,11 +327,9 @@ public class OrderServiceImpl implements OrderService {
 										.blockFirst();
 								return ("/refund-image/" + image);
 							}).subscribe(images::add);
-
 							int min = 10;
 							long max = 100000000000000000L;
 							Long random_int = (long) Math.floor(Math.random() * (max - min + 1) + min);
-
 							i.setId(random_int);
 							i.setPublicId(utils.generateId(20));
 							i.setReason(reason);
@@ -526,5 +528,11 @@ public class OrderServiceImpl implements OrderService {
 								return true;
 							});
 				}).switchIfEmpty(Mono.just(false));
+	}
+
+	@Override
+	public Flux<Boolean> saveManyOrder(Flux<CartDto> cart, String email) {
+		
+		return null;
 	}
 }
