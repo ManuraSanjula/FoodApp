@@ -92,7 +92,7 @@ public class UserServiceImpl implements UserService {
 
 	@SuppressWarnings("static-access")
 	@Override
-	public UserDto createUser(UserDto user) {
+	public UserDto createUser(UserDto user, String roleName) {
 
 		if (userRepo.findByEmail(user.getEmail()) != null) {
 			throw new UserServiceException("User AlReady exits given Email");
@@ -105,8 +105,16 @@ public class UserServiceImpl implements UserService {
 		AuthorityEntity writeAuthority = authorityRepo.findByName("WRITE_AUTHORITY");
 		AuthorityEntity deleteAuthority = authorityRepo.findByName("DELETE_AUTHORITY");
 		AuthorityEntity updateAuthority = authorityRepo.findByName("UPDATE_AUTHORITY");
+		RoleEntity role = null;
+		
+		if (roleName.equals("ADMIN")) {
+			role = roleRepo.findByRole("ROLE_ADMIN");
+		} else if (roleName.equals("DELIVERY")) {
+			role = roleRepo.findByRole("ROLE_DELIVERY");
+		} else {
+			role = roleRepo.findByRole("ROLE_USER");
+		}
 
-		RoleEntity role = roleRepo.findByRole("ROLE_USER");
 		role.setAuthorities(Arrays.asList(readAuthority, writeAuthority, updateAuthority, deleteAuthority));
 		if (role != null) {
 			userEntity.setRole(Arrays.asList(role));
@@ -133,8 +141,15 @@ public class UserServiceImpl implements UserService {
 		UserEntity createdUser = userRepo.save(userEntity);
 		saveUserIntoCache(createdUser);
 		UserDto result = modelMapper.map(createdUser, UserDto.class);
-
-		result.setRoles(Arrays.asList("ROLE_USER"));
+		
+		if (roleName.equals("ADMIN")) {
+			result.setRoles(Arrays.asList("ROLE_ADMIN"));
+		} else if (roleName.equals("DELIVERY")) {
+			result.setRoles(Arrays.asList("ROLE_DELIVERY"));
+		} else {
+			result.setRoles(Arrays.asList("ROLE_USER"));
+		}
+		
 		result.setAuthorities(
 				Arrays.asList("READ_AUTHORITY", "WRITE_AUTHORITY", "DELETE_AUTHORITY", "UPDATE_AUTHORITY"));
 
@@ -339,16 +354,16 @@ public class UserServiceImpl implements UserService {
 		}
 	}
 
-	private MultipartFile resizeImage(MultipartFile image, int targetWidth, int targetHeight,long size) {// 192x192
+	private MultipartFile resizeImage(MultipartFile image, int targetWidth, int targetHeight, long size) {// 192x192
 		try {
 			BufferedImage imBuff = ImageIO.read(image.getInputStream());
 			ByteArrayOutputStream stream = new ByteArrayOutputStream(); // your output
-			BufferedImage bufferedImage = Scalr.resize(imBuff, Scalr.Method.AUTOMATIC, Scalr.Mode.AUTOMATIC, targetWidth, targetHeight,
-					Scalr.OP_ANTIALIAS);
+			BufferedImage bufferedImage = Scalr.resize(imBuff, Scalr.Method.AUTOMATIC, Scalr.Mode.AUTOMATIC,
+					targetWidth, targetHeight, Scalr.OP_ANTIALIAS);
 			try {
 				ImageIO.write(bufferedImage, "jpeg", stream);
 				InputStream inputStream = new ByteArrayInputStream(stream.toByteArray());
-				MultipartFile multipartFile = new MockMultipartFile("temp.jpg","temp.jpg","", inputStream);
+				MultipartFile multipartFile = new MockMultipartFile("temp.jpg", "temp.jpg", "", inputStream);
 				return multipartFile;
 			} catch (Exception e) {
 				return null;
@@ -363,18 +378,20 @@ public class UserServiceImpl implements UserService {
 		ModelMapper modelMapper = new ModelMapper();
 		UserEntity userEntity = userRepo.findByEmail(email);
 		if (userEntity != null) {
-			MultipartFile resizeImage = resizeImage(image, 192, 192,image.getSize());
-			if(resizeImage == null) {
-				Flux<DataBuffer> data = DataBufferUtils.read(image.getResource(), new DefaultDataBufferFactory(), 1000000);
-				String img = ("user-image/" + this.requester.route("file.upload.user").data(data).retrieveFlux(String.class)
-						.distinct().blockFirst());
+			MultipartFile resizeImage = resizeImage(image, 192, 192, image.getSize());
+			if (resizeImage == null) {
+				Flux<DataBuffer> data = DataBufferUtils.read(image.getResource(), new DefaultDataBufferFactory(),
+						1000000);
+				String img = ("user-image/" + this.requester.route("file.upload.user").data(data)
+						.retrieveFlux(String.class).distinct().blockFirst());
 				userEntity.setPic(img);
 				userRepo.save(userEntity);
 				return modelMapper.map(userEntity, UserRes.class);
-			}else {
-				Flux<DataBuffer> data = DataBufferUtils.read(resizeImage.getResource(), new DefaultDataBufferFactory(), 1000000);
-				String img = ("/user-image/" + this.requester.route("file.upload.user").data(data).retrieveFlux(String.class)
-						.distinct().blockFirst());
+			} else {
+				Flux<DataBuffer> data = DataBufferUtils.read(resizeImage.getResource(), new DefaultDataBufferFactory(),
+						1000000);
+				String img = ("/user-image/" + this.requester.route("file.upload.user").data(data)
+						.retrieveFlux(String.class).distinct().blockFirst());
 				userEntity.setPic(img);
 				userRepo.save(userEntity);
 				return modelMapper.map(userEntity, UserRes.class);
@@ -385,5 +402,4 @@ public class UserServiceImpl implements UserService {
 		}
 
 	}
-
 }

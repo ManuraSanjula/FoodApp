@@ -53,6 +53,5 @@ public class UserMicroServiceApplication implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        rabbitTemplate.convertAndSend("UserCreated", "UserServiceStarted");
     }
 }

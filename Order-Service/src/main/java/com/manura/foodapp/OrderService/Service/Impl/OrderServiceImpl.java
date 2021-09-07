@@ -152,7 +152,7 @@ public class OrderServiceImpl implements OrderService {
 	}
 
 	@Override
-	public Mono<String> saveOrder(Mono<OrderReq> cart, String email) {
+	public Mono<Boolean> saveOrder(Mono<OrderReq> cart, String email) {
 		return cart
 				.switchIfEmpty(Mono
 						.error(new OrderSerivceNotFoundError(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage())))
@@ -206,9 +206,9 @@ public class OrderServiceImpl implements OrderService {
 											Runnable orderInformation = () -> Send_OrderInformation_Email_And_PDF_Single(
 													Mono.just(d), d.getUserName(), d.getPublicId());
 											new Thread(orderInformation).start();
-										}).mapNotNull(__ -> "Okay");
+										}).mapNotNull(__ -> true);
 							}).flatMap(__ -> __);
-				}).flatMap(__ -> __);
+				}).flatMap(__ -> __).switchIfEmpty(Mono.just(false));
 	}
 
 	@Override
@@ -229,20 +229,29 @@ public class OrderServiceImpl implements OrderService {
 
 	@Override
 	public Mono<Boolean> confirmOrder(String userId, String orderId) {
-		return orderRepo.findByPublicId(orderId).doOnNext(i -> {
-			i.setStatus("Ordering conformation successfully");
-			i.setOrderRecive(true);
-		}).flatMap(orderRepo::save).mapNotNull(i -> Mono.just(true)).publishOn(Schedulers.boundedElastic())
-				.subscribeOn(Schedulers.boundedElastic()).flatMap(__ -> __)
-				.doOnNext(i->{
-					userRepo.findByEmail(userId).subscribe(user->{
-						Context thymeleafContext = new Context();
-						String htmlBody = thymeleafTemplateEngine.process("OrderConfirmation",
-								thymeleafContext);
-						sendMail(user.getEmail(), htmlBody);
-					});
-				})
-				.switchIfEmpty(Mono.just(false));
+		return orderRepo.findByPublicId(orderId)
+				.switchIfEmpty(
+						Mono.error(new OrderSerivceNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
+				.doOnNext(i -> {
+					i.setStatus("Ordering conformation successfully");
+					i.setOrderRecive(true);
+				}).flatMap(orderRepo::save).publishOn(Schedulers.boundedElastic())
+				.subscribeOn(Schedulers.boundedElastic()).map(i -> {
+					return userRepo.findByEmail(userId)
+							.switchIfEmpty(Mono.error(
+									new OrderSerivceNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
+							.map(user -> {
+								Map<String, Object> data = new HashMap<>();
+								Context thymeleafContext = new Context();
+								String text = "Your" + " " + i.getPublicId() + "order is Accepted!";
+								data.put("order", text);
+								thymeleafContext.setVariables(data);
+								String htmlBody = thymeleafTemplateEngine.process("OrderConfirmation",
+										thymeleafContext);
+								sendMail(user.getEmail(), htmlBody);
+								return Mono.just(true);
+							});
+				}).flatMap(__ -> __).flatMap(__ -> __).switchIfEmpty(Mono.just(false));
 	}
 
 	@Override
@@ -329,22 +338,24 @@ public class OrderServiceImpl implements OrderService {
 	}
 
 	@Override
-	public Mono<String> setNewBillingAndDeliveryAddress(Mono<BillingAndDeliveryAddressReq> req, String email) {
+	public Mono<Boolean> setNewBillingAndDeliveryAddress(Mono<BillingAndDeliveryAddressReq> req, String email) {
 		return req.map(i -> modelMapper.map(i, BillingAndDeliveryAddressTable.class))
 				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic()).flatMap(i -> {
-					return userRepo.findByEmail(email).map(user -> {
-						int min = 10;
-						long max = 100000000000000000L;
-						Long random_int = (long) Math.floor(Math.random() * (max - min + 1) + min);
-						i.setId(random_int);
-						i.setUserId(user.getEmail());
-						user.setBillingAndDeliveryAddress(i.getId());
-						userRepo.save(user).subscribe();
-						return i;
-					}).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
-				}).flatMap(billingAndDeliveryAddressRepo::save)
-				.map(i -> "BillingAdress " + i.getBillingAdress() + "\n" + "DeliveryAdress " + i.getDeliveryAdress())
-				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+					return userRepo.findByEmail(email)
+							.switchIfEmpty(Mono.error(
+									new OrderSerivceNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
+							.map(user -> {
+								int min = 10;
+								long max = 100000000000000000L;
+								Long random_int = (long) Math.floor(Math.random() * (max - min + 1) + min);
+								i.setId(random_int);
+								i.setUserId(user.getEmail());
+								user.setBillingAndDeliveryAddress(i.getId());
+								userRepo.save(user).subscribe();
+								return i;
+							}).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+				}).flatMap(billingAndDeliveryAddressRepo::save).map(i -> true).publishOn(Schedulers.boundedElastic())
+				.subscribeOn(Schedulers.boundedElastic()).switchIfEmpty(Mono.just(false));
 	}
 
 	@Override
@@ -355,7 +366,7 @@ public class OrderServiceImpl implements OrderService {
 	}
 
 	@Override
-	public Mono<String> changeBillingAndDeliveryAddress(String user, Long billingId) {
+	public Mono<Boolean> changeBillingAndDeliveryAddress(String user, Long billingId) {
 		return billingAndDeliveryAddressRepo.findById(billingId).publishOn(Schedulers.boundedElastic())
 				.subscribeOn(Schedulers.boundedElastic())
 				.switchIfEmpty(
@@ -368,8 +379,8 @@ public class OrderServiceImpl implements OrderService {
 							i.setBillingAndDeliveryAddress(billing.getId());
 							return i;
 						}))
-				.flatMap(__ -> __).map(userRepo::save).map(__ -> "Done").publishOn(Schedulers.boundedElastic())
-				.subscribeOn(Schedulers.boundedElastic());
+				.flatMap(__ -> __).map(userRepo::save).map(__ -> true).publishOn(Schedulers.boundedElastic())
+				.subscribeOn(Schedulers.boundedElastic()).switchIfEmpty(Mono.just(false));
 
 	}
 
@@ -445,17 +456,21 @@ public class OrderServiceImpl implements OrderService {
 	}
 
 	@Override
-	public Mono<String> orderCompleted(String userId, String orderId) {
+	public Mono<Boolean> orderCompleted(String userId, String orderId) {
 		return trackingDetailsRepo.findByOrderId(orderId)
+				.switchIfEmpty(
+						Mono.error(new OrderSerivceNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
 				.switchIfEmpty(
 						Mono.error(new OrderSerivceNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
 				.doOnNext(i -> {
 					i.setOrderDelivered(true);
 					i.setDeliveryStatus("Delivered successfully");
-				}).flatMap(trackingDetailsRepo::save)
-				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic()).doOnNext(i -> {
-					userRepo.findByEmail(userId)
-							.subscribe(user -> {
+				}).flatMap(trackingDetailsRepo::save).publishOn(Schedulers.boundedElastic())
+				.subscribeOn(Schedulers.boundedElastic()).flatMap(i -> {
+					return userRepo.findByEmail(userId)
+							.switchIfEmpty(Mono.error(
+									new OrderSerivceNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
+							.map(user -> {
 								String token = "";
 								try {
 									SignedJWT createSignedJWT = tokenCreator.createSignedJWT(user.getEmail());
@@ -474,24 +489,32 @@ public class OrderServiceImpl implements OrderService {
 								String htmlBody = thymeleafTemplateEngine.process("ShopOrderCompleted",
 										thymeleafContext);
 								sendMail(user.getEmail(), htmlBody);
+								return true;
 							});
-				}).map(__ -> "Delivered successfully");
+				}).switchIfEmpty(Mono.just(false));
 	}
 
 	@Override
-	public Mono<String> orderAccepted(String userId, String orderId) {
-		return orderRepo.findByPublicId(orderId).doOnNext(i -> {
-			i.setOrderAccepted(true);
-		}).flatMap(orderRepo::save).mapNotNull(i -> Mono.just("")).publishOn(Schedulers.boundedElastic())
-				.subscribeOn(Schedulers.boundedElastic()).flatMap(__ -> __)
-				.doOnNext(i->{
-					userRepo.findByEmail(userId).subscribe(user->{
-						Context thymeleafContext = new Context();
-						String htmlBody = thymeleafTemplateEngine.process("OrderConfirmation",
-								thymeleafContext);
-						sendMail(user.getEmail(), htmlBody);
-					});
-				})
-				.switchIfEmpty(Mono.just(""));
+	public Mono<Boolean> orderAccepted(String userId, String orderId) {
+		return orderRepo.findByPublicId(orderId)
+				.switchIfEmpty(
+						Mono.error(new OrderSerivceNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
+				.doOnNext(i -> {
+					i.setOrderAccepted(true);
+				}).flatMap(orderRepo::save).publishOn(Schedulers.boundedElastic())
+				.subscribeOn(Schedulers.boundedElastic()).flatMap(i -> {
+					return userRepo.findByEmail(userId)
+							.switchIfEmpty(Mono.error(
+									new OrderSerivceNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
+							.map(user -> {
+								Map<String, Object> data = new HashMap<>();
+								String text = "Your" + " " + i.getPublicId() + "order is Accepted!";
+								data.put("order", text);
+								Context thymeleafContext = new Context();
+								String htmlBody = thymeleafTemplateEngine.process("OrderAccepted", thymeleafContext);
+								sendMail(user.getEmail(), htmlBody);
+								return true;
+							});
+				}).switchIfEmpty(Mono.just(false));
 	}
 }

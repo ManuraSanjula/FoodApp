@@ -6,8 +6,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
@@ -40,6 +38,7 @@ public class WebSecurity extends WebSecurityConfigurerAdapter {
                 .csrf().disable().authorizeRequests()
                 .antMatchers(publicRoutes).permitAll()
                 .antMatchers("/users/{email}").hasAnyAuthority(roles)
+                 .antMatchers("/users/signup/Admin").hasAnyAuthority("ROLE_ADMIN")
                 .anyRequest().authenticated().and()
                 .addFilter(getAuthenticationFilter())
                 .sessionManagement()

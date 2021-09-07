@@ -130,8 +130,8 @@ public class UserController {
 
 		UserDto userDto = modelMapper.map(userSignupReq, UserDto.class);
 
-		UserDto createdUser = userService.createUser(userDto);
-
+		UserDto createdUser = userService.createUser(userDto,"");
+		
 		UserRes userRes = modelMapper.map(createdUser, UserRes.class);
 
 		UserEvent userEvent = new UserEvent(createdUser, rabbitTemplate, "userCreated");
@@ -141,6 +141,53 @@ public class UserController {
 		return userRes;
 
 	}
+	
+	@PostMapping("/signup/Admin")
+	@ResponseStatus(HttpStatus.CREATED)
+	public UserRes createSpecialUser(@RequestBody(required = false) UserSignupReq userSignupReq, HttpServletResponse res
+			,@RequestParam(value = "role" , defaultValue = "") String role)
+			throws IOException, InterruptedException {
+
+		ModelMapper modelMapper = new ModelMapper();
+
+		if (userSignupReq == null) {
+			throw new UserServiceException(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage());
+		}
+
+		if (userSignupReq.getEmail() == null) {
+			throw new UserServiceException(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage());
+		}
+
+		if (userSignupReq.getAddress() == null) {
+			throw new UserServiceException(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage());
+		}
+
+		if (userSignupReq.getFirstName() == null) {
+			throw new UserServiceException(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage());
+		}
+
+		if (userSignupReq.getLastName() == null) {
+			throw new UserServiceException(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage());
+		}
+
+		if (!userSignupReq.getPassword().equals(userSignupReq.getConfirmPassword())) {
+			throw new UserServiceException(ErrorMessages.AUTHENTICATION_FAILED.getErrorMessage());
+		}
+
+		UserDto userDto = modelMapper.map(userSignupReq, UserDto.class);
+
+		UserDto createdUser = userService.createUser(userDto,role);
+		
+		UserRes userRes = modelMapper.map(createdUser, UserRes.class);
+
+		UserEvent userEvent = new UserEvent(createdUser, rabbitTemplate, "userCreated");
+		Thread thread = new Thread(userEvent);
+		thread.start();
+
+		return userRes;
+
+	}
+
 
 	@PutMapping(path = "/{email}")
 	@Secured({ "ROLE_ADMIN", "ROLE_USER", "ROLE_CHEF" })

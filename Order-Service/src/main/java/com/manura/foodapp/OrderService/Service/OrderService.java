@@ -21,7 +21,7 @@ import reactor.core.publisher.Mono;
  */
 public interface OrderService {
     Mono<UserTable> saveUser(Mono<UserTable> user);
-    Mono<String> saveOrder(Mono<OrderReq> cart,String email);
+    Mono<Boolean> saveOrder(Mono<OrderReq> cart,String email);
 	Flux<OrderDto> getOrder(String id);
 	Mono<FullOrderDto> getOneOrder(String userId,String orderId);
 	Mono<UserTable> getUser(String id);
@@ -29,9 +29,9 @@ public interface OrderService {
 	Mono<FoodTable> saveFood(Mono<FoodTable> food);
 	Mono<FoodTable> updateFood(String id,Mono<FoodTable> food);
 	
-	Mono<String> orderCompleted(String userId,String orderId);
+	Mono<Boolean> orderCompleted(String userId,String orderId);
 	
-	Mono<String> orderAccepted(String userId,String orderId);
+	Mono<Boolean> orderAccepted(String userId,String orderId);
 
 	
 	Mono<Boolean> confirmOrder(String userId,String orderId);
@@ -40,9 +40,9 @@ public interface OrderService {
 			String email,
 			String reason,String userId,String orderId); 
 	Flux<RefundDto> getAllRefund(String userId);
-	Mono<String> setNewBillingAndDeliveryAddress(Mono<BillingAndDeliveryAddressReq> req,String user);
+	Mono<Boolean> setNewBillingAndDeliveryAddress(Mono<BillingAndDeliveryAddressReq> req,String user);
 	Flux<BillingAndDeliveryAddressDto> getAllBillingAndDeliveryAddress(String user);
-	Mono<String> changeBillingAndDeliveryAddress(String user,Long billingId);
+	Mono<Boolean> changeBillingAndDeliveryAddress(String user,Long billingId);
 	void Send_OrderInformation_Email_And_PDF_Single(Mono<OrderTable> order,String email,String orderId);
 	void Send_OrderInformation_Email_And_PDF_Many(Mono<OrderTable> order,String email,String orderId);
 

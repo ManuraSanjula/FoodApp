@@ -8,7 +8,7 @@ import com.manura.foodapp.UserService.entity.UserEntity;
 import com.manura.foodapp.UserService.shared.DTO.UserDto;
 
 public interface UserService extends UserDetailsService {
-	UserDto createUser(UserDto user);
+	UserDto createUser(UserDto user,String role);
 
 	UserDto getUser(String email);
 	

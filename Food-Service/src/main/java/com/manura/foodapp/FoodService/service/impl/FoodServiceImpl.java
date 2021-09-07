@@ -1,7 +1,6 @@
 package com.manura.foodapp.FoodService.service.impl;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -336,9 +335,6 @@ public class FoodServiceImpl implements FoodService {
 	@Override
 	public Mono<UserEntity> saveUser(Mono<UserDto> user) {
 		return user.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic()).flatMap(u -> {
-			u.setRoles(Arrays.asList("ROLE_USER"));
-			u.setAuthorities(
-					Arrays.asList("READ_AUTHORITY", "WRITE_AUTHORITY", "DELETE_AUTHORITY", "UPDATE_AUTHORITY"));
 			return Mono.just(userRepo.save(modelMapper.map(u, UserEntity.class)));
 		}).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic()).doOnNext(i -> {
 			redisServiceImpl.addNewUser(i).publishOn(Schedulers.boundedElastic())
