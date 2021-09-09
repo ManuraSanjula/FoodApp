@@ -140,16 +140,6 @@
                                                     style="width: 45%; font-size: 14px; line-height: 18px; color: #666666;">
                                                 </td>
                                             </tr>
-                                            <!-- <tr>
-                                                <td th:text="${delivery-address-two}"
-                                                    style="width: 55%; font-size: 14px; line-height: 18px; color: #666666; padding-bottom: 10px;">
-
-                                                </td>
-                                                <td th:text="${billing-address-two}"
-                                                    style="width: 45%; font-size: 14px; line-height: 18px; color: #666666; padding-bottom: 10px;">
-
-                                                </td>
-                                            </tr> -->
                                         </tbody>
                                     </table>
                                 </td>
@@ -159,25 +149,25 @@
                                 <td style="padding-top: 0;">
                                     <table width="560" align="center" cellpadding="0" cellspacing="0" border="0"
                                         class="devicewidthinner" style="border-bottom: 1px solid #eeeeee;">
-                                        <tbody>
+                                        <tbody th:each="order : ${orders}">
                                             <tr>
                                                 <td rowspan="4" style="padding-right: 10px; padding-bottom: 10px;">
 
-                                                    <img th:attr="src=${imgUrl},title=image,alt=image" height="80"
+                                                    <img th:attr="src=${order.coverImage},title=image,alt=image" height="80"
                                                         width="80" /><br />
                                                 </td>
-                                                <td colspan="2" th:text="${foodName}"
+                                                <td colspan="2" th:text="${order.name}"
                                                     style="font-size: 14px; font-weight: bold; color: #666666; padding-bottom: 5px;">
                                                 </td>
                                             </tr>
                                             <tr>
-                                                <td th:text="${foodCount}"
+                                                <td th:text="${order.foodInfo.count}"
                                                     style="font-size: 14px; line-height: 18px; color: #757575; width: 440px;">
                                                 </td>
                                                 <td style="width: 130px;"></td>
                                             </tr>
                                             <tr>
-                                                <td th:text="${foodPrice}"
+                                                <td th:text="${order.foodInfo.price}"
                                                     style="font-size: 14px; line-height: 18px; color: #757575; text-align: right;">
                                                 </td>
                                             </tr>

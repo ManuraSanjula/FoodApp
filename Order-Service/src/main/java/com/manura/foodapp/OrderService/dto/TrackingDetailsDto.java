@@ -2,6 +2,7 @@ package com.manura.foodapp.OrderService.dto;
 
 import java.io.Serializable;
 
+
 import lombok.Data;
 
 @Data
@@ -14,6 +15,8 @@ public class TrackingDetailsDto implements Serializable {
 	 * 
 	 */
 	private Long id;
-	private Long orderId;
+	private String orderId;
+	private String userId;
 	private String deliveryStatus;
+	private Boolean orderDelivered;
 }

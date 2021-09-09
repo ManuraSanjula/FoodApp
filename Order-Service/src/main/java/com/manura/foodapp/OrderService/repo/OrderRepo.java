@@ -15,7 +15,4 @@ public interface OrderRepo extends ReactiveCassandraRepository<OrderTable, Long>
 
 	@AllowFiltering
 	Mono<OrderTable> findByPublicId(String publicId);
-
-	@AllowFiltering
-	Mono<OrderTable> findByUserNameAndFood(String user, String food);
 }

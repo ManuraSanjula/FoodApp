@@ -29,6 +29,7 @@ import com.manura.foodapp.OrderService.Table.FoodTable;
 import com.manura.foodapp.OrderService.Table.OrderTable;
 import com.manura.foodapp.OrderService.Table.TrackingDetailsTable;
 import com.manura.foodapp.OrderService.Table.UserTable;
+import com.manura.foodapp.OrderService.Table.Support.OrderFoodInfromation;
 import com.manura.foodapp.OrderService.Table.RefundTable;
 
 import com.manura.foodapp.OrderService.Utils.ErrorMessages;
@@ -39,6 +40,7 @@ import com.manura.foodapp.OrderService.controller.Req.OrderReq;
 import com.manura.foodapp.OrderService.dto.BillingAndDeliveryAddressDto;
 import com.manura.foodapp.OrderService.dto.CartDto;
 import com.manura.foodapp.OrderService.dto.FoodDto;
+import com.manura.foodapp.OrderService.dto.FoodInfoDto;
 import com.manura.foodapp.OrderService.dto.FullOrderDto;
 import com.manura.foodapp.OrderService.dto.OrderDto;
 import com.manura.foodapp.OrderService.dto.RefundDto;
@@ -172,21 +174,30 @@ public class OrderServiceImpl implements OrderService {
 											}
 											return billingAndDeliveryAddressRepo
 													.findById(user.getBillingAndDeliveryAddress())
+													.publishOn(Schedulers.boundedElastic())
+													.subscribeOn(Schedulers.boundedElastic())
 													.switchIfEmpty(Mono.error(new OrderSerivceNotFoundError(
 															ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
 													.mapNotNull(billing -> {
+														List<OrderFoodInfromation> foodsInfo = new ArrayList<>();
 														OrderTable orderTable = new OrderTable();
 														orderTable.setAddress(user.getAddress());
 														orderTable.setPublicId(utils.generateAddressId(30));
 														orderTable.setUserName(user.getEmail());
-														List<String> foodId = new ArrayList<>();
-														foodId.add(food.getPublicId());
-														orderTable.setFoods(foodId);
-														orderTable.setCount(i.getCount());
-														orderTable.setPrice((food.getPrice() * i.getCount()));
+														OrderFoodInfromation orderFoodInfromation = new OrderFoodInfromation();
+														orderFoodInfromation.setFoodId(food.getPublicId());
+														orderFoodInfromation.setCount(i.getCount());
+														orderFoodInfromation.setPrice((food.getPrice() * i.getCount()));
+														foodsInfo.add(orderFoodInfromation);
+														orderTable.setFoodsInfo(foodsInfo);
 														orderTable.setStatus("processing");
 														orderTable.setTrackingNumber(utils.generateAddressId(20));
 														orderTable.setBillingAndDeliveryAddress(billing.getId());
+														Double totalPrice = 0D;
+														for (OrderFoodInfromation info : foodsInfo) {
+															totalPrice = (totalPrice + info.getPrice());
+														}
+														orderTable.setTotalPrice(totalPrice);
 														return orderTable;
 													});
 										}).flatMap(__ -> __).doOnNext(o -> {
@@ -194,7 +205,8 @@ public class OrderServiceImpl implements OrderService {
 											long max = 100000000000000000L;
 											Long random_int = (long) Math.floor(Math.random() * (max - min + 1) + min);
 											o.setId(random_int);
-										}).flatMap(orderRepo::save).doOnNext(d -> {
+										}).flatMap(orderRepo::save).publishOn(Schedulers.boundedElastic())
+										.subscribeOn(Schedulers.boundedElastic()).doOnNext(d -> {
 											TrackingDetailsTable trackingDetailsTable = new TrackingDetailsTable();
 											trackingDetailsTable.setUserId(email);
 											trackingDetailsTable.setOrderId(d.getPublicId());
@@ -204,30 +216,43 @@ public class OrderServiceImpl implements OrderService {
 											Long random_int = (long) Math.floor(Math.random() * (max - min + 1) + min);
 											trackingDetailsTable.setId(random_int);
 											trackingDetailsRepo.save(trackingDetailsTable).subscribe();
-											Runnable orderInformation = () -> Send_OrderInformation_Email_And_PDF_Single(
+											Runnable orderInformation = () -> Send_OrderInformation_Email_And_PDF(
 													Mono.just(d), d.getUserName(), d.getPublicId());
 											new Thread(orderInformation).start();
 										}).mapNotNull(__ -> true);
 							}).flatMap(__ -> __);
-				}).flatMap(__ -> __).switchIfEmpty(Mono.just(false));
+				}).flatMap(__ -> __).switchIfEmpty(Mono.just(false)).publishOn(Schedulers.boundedElastic())
+				.subscribeOn(Schedulers.boundedElastic());
 	}
 
 	@Override
 	public Flux<OrderDto> getOrder(String id) {
 		return orderRepo.findByUserName(id).publishOn(Schedulers.boundedElastic())
+				.subscribeOn(Schedulers.boundedElastic()).publishOn(Schedulers.boundedElastic())
 				.subscribeOn(Schedulers.boundedElastic()).map(e -> {
-					return Flux.fromIterable(e.getFoods())
-							.publishOn(Schedulers.boundedElastic())
-							.subscribeOn(Schedulers.boundedElastic())
-							.map(i -> {
-								OrderDto cart = new OrderDto();
-								cart.setId(e.getPublicId());
-								cart.setFood(modelMapper.map(i, FoodDto.class));
-								cart.setCount(e.getCount());
-								cart.setPrice(e.getPrice());
-								return cart;
-							}).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
-				}).flatMap(__ -> __).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+					return userRepo.findByEmail(e.getUserName()).publishOn(Schedulers.boundedElastic())
+							.subscribeOn(Schedulers.boundedElastic()).map(user -> {
+								return Flux.fromIterable(e.getFoodsInfo()).map(foodInfo -> {
+									return foodRepo.findByPublicId(foodInfo.getFoodId()).map(foodTable -> {
+										List<FoodDto> food = new ArrayList<>();
+										OrderDto cart = new OrderDto();
+										cart.setId(e.getPublicId());
+										cart.setTotalPrice(e.getTotalPrice());
+
+										FoodInfoDto foodInfoDto = new FoodInfoDto();
+										foodInfoDto.setCount(foodInfo.getCount());
+										foodInfoDto.setPrice(foodInfo.getPrice());
+
+										FoodDto foodDto = modelMapper.map(foodTable, FoodDto.class);
+										foodDto.setFoodInfo(foodInfoDto);
+										food.add(foodDto);
+										cart.setFood(food);
+										return cart;
+									});
+								}).flatMap(__ -> __);
+							});
+				}).flatMap(__ -> __).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
+				.flatMap(__ -> __);
 	}
 
 	@Override
@@ -262,90 +287,110 @@ public class OrderServiceImpl implements OrderService {
 		return orderRepo.findByPublicId(orderId).publishOn(Schedulers.boundedElastic())
 				.switchIfEmpty(
 						Mono.error(new OrderSerivceNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
-				.subscribeOn(Schedulers.boundedElastic()).mapNotNull(order -> {
+				.subscribeOn(Schedulers.boundedElastic()).map(order -> {
 					return trackingDetailsRepo.findByOrderId(order.getPublicId()).publishOn(Schedulers.boundedElastic())
-							.subscribeOn(Schedulers.boundedElastic()).mapNotNull(tracking -> {
-								return foodRepo.findByPublicId(order.getFood()).publishOn(Schedulers.boundedElastic())
-										.subscribeOn(Schedulers.boundedElastic()).mapNotNull(food -> {
-											return userRepo.findByEmail(order.getUserName())
+							.subscribeOn(Schedulers.boundedElastic()).map(trackingD -> {
+								return Flux.fromIterable(order.getFoodsInfo()).publishOn(Schedulers.boundedElastic())
+										.subscribeOn(Schedulers.boundedElastic()).map(info -> {
+											return foodRepo.findByPublicId(info.getFoodId())
 													.publishOn(Schedulers.boundedElastic())
-													.subscribeOn(Schedulers.boundedElastic()).mapNotNull(user -> {
-														FullOrderDto fullOrderDto = new FullOrderDto();
-														fullOrderDto.setId(order.getPublicId());
-														fullOrderDto.setFood(modelMapper.map(food, FoodDto.class));
-														fullOrderDto.setUser(modelMapper.map(user, UserDto.class));
-														fullOrderDto.setCount(order.getCount());
-														fullOrderDto.setPrice(order.getPrice());
-														fullOrderDto.setTrackingDetails(
-																modelMapper.map(tracking, TrackingDetailsDto.class));
-														return fullOrderDto;
-													});
-										}).flatMap(__ -> __);
-							}).flatMap(__ -> __);
-				}).flatMap(__ -> __).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+													.subscribeOn(Schedulers.boundedElastic()).map(food -> {
+														return userRepo.findByEmail(userId)
+																.publishOn(Schedulers.boundedElastic())
+																.subscribeOn(Schedulers.boundedElastic()).map(user -> {
+																	List<FoodDto> foodDtos = new ArrayList<>();
 
+																	FoodInfoDto foodInfoDto = new FoodInfoDto();
+																	foodInfoDto.setCount(info.getCount());
+																	foodInfoDto.setPrice(info.getPrice());
+
+																	FoodDto foodDto = modelMapper.map(food,
+																			FoodDto.class);
+																	foodDto.setFoodInfo(foodInfoDto);
+																	foodDtos.add(foodDto);
+																	FullOrderDto fullOrderDto = new FullOrderDto();
+																	fullOrderDto.setUser(
+																			modelMapper.map(user, UserDto.class));
+																	fullOrderDto.setTrackingDetails(modelMapper
+																			.map(trackingD, TrackingDetailsDto.class));
+																	fullOrderDto.setId(order.getPublicId());
+																	fullOrderDto.setTotalPrice(order.getTotalPrice());
+																	fullOrderDto.setFood(foodDtos);
+																	return fullOrderDto;
+																});
+													}).flatMap(__ -> __);
+										});
+							}).flatMapMany(__ -> __);
+				}).flatMapMany(__ -> __).distinct().blockLast();
 	}
 
 	@Override
 	public Flux<RefundDto> getAllRefund(String userId) {
 		return refundRepo.findByUserId(userId).publishOn(Schedulers.boundedElastic())
-				.subscribeOn(Schedulers.boundedElastic()).map(i -> {
-					Flux.fromIterable(i.getOrderId());
-					return orderRepo.findByPublicId().map(order -> {
-						return foodRepo.findByPublicId(order.getFood()).publishOn(Schedulers.boundedElastic())
-								.subscribeOn(Schedulers.boundedElastic()).mapNotNull(food -> {
-									FoodDto foodDto = modelMapper.map(food, FoodDto.class);
-									RefundDto refundDto = modelMapper.map(i, RefundDto.class);
-									OrderDto orderDto = modelMapper.map(order, OrderDto.class);
-									orderDto.setFood(foodDto);
-									refundDto.setOrder(orderDto);
-									return refundDto;
-								});
-					});
-				}).flatMap(__ -> __).flatMap(__ -> __);
+				.subscribeOn(Schedulers.boundedElastic()).flatMap(i -> {
+					return orderRepo.findByPublicId(i.getOrderId()).publishOn(Schedulers.boundedElastic())
+							.subscribeOn(Schedulers.boundedElastic()).map(order -> {
+								List<FoodDto> foodDtos = new ArrayList<>();
+								return Flux.fromIterable(order.getFoodsInfo()).publishOn(Schedulers.boundedElastic())
+										.subscribeOn(Schedulers.boundedElastic()).flatMap(info -> {
+											return foodRepo.findByPublicId(info.getFoodId())
+													.publishOn(Schedulers.boundedElastic())
+													.subscribeOn(Schedulers.boundedElastic()).doOnNext(h -> {
+														FoodDto foodDto = modelMapper.map(h, FoodDto.class);
+														foodDtos.add(foodDto);
+													}).map(food -> {
+														RefundDto refundDto = modelMapper.map(i, RefundDto.class);
+														OrderDto orderDto = modelMapper.map(order, OrderDto.class);
+														orderDto.setFood(foodDtos);
+														refundDto.setOrder(orderDto);
+														return refundDto;
+													});
+										});
+							});
+				}).flatMap(__ -> __).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
 
 	@Override
-	public Mono<Boolean> requestARefund(Flux<FilePart> filePartFlux, String email, String reason,
-			String orderId) {
+	public Mono<Boolean> requestARefund(Flux<FilePart> filePartFlux, String email, String reason, String orderId) {
 		List<String> images = new ArrayList<>();
 		return Mono.just(new RefundTable()).publishOn(Schedulers.boundedElastic())
 				.subscribeOn(Schedulers.boundedElastic()).flatMap(i -> {
 					return userRepo.findByEmail(email)
 							.switchIfEmpty(Mono.error(
 									new OrderSerivceNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
-							.flatMap(user->{
-						return orderRepo.findByPublicId(orderId)
-								.switchIfEmpty(Mono.error(
+							.flatMap(user -> {
+								return orderRepo.findByPublicId(orderId).switchIfEmpty(Mono.error(
 										new OrderSerivceNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
-								.map(order->{
-							filePartFlux.map(file -> {
-								String image = this.rSocketRequester
-										.map(rsocket -> rsocket.route("file.upload.refund").data(file.content()))
-										.mapNotNull(r -> r.retrieveFlux(String.class)).flatMapMany(s -> s).distinct()
-										.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
-										.blockFirst();
-								return ("/refund-image/" + image);
-							}).subscribe(images::add);
-							int min = 10;
-							long max = 100000000000000000L;
-							Long random_int = (long) Math.floor(Math.random() * (max - min + 1) + min);
-							i.setId(random_int);
-							i.setPublicId(utils.generateId(20));
-							i.setReason(reason);
-							i.setDate(new Date());
-							i.setOrderId(order.getPublicId());
-							i.setUserId(user.getEmail());
-							i.setSuccess(false);
-							i.setStatus("Pending");
-							return i;
-						});
-					});
+										.map(order -> {
+											filePartFlux.map(file -> {
+												String image = this.rSocketRequester
+														.map(rsocket -> rsocket.route("file.upload.refund")
+																.data(file.content()))
+														.mapNotNull(r -> r.retrieveFlux(String.class))
+														.flatMapMany(s -> s).distinct()
+														.publishOn(Schedulers.boundedElastic())
+														.subscribeOn(Schedulers.boundedElastic()).blockFirst();
+												return ("/refund-image/" + image);
+											}).subscribe(images::add);
+											int min = 10;
+											long max = 100000000000000000L;
+											Long random_int = (long) Math.floor(Math.random() * (max - min + 1) + min);
+											i.setId(random_int);
+											i.setPublicId(utils.generateId(20));
+											i.setReason(reason);
+											i.setDate(new Date());
+											i.setOrderId(order.getPublicId());
+											i.setUserId(user.getEmail());
+											i.setSuccess(false);
+											i.setStatus("Pending");
+											return i;
+										});
+							});
 				}).map(i -> {
 					i.setEvidence(images);
 					return i;
-				}).flatMap(refundRepo::save).map(i ->true)
-				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+				}).flatMap(refundRepo::save).map(i -> true).publishOn(Schedulers.boundedElastic())
+				.subscribeOn(Schedulers.boundedElastic());
 
 	}
 
@@ -397,55 +442,54 @@ public class OrderServiceImpl implements OrderService {
 	}
 
 	@Override
-	public void Send_OrderInformation_Email_And_PDF_Single(Mono<OrderTable> order, String email, String orderId) {
-		order.map(i -> {
+	public void Send_OrderInformation_Email_And_PDF(Mono<OrderTable> order, String email, String orderId) {
+		String html = order.map(i -> {
 			Long billingAndDeliveryAddress = i.getBillingAndDeliveryAddress();
-			String foodId = i.getFood();
 			String userName = i.getUserName();
+			return userRepo.findByEmail(userName).map(user -> {
+				return billingAndDeliveryAddressRepo.findById(billingAndDeliveryAddress).map(billing -> {
+					return Flux.fromIterable(i.getFoodsInfo()).map(info -> {
+						return foodRepo.findByPublicId(info.getFoodId()).map(d -> {
+							List<FoodDto> foodDtos = new ArrayList<>();
 
-			return userRepo.findByEmail(userName).publishOn(Schedulers.boundedElastic())
-					.subscribeOn(Schedulers.boundedElastic()).map(user -> {
-						return foodRepo.findByPublicId(foodId).publishOn(Schedulers.boundedElastic())
-								.subscribeOn(Schedulers.boundedElastic()).map(food -> {
-									return billingAndDeliveryAddressRepo.findById(billingAndDeliveryAddress)
-											.publishOn(Schedulers.boundedElastic())
-											.subscribeOn(Schedulers.boundedElastic()).map(billing -> {
-												Map<String, Object> data = new HashMap<>();
+							FoodInfoDto foodInfoDto = new FoodInfoDto();
+							foodInfoDto.setCount(info.getCount());
+							foodInfoDto.setPrice(info.getPrice());
 
-												data.put("name", user.getEmail());
-												data.put("deliveryAddress", billing.getDeliveryAdress());
-												data.put("billingAddress", billing.getBillingAdress());
+							FoodDto foodDto = modelMapper.map(d,
+									FoodDto.class);
+							foodDto.setFoodInfo(foodInfoDto);
+							foodDtos.add(foodDto);
+							
+							Map<String, Object> data = new HashMap<>();
+							data.put("name", user.getEmail());
+							data.put("deliveryAddress", billing.getDeliveryAdress());
+							data.put("billingAddress", billing.getBillingAdress());
+							try {
+								data.put("imgUrl", ("http://" + InetAddress.getLocalHost().getHostAddress() + ":8081"
+										+ d.getCoverImage()));
+							} catch (Exception e) {
+								data.put("order.imgUrl", d.getCoverImage());
+							}
+							data.put("orders", foodDtos);
+							data.put("orderTotalPrice", i.getTotalPrice());
+							Context thymeleafContext = new Context();
+							thymeleafContext.setVariables(data);
 
-												try {
-													data.put("imgUrl",
-															("http://" + InetAddress.getLocalHost().getHostAddress()
-																	+ ":8081" + food.getCoverImage()));
-												} catch (Exception e) {
-													data.put("order.imgUrl", food.getCoverImage());
-												}
-												data.put("foodName", food.getName());
-												data.put("foodCount", i.getCount());
-												data.put("foodPrice", food.getPrice());
-												data.put("orderTotalPrice", i.getPrice());
-
-												Context thymeleafContext = new Context();
-												thymeleafContext.setVariables(data);
-
-												String htmlBody = thymeleafTemplateEngine.process("SingleOrder",
-														thymeleafContext);
-												return htmlBody;
-											});
-								}).flatMap(__ -> __);
+							String htmlBody = thymeleafTemplateEngine.process("Order", thymeleafContext);
+							return htmlBody;
+						});
 					}).flatMap(__ -> __);
-		}).flatMap(__ -> __).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
-				.subscribe(html -> {
-					try {
-						byte[] asByteArray = utils.getAllBytesPdf(html, orderId);
-						redisServiceImpl.savePdf(asByteArray, orderId);
-					} catch (Exception e) {
-					}
-					sendMail(email, html);
 				});
+			}).flatMapMany(__ -> __);
+		}).flatMapMany(__ -> __).distinct().blockLast().distinct().blockLast();
+
+		try {
+			byte[] asByteArray = utils.getAllBytesPdf(html, orderId);
+			redisServiceImpl.savePdf(asByteArray, orderId);
+		} catch (Exception e) {
+		}
+		sendMail(email, html);
 	}
 
 	private void sendMail(String email, String html) {
@@ -460,11 +504,6 @@ public class OrderServiceImpl implements OrderService {
 								.withSubject(new Content().withCharset("UTF-8").withData("Order Information")))
 				.withSource(FROM);
 		client.sendEmail(request);
-	}
-
-	@Override
-	public void Send_OrderInformation_Email_And_PDF_Many(Mono<OrderTable> order, String email, String orderId) {
-
 	}
 
 	@Override
@@ -531,8 +570,14 @@ public class OrderServiceImpl implements OrderService {
 	}
 
 	@Override
-	public Flux<Boolean> saveManyOrder(Flux<CartDto> cart, String email) {
-		
+	public Flux<Boolean> saveManyOrderFromCart(Flux<CartDto> cart, String email) {
+
+		return null;
+	}
+
+	@Override
+	public Mono<Boolean> saveOrderFromCart(Mono<CartDto> cart, String email) {
+		// TODO Auto-generated method stub
 		return null;
 	}
 }

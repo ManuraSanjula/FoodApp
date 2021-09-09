@@ -8,6 +8,8 @@ import org.springframework.data.cassandra.core.cql.PrimaryKeyType;
 import org.springframework.data.cassandra.core.mapping.PrimaryKeyColumn;
 import org.springframework.data.cassandra.core.mapping.Table;
 
+import com.manura.foodapp.OrderService.Table.Support.OrderFoodInfromation;
+
 import lombok.Data;
 
 @Data
@@ -25,11 +27,7 @@ public class OrderTable implements Serializable {
 	@PrimaryKeyColumn(name = "userName", ordinal = 2, type = PrimaryKeyType.PARTITIONED)
 	private String userName;
 	
-	private List<String> foods;
-
-	private Long count;
-
-	private Double price;
+	private List<OrderFoodInfromation> foodsInfo;
 	
 	private String address;
 	
@@ -38,5 +36,6 @@ public class OrderTable implements Serializable {
 	private Long billingAndDeliveryAddress;
 	private Boolean orderAccepted;
 	private Boolean orderRecive;
+	private Double totalPrice;
 }
 

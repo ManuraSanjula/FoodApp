@@ -23,7 +23,8 @@ import reactor.core.publisher.Mono;
 public interface OrderService {
     Mono<UserTable> saveUser(Mono<UserTable> user);
     Mono<Boolean> saveOrder(Mono<OrderReq> cart,String email);
-    Flux<Boolean> saveManyOrder(Flux<CartDto> cart,String email);
+    Flux<Boolean> saveManyOrderFromCart(Flux<CartDto> cart,String email);
+    Mono<Boolean> saveOrderFromCart(Mono<CartDto> cart,String email);
 
 	Flux<OrderDto> getOrder(String id);
 	Mono<FullOrderDto> getOneOrder(String userId,String orderId);
@@ -46,7 +47,6 @@ public interface OrderService {
 	Mono<Boolean> setNewBillingAndDeliveryAddress(Mono<BillingAndDeliveryAddressReq> req,String user);
 	Flux<BillingAndDeliveryAddressDto> getAllBillingAndDeliveryAddress(String user);
 	Mono<Boolean> changeBillingAndDeliveryAddress(String user,Long billingId);
-	void Send_OrderInformation_Email_And_PDF_Single(Mono<OrderTable> order,String email,String orderId);
-	void Send_OrderInformation_Email_And_PDF_Many(Mono<OrderTable> order,String email,String orderId);
+	void Send_OrderInformation_Email_And_PDF(Mono<OrderTable> order,String email,String orderId);
 
 }
