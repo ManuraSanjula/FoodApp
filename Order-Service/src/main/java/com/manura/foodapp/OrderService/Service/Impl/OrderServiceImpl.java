@@ -38,7 +38,6 @@ import com.manura.foodapp.OrderService.Utils.Utils;
 import com.manura.foodapp.OrderService.controller.Req.BillingAndDeliveryAddressReq;
 import com.manura.foodapp.OrderService.controller.Req.OrderReq;
 import com.manura.foodapp.OrderService.dto.BillingAndDeliveryAddressDto;
-import com.manura.foodapp.OrderService.dto.CartDto;
 import com.manura.foodapp.OrderService.dto.FoodDto;
 import com.manura.foodapp.OrderService.dto.FoodInfoDto;
 import com.manura.foodapp.OrderService.dto.FullOrderDto;
@@ -46,6 +45,8 @@ import com.manura.foodapp.OrderService.dto.OrderDto;
 import com.manura.foodapp.OrderService.dto.RefundDto;
 import com.manura.foodapp.OrderService.dto.TrackingDetailsDto;
 import com.manura.foodapp.OrderService.dto.UserDto;
+import com.manura.foodapp.OrderService.dto.fromCart.CheckOutDto;
+import com.manura.foodapp.OrderService.dto.fromCart.FoodDtoProps;
 import com.manura.foodapp.OrderService.repo.BillingAndDeliveryAddressRepo;
 import com.manura.foodapp.OrderService.repo.FoodRepo;
 import com.manura.foodapp.OrderService.repo.OrderRepo;
@@ -193,6 +194,8 @@ public class OrderServiceImpl implements OrderService {
 														orderTable.setStatus("processing");
 														orderTable.setTrackingNumber(utils.generateAddressId(20));
 														orderTable.setBillingAndDeliveryAddress(billing.getId());
+														orderTable.setOrderRecive(false);
+														orderTable.setOrderRecive(false);
 														Double totalPrice = 0D;
 														for (OrderFoodInfromation info : foodsInfo) {
 															totalPrice = (totalPrice + info.getPrice());
@@ -456,11 +459,10 @@ public class OrderServiceImpl implements OrderService {
 							foodInfoDto.setCount(info.getCount());
 							foodInfoDto.setPrice(info.getPrice());
 
-							FoodDto foodDto = modelMapper.map(d,
-									FoodDto.class);
+							FoodDto foodDto = modelMapper.map(d, FoodDto.class);
 							foodDto.setFoodInfo(foodInfoDto);
 							foodDtos.add(foodDto);
-							
+
 							Map<String, Object> data = new HashMap<>();
 							data.put("name", user.getEmail());
 							data.put("deliveryAddress", billing.getDeliveryAdress());
@@ -570,14 +572,59 @@ public class OrderServiceImpl implements OrderService {
 	}
 
 	@Override
-	public Flux<Boolean> saveManyOrderFromCart(Flux<CartDto> cart, String email) {
+	public Mono<Boolean> saveOrderFromCart(Mono<CheckOutDto> cart, String email) {
+		return cart.map(i -> {
+			return userRepo.findByEmail(i.getUser()).switchIfEmpty(Mono.empty()).map(user -> {
+				return billingAndDeliveryAddressRepo.findById(user.getBillingAndDeliveryAddress())
+						.switchIfEmpty(Mono.empty()).map(billing -> {
+													
+							OrderTable orderTable = new OrderTable();
+							List<FoodDtoProps> cartDtos = i.getCartDtos();
+							List<OrderFoodInfromation> foodsInfo = new ArrayList<>();
 
-		return null;
-	}
-
-	@Override
-	public Mono<Boolean> saveOrderFromCart(Mono<CartDto> cart, String email) {
-		// TODO Auto-generated method stub
-		return null;
+							orderTable.setAddress(user.getAddress());
+							orderTable.setPublicId(utils.generateAddressId(30));
+							orderTable.setUserName(user.getEmail());
+							orderTable.setStatus("processing");
+							orderTable.setTrackingNumber(utils.generateAddressId(20));
+							orderTable.setBillingAndDeliveryAddress(billing.getId());
+							orderTable.setOrderRecive(false);
+							orderTable.setOrderRecive(false);
+							
+							for (FoodDtoProps cartDto : cartDtos) {
+								FoodTable foodTable = foodRepo.findByPublicId(cartDto.getFoodId()).block();
+								if (foodTable != null) {
+									OrderFoodInfromation info = modelMapper.map(foodTable, OrderFoodInfromation.class);
+									foodsInfo.add(info);
+								}
+							}
+							orderTable.setFoodsInfo(foodsInfo);
+							Double totalPrice = 0D;
+							for (OrderFoodInfromation info : foodsInfo) {
+								totalPrice = (totalPrice + info.getPrice());
+							}
+							orderTable.setTotalPrice(totalPrice);
+							return orderTable;
+						}).doOnNext(o -> {
+							int min = 10;
+							long max = 100000000000000000L;
+							Long random_int = (long) Math.floor(Math.random() * (max - min + 1) + min);
+							o.setId(random_int);
+						}).flatMap(orderRepo::save).doOnNext(d -> {
+							TrackingDetailsTable trackingDetailsTable = new TrackingDetailsTable();
+							trackingDetailsTable.setUserId(email);
+							trackingDetailsTable.setOrderId(d.getPublicId());
+							trackingDetailsTable.setDeliveryStatus("Not Delivered");
+							int min = 10;
+							long max = 100000000000000000L;
+							Long random_int = (long) Math.floor(Math.random() * (max - min + 1) + min);
+							trackingDetailsTable.setId(random_int);
+							trackingDetailsRepo.save(trackingDetailsTable).subscribe();
+							Runnable orderInformation = () -> Send_OrderInformation_Email_And_PDF(Mono.just(d),
+									d.getUserName(), d.getPublicId());
+							new Thread(orderInformation).start();
+						}).mapNotNull(__ -> true);
+			}).flatMap(__->__);
+		}).flatMap(__->__).switchIfEmpty(Mono.just(false));
 	}
 }
