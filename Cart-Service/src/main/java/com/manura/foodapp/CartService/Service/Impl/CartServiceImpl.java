@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.rsocket.RSocketRequester;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +27,8 @@ import com.manura.foodapp.CartService.Dto.CartDto;
 import com.manura.foodapp.CartService.Dto.FoodDto;
 import com.manura.foodapp.CartService.Dto.RedisCartDto;
 import com.manura.foodapp.CartService.Dto.UserDto;
+import com.manura.foodapp.CartService.Dto.order_service.CheckOutDto;
+import com.manura.foodapp.CartService.Dto.order_service.FoodDtoProps;
 import com.manura.foodapp.CartService.Error.Model.CartSerivceError;
 import com.manura.foodapp.CartService.Error.Model.CartSerivceNotFoundError;
 
@@ -51,6 +54,9 @@ public class CartServiceImpl implements CartService {
 	private Utils utils;
 
 	private RedisServiceImpl redisServiceImpl;
+
+	@Autowired
+	private Mono<RSocketRequester> rSocketRequester;
 
 	@Override
 	public Mono<String> saveCart(Mono<CartReq> cartReq, String email) {
@@ -185,7 +191,7 @@ public class CartServiceImpl implements CartService {
 							}).flatMap(u -> u).publishOn(Schedulers.boundedElastic())
 							.subscribeOn(Schedulers.boundedElastic());
 				}).flatMap(u -> u).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
-				.doOnNext(i->{
+				.doOnNext(i -> {
 					RedisCartDto redisCartDto = new RedisCartDto();
 					redisCartDto.setUser(id);
 					redisCartDto.setCartDtos(cartDtos);
@@ -203,5 +209,46 @@ public class CartServiceImpl implements CartService {
 	public Mono<UserTable> getUser(String id) {
 		return userRepo.findByPublicId(id).publishOn(Schedulers.boundedElastic())
 				.subscribeOn(Schedulers.boundedElastic());
+	}
+
+	@Override
+	public Mono<Boolean> checkOutAll(String email) {
+		return Mono.just(false).map(val -> {
+			CheckOutDto checkOutDto = new CheckOutDto();
+			checkOutDto.setUser(email);
+			List<FoodDtoProps> cartDtos = new ArrayList<>();
+			cartRepo.findByUserName(email).publishOn(Schedulers.boundedElastic())
+					.subscribeOn(Schedulers.boundedElastic()).subscribe(i -> {
+						FoodDtoProps props = new FoodDtoProps();
+						props.setCount(i.getCount());
+						props.setPrice(i.getPrice());
+						props.setFoodId(i.getFood());
+						cartDtos.add(props);
+					});
+			return this.rSocketRequester
+					.map(rsocket -> rsocket.route("check.out.order.from.cart").data(Mono.just(checkOutDto)))
+					.mapNotNull(r -> r.retrieveMono(Boolean.class)).publishOn(Schedulers.boundedElastic())
+					.subscribeOn(Schedulers.boundedElastic());
+		}).flatMap(__ -> __).flatMap(__ -> __).publishOn(Schedulers.boundedElastic())
+				.subscribeOn(Schedulers.boundedElastic());
+	}
+
+	@Override
+	public Mono<Boolean> checkOutOne(String email, String publicId) {
+		return cartRepo.findByPublicId(publicId).publishOn(Schedulers.boundedElastic())
+				.subscribeOn(Schedulers.boundedElastic()).map(i -> {
+					CheckOutDto checkOutDto = new CheckOutDto();
+					checkOutDto.setUser(email);
+					List<FoodDtoProps> cartDtos = new ArrayList<>();
+					FoodDtoProps props = new FoodDtoProps();
+					props.setCount(i.getCount());
+					props.setPrice(i.getPrice());
+					props.setFoodId(i.getFood());
+					cartDtos.add(props);
+					return this.rSocketRequester
+							.map(rsocket -> rsocket.route("check.out.order.from.cart").data(Mono.just(checkOutDto)))
+							.mapNotNull(r -> r.retrieveMono(Boolean.class)).publishOn(Schedulers.boundedElastic())
+							.subscribeOn(Schedulers.boundedElastic());
+				}).flatMap(__ -> __).flatMap(__ -> __);
 	}
 }

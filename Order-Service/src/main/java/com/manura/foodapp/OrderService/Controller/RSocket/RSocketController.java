@@ -20,10 +20,10 @@ public class RSocketController {
 	@Autowired
 	private OrderServiceImpl orderServiceImpl;
 	
-	@MessageMapping("check-out-order-from-cart")
+	@MessageMapping("check.out.order.from.cart")
 	public Mono<Boolean> saveOrderFromCart(@Headers Map<String, Object> metadata,@Payload Mono<CheckOutDto> cart) {
-        var email = metadata.get(Constants.FILE_EMAIL);
-		return orderServiceImpl.saveOrderFromCart(cart, email.toString()).publishOn(Schedulers.boundedElastic())
+//        var email = metadata.get(Constants.FILE_EMAIL);
+		return orderServiceImpl.saveOrderFromCart(cart, "").publishOn(Schedulers.boundedElastic())
 				.subscribeOn(Schedulers.boundedElastic());
 	}
 }

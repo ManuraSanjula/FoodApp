@@ -19,14 +19,11 @@ public interface CartService {
 	Mono<String> saveCart(Mono<CartReq> cart,String email);
 	Flux<CartDto> getCart(String id);
 	Mono<Void> deleteCart(String user,String id);
-
 	Mono<UserTable> saveUser(Mono<UserTable> user);
-	
+	Mono<Boolean> checkOutAll(String email);
+	Mono<Boolean> checkOutOne(String email,String publicId);
 	Mono<UserTable> getUser(String id);
-
 	Mono<UserTable> updateUser(String id,Mono<UserTable> user);
-	
 	Mono<FoodTable> saveFood(Mono<FoodTable> food);
-
 	Mono<FoodTable> updateFood(String id,Mono<FoodTable> food);
 }
