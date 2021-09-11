@@ -7,7 +7,10 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 public interface RedisService {
-	Mono<Void> save(RedisCartDto redisCartDto);
+   Mono<Void> add(String id,CartDto dto);	
+   Mono<Void> save(RedisCartDto redisCartDto);
    Flux<CartDto> get(String user);
    Mono<Void> deleteCart(String user,String cartId);
+   Mono<Void> deleteCart(String user);
+
 }

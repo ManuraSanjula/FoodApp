@@ -99,9 +99,14 @@ public class CartServiceImpl implements CartService {
 												return cartRepo.save(cartTable);
 											}
 										}).flatMap(e -> e).publishOn(Schedulers.boundedElastic())
-										.subscribeOn(Schedulers.boundedElastic()).map(e -> "Okay");
+										.subscribeOn(Schedulers.boundedElastic()).doOnNext(j->{
+											
+										}).map(e -> "Okay");
 							}).flatMap(j -> j);
-				}).flatMap(k -> k).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+				}).flatMap(k -> k).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
+				.doOnSuccess((d)->{
+					redisServiceImpl.deleteCart(email);
+				});
 	}
 
 	@Override
@@ -237,6 +242,7 @@ public class CartServiceImpl implements CartService {
 		}).flatMap(__ -> __).flatMap(__ -> __).publishOn(Schedulers.boundedElastic())
 				.subscribeOn(Schedulers.boundedElastic()).doOnNext(i->{
 					cartRepo.deleteAllByUserName(email).subscribe();
+					redisServiceImpl.deleteCart(email);
 				});
 	}
 

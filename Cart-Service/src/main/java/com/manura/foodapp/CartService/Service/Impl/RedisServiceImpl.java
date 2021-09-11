@@ -31,50 +31,81 @@ public class RedisServiceImpl implements RedisService {
 	@Autowired
 	private ReactiveRedisTemplate<String, RedisCartDto> reactiveRedisTemplateForCart;
 	private ReactiveValueOperations<String, RedisCartDto> reactiveRedisTemplateOpsCart;
-	
+
 	@PostConstruct
 	public void setup() {
 		reactiveRedisTemplateOpsCart = reactiveRedisTemplateForCart.opsForValue();
 	}
-	
+
 	@Override
 	public Mono<Void> save(RedisCartDto redisCartDto) {
-		 try {
-			 reactiveRedisTemplateOpsCart.set(redisCartDto.getUser(), redisCartDto).
-			 publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic()).subscribe();
-		 }catch (Exception e) {
+		try {
+			reactiveRedisTemplateOpsCart.set(redisCartDto.getUser(), redisCartDto)
+					.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic()).subscribe();
+		} catch (Exception e) {
 			// TODO: handle exception
 		}
-		 return Mono.empty();
+		return Mono.empty();
 	}
 
 	@Override
 	public Flux<CartDto> get(String user) {
-		 try {
-			 return reactiveRedisTemplateOpsCart.get(user).flatMapMany(i-> Flux.fromIterable(i.getCartDtos()))
-					 .switchIfEmpty(Flux.empty())
-					 .publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
-		 }catch (Exception e) {
-			 return Flux.empty();
+		try {
+			return reactiveRedisTemplateOpsCart.get(user).flatMapMany(i -> Flux.fromIterable(i.getCartDtos()))
+					.switchIfEmpty(Flux.empty()).publishOn(Schedulers.boundedElastic())
+					.subscribeOn(Schedulers.boundedElastic());
+		} catch (Exception e) {
+			return Flux.empty();
 		}
 	}
 
 	@Override
 	public Mono<Void> deleteCart(String user, String cartId) {
 		try {
-			reactiveRedisTemplateOpsCart.get(user).map(i->{
+			reactiveRedisTemplateOpsCart.get(user).map(i -> {
 				List<CartDto> cartDtos = new ArrayList<>();
 				cartDtos.addAll(i.getCartDtos());
-				cartDtos.removeIf(d->d.getUser().equals(user));
+				cartDtos.removeIf(d -> d.getUser().equals(user));
 				i.setCartDtos(cartDtos);
 				return i;
-			}).map(i->{
-				 return reactiveRedisTemplateOpsCart.set(i.getUser(),i);
-			}).flatMap(i->i).subscribe();
-			 return Mono.empty();
-		}catch (Exception e) {
-			 return Mono.empty();
+			}).map(i -> {
+				return reactiveRedisTemplateOpsCart.set(i.getUser(), i);
+			}).flatMap(i -> i).subscribe();
+			return Mono.empty();
+		} catch (Exception e) {
+			return Mono.empty();
 		}
+	}
+
+	private Mono<RedisCartDto> redisCartDto() {
+		RedisCartDto redisCartDto = new RedisCartDto();
+		redisCartDto.setCartDtos(new ArrayList<>());
+		return Mono.just(redisCartDto);
+	}
+
+	@Override
+	public Mono<Void> add(String id, CartDto dto) {
+		try {
+			reactiveRedisTemplateOpsCart.get(id).switchIfEmpty(redisCartDto()).map(i -> {
+				i.getCartDtos().add(dto);
+				return i;
+			}).map(i -> {
+				return reactiveRedisTemplateOpsCart.set(i.getUser(), i);
+			}).subscribe();
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		return Mono.empty();
+	}
+
+	@Override
+	public Mono<Void> deleteCart(String user) {
+		try {
+			reactiveRedisTemplateOpsCart.delete(user).subscribe();
+		}catch (Exception e) {
+			// TODO: handle exception
+		}
+		return Mono.empty();
 	}
 
 }
