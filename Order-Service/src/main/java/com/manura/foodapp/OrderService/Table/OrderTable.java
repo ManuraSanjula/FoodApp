@@ -22,20 +22,20 @@ public class OrderTable implements Serializable {
 	private Long id;
 	
 	@PrimaryKeyColumn(name = "publicId", ordinal = 1, type = PrimaryKeyType.PARTITIONED)
-	private String publicId;//
+	private String publicId;
 	
 	@PrimaryKeyColumn(name = "userName", ordinal = 2, type = PrimaryKeyType.PARTITIONED)
-	private String userName;//
+	private String userName;
 	
 	private List<OrderFoodInfromation> foodsInfo;
 	
-	private String address;//
+	private String address;
 	
-	private String status; //
-	private String trackingNumber;
-	private Long billingAndDeliveryAddress;//
-	private Boolean orderAccepted;//
-	private Boolean orderRecive;//
+	private String status;
+	private Long trackingNumber;
+	private Long billingAndDeliveryAddress;
+	private Boolean orderAccepted;
+	private Boolean orderRecive;
 	private Double totalPrice;
 }
 

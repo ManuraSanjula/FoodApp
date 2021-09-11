@@ -53,6 +53,7 @@ public class CartServiceImpl implements CartService {
 	@Autowired
 	private Utils utils;
 
+	@Autowired
 	private RedisServiceImpl redisServiceImpl;
 
 	@Autowired
@@ -217,20 +218,26 @@ public class CartServiceImpl implements CartService {
 			CheckOutDto checkOutDto = new CheckOutDto();
 			checkOutDto.setUser(email);
 			List<FoodDtoProps> cartDtos = new ArrayList<>();
-			cartRepo.findByUserName(email).publishOn(Schedulers.boundedElastic())
-					.subscribeOn(Schedulers.boundedElastic()).subscribe(i -> {
-						FoodDtoProps props = new FoodDtoProps();
-						props.setCount(i.getCount());
-						props.setPrice(i.getPrice());
-						props.setFoodId(i.getFood());
-						cartDtos.add(props);
-					});
+			List<CartTable> userCarts = cartRepo.findByUserName(email).publishOn(Schedulers.boundedElastic())
+			      .subscribeOn(Schedulers.boundedElastic()).collectList().block();
+			for(CartTable i :userCarts) {
+				
+				FoodDtoProps props = new FoodDtoProps();
+				props.setCount(i.getCount());
+				props.setPrice(i.getPrice());
+				props.setFoodId(i.getFood());
+				cartDtos.add(props);
+			}
+			checkOutDto.setCartDtos(cartDtos);
+
 			return this.rSocketRequester
 					.map(rsocket -> rsocket.route("check.out.order.from.cart").data(Mono.just(checkOutDto)))
 					.mapNotNull(r -> r.retrieveMono(Boolean.class)).publishOn(Schedulers.boundedElastic())
 					.subscribeOn(Schedulers.boundedElastic());
 		}).flatMap(__ -> __).flatMap(__ -> __).publishOn(Schedulers.boundedElastic())
-				.subscribeOn(Schedulers.boundedElastic());
+				.subscribeOn(Schedulers.boundedElastic()).doOnNext(i->{
+					cartRepo.deleteAllByUserName(email).subscribe();
+				});
 	}
 
 	@Override

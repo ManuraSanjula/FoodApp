@@ -180,6 +180,9 @@ public class OrderServiceImpl implements OrderService {
 													.switchIfEmpty(Mono.error(new OrderSerivceNotFoundError(
 															ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
 													.mapNotNull(billing -> {
+														int min = 10;
+														long max = 100000000000000000L;
+														Long random_int = (long) Math.floor(Math.random() * (max - min + 1) + min);
 														List<OrderFoodInfromation> foodsInfo = new ArrayList<>();
 														OrderTable orderTable = new OrderTable();
 														orderTable.setAddress(user.getAddress());
@@ -192,10 +195,10 @@ public class OrderServiceImpl implements OrderService {
 														foodsInfo.add(orderFoodInfromation);
 														orderTable.setFoodsInfo(foodsInfo);
 														orderTable.setStatus("processing");
-														orderTable.setTrackingNumber(utils.generateAddressId(20));
+														orderTable.setTrackingNumber(random_int);
 														orderTable.setBillingAndDeliveryAddress(billing.getId());
 														orderTable.setOrderRecive(false);
-														orderTable.setOrderRecive(false);
+														orderTable.setOrderAccepted(false);
 														Double totalPrice = 0D;
 														for (OrderFoodInfromation info : foodsInfo) {
 															totalPrice = (totalPrice + info.getPrice());
@@ -214,10 +217,8 @@ public class OrderServiceImpl implements OrderService {
 											trackingDetailsTable.setUserId(email);
 											trackingDetailsTable.setOrderId(d.getPublicId());
 											trackingDetailsTable.setDeliveryStatus("Not Delivered");
-											int min = 10;
-											long max = 100000000000000000L;
-											Long random_int = (long) Math.floor(Math.random() * (max - min + 1) + min);
-											trackingDetailsTable.setId(random_int);
+											
+											trackingDetailsTable.setId(d.getBillingAndDeliveryAddress());
 											trackingDetailsRepo.save(trackingDetailsTable).subscribe();
 											Runnable orderInformation = () -> Send_OrderInformation_Email_And_PDF(
 													Mono.just(d), d.getUserName(), d.getPublicId());
@@ -577,26 +578,32 @@ public class OrderServiceImpl implements OrderService {
 			return userRepo.findByEmail(i.getUser()).switchIfEmpty(Mono.empty()).map(user -> {
 				return billingAndDeliveryAddressRepo.findById(user.getBillingAndDeliveryAddress())
 						.switchIfEmpty(Mono.empty()).map(billing -> {
+							int min = 10;
+							long max = 100000000000000000L;
+							Long random_int = (long) Math.floor(Math.random() * (max - min + 1) + min);
 													
 							OrderTable orderTable = new OrderTable();
-							List<FoodDtoProps> cartDtos = i.getCartDtos();
+							List<FoodDtoProps> cartDtos = new ArrayList<>();
+							cartDtos.addAll(i.getCartDtos());
 							List<OrderFoodInfromation> foodsInfo = new ArrayList<>();
 
 							orderTable.setAddress(user.getAddress());
 							orderTable.setPublicId(utils.generateAddressId(30));
 							orderTable.setUserName(user.getEmail());
 							orderTable.setStatus("processing");
-							orderTable.setTrackingNumber(utils.generateAddressId(20));
+							orderTable.setTrackingNumber(random_int);
 							orderTable.setBillingAndDeliveryAddress(billing.getId());
 							orderTable.setOrderRecive(false);
-							orderTable.setOrderRecive(false);
+							orderTable.setOrderAccepted(false);
 							
 							for (FoodDtoProps cartDto : cartDtos) {
-								FoodTable foodTable = foodRepo.findByPublicId(cartDto.getFoodId()).block();
-								if (foodTable != null) {
-									OrderFoodInfromation info = modelMapper.map(foodTable, OrderFoodInfromation.class);
-									foodsInfo.add(info);
-								}
+//								FoodTable foodTable = foodRepo.findByPublicId(cartDto.getFoodId()).block();
+//								if (foodTable != null) {
+//									OrderFoodInfromation info = modelMapper.map(cartDto, OrderFoodInfromation.class);
+//									foodsInfo.add(info);
+//								}
+								OrderFoodInfromation info = modelMapper.map(cartDto, OrderFoodInfromation.class);
+								foodsInfo.add(info);
 							}
 							orderTable.setFoodsInfo(foodsInfo);
 							Double totalPrice = 0D;
@@ -615,10 +622,8 @@ public class OrderServiceImpl implements OrderService {
 							trackingDetailsTable.setUserId(email);
 							trackingDetailsTable.setOrderId(d.getPublicId());
 							trackingDetailsTable.setDeliveryStatus("Not Delivered");
-							int min = 10;
-							long max = 100000000000000000L;
-							Long random_int = (long) Math.floor(Math.random() * (max - min + 1) + min);
-							trackingDetailsTable.setId(random_int);
+							
+							trackingDetailsTable.setId(d.getBillingAndDeliveryAddress());
 							trackingDetailsRepo.save(trackingDetailsTable).subscribe();
 							Runnable orderInformation = () -> Send_OrderInformation_Email_And_PDF(Mono.just(d),
 									d.getUserName(), d.getPublicId());

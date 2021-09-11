@@ -11,6 +11,7 @@ import javax.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.data.redis.core.ReactiveValueOperations;
+import org.springframework.stereotype.Service;
 
 import com.manura.foodapp.CartService.Dto.CartDto;
 import com.manura.foodapp.CartService.Dto.RedisCartDto;
@@ -24,6 +25,7 @@ import reactor.core.scheduler.Schedulers;
  * @author manurasanjula
  *
  */
+@Service
 public class RedisServiceImpl implements RedisService {
 
 	@Autowired

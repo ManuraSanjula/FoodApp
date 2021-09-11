@@ -21,4 +21,5 @@ public interface CartRepo extends R2dbcRepository<CartTable, Integer> {
    Flux<CartTable> findByUserName(String user);
    Mono<CartTable> findByPublicId(String id);
    Mono<Void> deleteByUserNameAndFood(String user,String food);
+   Mono<Void> deleteAllByUserName(String user);
 }

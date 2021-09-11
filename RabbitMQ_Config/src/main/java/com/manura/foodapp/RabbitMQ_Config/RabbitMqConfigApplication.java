@@ -13,7 +13,7 @@ public class RabbitMqConfigApplication {
 		SpringApplication.run(RabbitMqConfigApplication.class, args);
 	}
 	
-	@RabbitListener(queues = "user_created-food",concurrency = "20")
-	public void user_created_food(String message) {}
+	@RabbitListener(queues = "food_error",concurrency = "20")
+	public void food_error(String message) {}
 
 }

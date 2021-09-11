@@ -124,7 +124,7 @@ public class UserServiceImpl implements UserService {
 		userEntity.setActive(true);
 		userEntity.setEmailVerify(false);
 		userEntity.setEmailVerify(false);
-		userEntity.setPic("defaultPic");
+		userEntity.setPic("/user-image/defaultPic");
 		userEntity.setPasswordChangedAt(new Date());
 		userEntity.setPassword(passwordEncoder.encode(user.getPassword()));
 

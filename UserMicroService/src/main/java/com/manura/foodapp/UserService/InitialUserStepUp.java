@@ -45,7 +45,7 @@
 //       AuthorityEntity updateAuthority = createAuthority("UPDATE_AUTHORITY");
 //
 //       RoleEntity ROLE_USER = createRole("ROLE_USER", Arrays.asList(readAuthority,writeAuthority,updateAuthority,deleteAuthority));
-//       RoleEntity ROLE_CHEF = createRole("ROLE_CHEF", Arrays.asList(readAuthority,writeAuthority,updateAuthority));
+//       RoleEntity ROLE_DELIVERY = createRole("ROLE_DELIVERY", Arrays.asList(readAuthority,writeAuthority,updateAuthority));
 //       RoleEntity ROLE_ADMIN = createRole("ROLE_ADMIN", Arrays.asList(readAuthority,writeAuthority,updateAuthority,deleteAuthority));
 //
 //       if(ROLE_ADMIN == null)
