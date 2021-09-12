@@ -5,12 +5,14 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 @SpringBootApplication(exclude = { UserDetailsServiceAutoConfiguration.class })
 @Configuration
+@EnableDiscoveryClient
 public class UserMicroServiceApplication implements CommandLineRunner {
 //
 //    static String PLAIN_TEXT = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0MkBnbWFpbC5jb20iLCJpYXQiOjE2MjIwODUyMTYsImV4cCI6MTYyMjEyMTIxNn0.d4sXt1LELA6l1pbJJmZ4KhMrpgHCXg5g8dTMQ-nL4lc";

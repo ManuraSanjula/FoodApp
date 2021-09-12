@@ -4,6 +4,7 @@ import org.neo4j.driver.Driver;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.data.neo4j.Neo4jDataProperties;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.neo4j.core.DatabaseSelection;
@@ -21,6 +22,7 @@ import reactor.core.publisher.Mono;
 
 @SpringBootApplication(proxyBeanMethods = false)
 @EnableReactiveNeo4jRepositories(considerNestedRepositories = true)
+@EnableDiscoveryClient
 public class FoodHutServiceApplication {
 
 	public static final String KEY_DATABASE_NAME = "database";
