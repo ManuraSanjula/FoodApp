@@ -11,6 +11,7 @@ import javax.imageio.ImageIO;
 
 import org.imgscalr.Scalr;
 import org.modelmapper.ModelMapper;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.buffer.DataBuffer;
@@ -30,6 +31,8 @@ import com.manura.foodapp.UserService.Service.UserService;
 import com.manura.foodapp.UserService.Ui.Errors.ErrorMessages;
 import com.manura.foodapp.UserService.Ui.Errors.Exception.UserServiceException;
 import com.manura.foodapp.UserService.Ui.controller.Models.Response.UserRes;
+import com.manura.foodapp.UserService.UserServiceEvent.OtherUserEvents;
+import com.manura.foodapp.UserService.UserServiceEvent.OtherUserEventsOperations;
 import com.manura.foodapp.UserService.UserServiceEvent.UserAccountSecurityOperationEvent;
 import com.manura.foodapp.UserService.entity.AuthorityEntity;
 import com.manura.foodapp.UserService.entity.RoleEntity;
@@ -89,24 +92,24 @@ public class UserServiceImpl implements UserService {
 
 	@Autowired
 	private HashOperations<String, String, UserEntity> hashOps;
+	
+	@Autowired
+	private RabbitTemplate rabbitTemplate;
+
 
 	@SuppressWarnings("static-access")
 	@Override
 	public UserDto createUser(UserDto user, String roleName) {
-
 		if (userRepo.findByEmail(user.getEmail()) != null) {
 			throw new UserServiceException("User AlReady exits given Email");
 		}
-
 		ModelMapper modelMapper = new ModelMapper();
 		UserEntity userEntity = modelMapper.map(user, UserEntity.class);
-
 		AuthorityEntity readAuthority = authorityRepo.findByName("READ_AUTHORITY");
 		AuthorityEntity writeAuthority = authorityRepo.findByName("WRITE_AUTHORITY");
 		AuthorityEntity deleteAuthority = authorityRepo.findByName("DELETE_AUTHORITY");
 		AuthorityEntity updateAuthority = authorityRepo.findByName("UPDATE_AUTHORITY");
 		RoleEntity role = null;
-		
 		if (roleName.equals("ADMIN")) {
 			role = roleRepo.findByRole("ROLE_ADMIN");
 		} else if (roleName.equals("DELIVERY")) {
@@ -114,12 +117,10 @@ public class UserServiceImpl implements UserService {
 		} else {
 			role = roleRepo.findByRole("ROLE_USER");
 		}
-
 		role.setAuthorities(Arrays.asList(readAuthority, writeAuthority, updateAuthority, deleteAuthority));
 		if (role != null) {
 			userEntity.setRole(Arrays.asList(role));
 		}
-
 		userEntity.setPublicId(util.generateUserId(30));
 		userEntity.setActive(true);
 		userEntity.setEmailVerify(false);
@@ -127,7 +128,6 @@ public class UserServiceImpl implements UserService {
 		userEntity.setPic("/user-image/defaultPic");
 		userEntity.setPasswordChangedAt(new Date());
 		userEntity.setPassword(passwordEncoder.encode(user.getPassword()));
-
 		try {
 			UserAccountSecurityOperationEvent emailVerification = new UserAccountSecurityOperationEvent(user.getEmail(),
 					amazonSES);
@@ -137,11 +137,9 @@ public class UserServiceImpl implements UserService {
 		} catch (Exception e) {
 
 		}
-
 		UserEntity createdUser = userRepo.save(userEntity);
 		saveUserIntoCache(createdUser);
 		UserDto result = modelMapper.map(createdUser, UserDto.class);
-		
 		if (roleName.equals("ADMIN")) {
 			result.setRoles(Arrays.asList("ROLE_ADMIN"));
 		} else if (roleName.equals("DELIVERY")) {
@@ -149,12 +147,9 @@ public class UserServiceImpl implements UserService {
 		} else {
 			result.setRoles(Arrays.asList("ROLE_USER"));
 		}
-		
 		result.setAuthorities(
 				Arrays.asList("READ_AUTHORITY", "WRITE_AUTHORITY", "DELETE_AUTHORITY", "UPDATE_AUTHORITY"));
-
 		return result;
-
 	}
 
 	@Override
@@ -191,15 +186,12 @@ public class UserServiceImpl implements UserService {
 
 			if (user.getAddress() != null)
 				userEntity.setAddress(user.getAddress());
-
 			UserEntity updatedUserDetails = userRepo.save(userEntity);
 			ModelMapper modelMapper = new ModelMapper();
 			saveUserIntoCache(updatedUserDetails);
 			UserDto returnValue = modelMapper.map(updatedUserDetails, UserDto.class);
-
 			return returnValue;
 		} else {
-
 			if (user.getFirstName() != null)
 				userFromCache.setFirstName(user.getFirstName());
 
@@ -213,7 +205,6 @@ public class UserServiceImpl implements UserService {
 			ModelMapper modelMapper = new ModelMapper();
 			saveUserIntoCache(updatedUserDetails);
 			UserDto returnValue = modelMapper.map(updatedUserDetails, UserDto.class);
-
 			return returnValue;
 		}
 	}
@@ -250,10 +241,8 @@ public class UserServiceImpl implements UserService {
 					.getBody().getSubject();
 			return user;
 		} catch (Exception e) {
-
 			return null;
 		}
-
 	}
 
 	@Override
@@ -266,13 +255,16 @@ public class UserServiceImpl implements UserService {
 			if (!hastokenExpired) {
 				userEntity.setEmailVerify(Boolean.TRUE);
 				userEntity.setEmailVerificationToken(null);
-				userRepo.save(userEntity);
+				UserEntity updatedUserDetails = userRepo.save(userEntity);
 				returnValue = true;
+				OtherUserEvents otherUserEventsdata = new OtherUserEvents();
+				otherUserEventsdata.setDate(new Date());
+				otherUserEventsdata.setMessage("PassWordReset Complete " + updatedUserDetails.getEmail());
+				new Thread(new OtherUserEventsOperations(otherUserEventsdata,rabbitTemplate,"user_verify_email")).start();;
 			}
 		} else {
 			throw new UsernameNotFoundException(ErrorMessages.NO_RECORD_FOUND.getErrorMessage());
 		}
-
 		return returnValue;
 	}
 
@@ -280,31 +272,22 @@ public class UserServiceImpl implements UserService {
 	public boolean requestPasswordReset(String email) {
 		try {
 			UserEntity userEntity = userRepo.findByEmail(email);
-
 			if (userEntity == null)
 				return false;
-
 			SignedJWT token = tokenCreator.createSignedJWT(email);
-
 			if (token == null)
 				return false;
-
 			String encryptToken = tokenCreator.encryptToken(token);
-
 			if (encryptToken == null)
 				return false;
-
 			try {
 				UserAccountSecurityOperationEvent passwordReset = new UserAccountSecurityOperationEvent(
 						userEntity.getEmail(), amazonSES);
 				passwordReset.passwordReset(encryptToken, userEntity.getEmail());
 				userEntity.setPasswordResetToken(encryptToken);
-
 				UserEntity updatedUserDetails = userRepo.save(userEntity);
-
 				if (updatedUserDetails == null)
 					return false;
-
 				return true;
 			} catch (Exception e) {
 				return false;
@@ -316,23 +299,20 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public boolean resetPassword(String token, String password) {
-
 		if (tokenConverter.passwordRestTokenValidating(token) == null)
 			return false;
-
 		UserEntity user = userRepo.findByEmail(tokenConverter.passwordRestTokenValidating(token));
-
 		if (user == null)
 			return false;
-
 		user.setPassword(passwordEncoder.encode(password));
 		user.setPasswordResetToken(null);
-
 		UserEntity updatedUserDetails = userRepo.save(user);
-
 		if (updatedUserDetails == null)
 			return false;
-
+		OtherUserEvents otherUserEventsdata = new OtherUserEvents();
+		otherUserEventsdata.setDate(new Date());
+		otherUserEventsdata.setMessage("PassWordReset Complete " + updatedUserDetails.getEmail());
+		new Thread(new OtherUserEventsOperations(otherUserEventsdata,rabbitTemplate,"user_password_reset_success")).start();;
 		return true;
 	}
 

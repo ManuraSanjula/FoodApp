@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.modelmapper.ModelMapper;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.messaging.rsocket.RSocketRequester;
@@ -22,6 +23,7 @@ import com.amazonaws.services.simpleemail.model.Content;
 import com.amazonaws.services.simpleemail.model.Destination;
 import com.amazonaws.services.simpleemail.model.Message;
 import com.amazonaws.services.simpleemail.model.SendEmailRequest;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.manura.foodapp.OrderService.Error.Model.OrderSerivceNotFoundError;
 import com.manura.foodapp.OrderService.Service.OrderService;
 import com.manura.foodapp.OrderService.Table.BillingAndDeliveryAddressTable;
@@ -41,6 +43,7 @@ import com.manura.foodapp.OrderService.dto.BillingAndDeliveryAddressDto;
 import com.manura.foodapp.OrderService.dto.FoodDto;
 import com.manura.foodapp.OrderService.dto.FoodInfoDto;
 import com.manura.foodapp.OrderService.dto.FullOrderDto;
+import com.manura.foodapp.OrderService.dto.NotificationMessages;
 import com.manura.foodapp.OrderService.dto.OrderDto;
 import com.manura.foodapp.OrderService.dto.RefundDto;
 import com.manura.foodapp.OrderService.dto.TrackingDetailsDto;
@@ -90,6 +93,8 @@ public class OrderServiceImpl implements OrderService {
 	private RedisServiceImpl redisServiceImpl;
 	@Autowired
 	private TokenCreator tokenCreator;
+	@Autowired
+	private RabbitTemplate rabbitTemplate;
 
 	@Override
 	public Mono<UserTable> saveUser(Mono<UserTable> user) {
@@ -182,7 +187,8 @@ public class OrderServiceImpl implements OrderService {
 													.mapNotNull(billing -> {
 														int min = 10;
 														long max = 100000000000000000L;
-														Long random_int = (long) Math.floor(Math.random() * (max - min + 1) + min);
+														Long random_int = (long) Math
+																.floor(Math.random() * (max - min + 1) + min);
 														List<OrderFoodInfromation> foodsInfo = new ArrayList<>();
 														OrderTable orderTable = new OrderTable();
 														orderTable.setAddress(user.getAddress());
@@ -217,7 +223,7 @@ public class OrderServiceImpl implements OrderService {
 											trackingDetailsTable.setUserId(email);
 											trackingDetailsTable.setOrderId(d.getPublicId());
 											trackingDetailsTable.setDeliveryStatus("Not Delivered");
-											
+
 											trackingDetailsTable.setId(d.getBillingAndDeliveryAddress());
 											trackingDetailsRepo.save(trackingDetailsTable).subscribe();
 											Runnable orderInformation = () -> Send_OrderInformation_Email_And_PDF(
@@ -273,9 +279,22 @@ public class OrderServiceImpl implements OrderService {
 							.switchIfEmpty(Mono.error(
 									new OrderSerivceNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
 							.map(user -> {
+								NotificationMessages messages = new NotificationMessages();
+								messages.setUser(userId);
+								messages.setDate(new Date());
+	
 								Map<String, Object> data = new HashMap<>();
 								Context thymeleafContext = new Context();
-								String text = "Your" + " " + i.getPublicId() + "order is Accepted!";
+								String text = "Your" + " " + i.getPublicId() + "order is successfully confirm Thank You !";
+								messages.setMessage(text);
+								ObjectMapper oMapper = new ObjectMapper();
+								try {
+									String json = oMapper.writeValueAsString(messages);
+									rabbitTemplate.convertAndSend("order_confirm", "", json);
+								} catch (Exception e) {
+									// TODO: handle exception
+								}
+								
 								data.put("order", text);
 								thymeleafContext.setVariables(data);
 								String htmlBody = thymeleafTemplateEngine.process("OrderConfirmation",
@@ -525,6 +544,11 @@ public class OrderServiceImpl implements OrderService {
 							.switchIfEmpty(Mono.error(
 									new OrderSerivceNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
 							.map(user -> {
+								NotificationMessages messages = new NotificationMessages();
+								messages.setUser(userId);
+								messages.setDate(new Date());
+								
+
 								String token = "";
 								try {
 									SignedJWT createSignedJWT = tokenCreator.createSignedJWT(user.getEmail());
@@ -537,6 +561,16 @@ public class OrderServiceImpl implements OrderService {
 										+ userId + "&orderId=" + orderId);
 								data.put("url", uri);
 								String text = "Your" + " " + i.getOrderId() + "order is completed!";
+								messages.setMessage(text);
+
+								ObjectMapper oMapper = new ObjectMapper();
+								try {
+									String json = oMapper.writeValueAsString(messages);
+									rabbitTemplate.convertAndSend("order_completed", "", json);
+								} catch (Exception e) {
+									// TODO: handle exception
+								}
+								
 								data.put("emailText", text);
 								Context thymeleafContext = new Context();
 								thymeleafContext.setVariables(data);
@@ -561,8 +595,22 @@ public class OrderServiceImpl implements OrderService {
 							.switchIfEmpty(Mono.error(
 									new OrderSerivceNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())))
 							.map(user -> {
+								NotificationMessages messages = new NotificationMessages();
+								messages.setUser(userId);
+								messages.setDate(new Date());
+
 								Map<String, Object> data = new HashMap<>();
 								String text = "Your" + " " + i.getPublicId() + "order is Accepted!";
+								messages.setMessage(text);
+
+								ObjectMapper oMapper = new ObjectMapper();
+								try {
+									String json = oMapper.writeValueAsString(messages);
+									rabbitTemplate.convertAndSend("order_accepted", "", json);
+								} catch (Exception e) {
+									// TODO: handle exception
+								}
+
 								data.put("order", text);
 								Context thymeleafContext = new Context();
 								String htmlBody = thymeleafTemplateEngine.process("OrderAccepted", thymeleafContext);
@@ -581,7 +629,7 @@ public class OrderServiceImpl implements OrderService {
 							int min = 10;
 							long max = 100000000000000000L;
 							Long random_int = (long) Math.floor(Math.random() * (max - min + 1) + min);
-													
+
 							OrderTable orderTable = new OrderTable();
 							List<FoodDtoProps> cartDtos = new ArrayList<>();
 							cartDtos.addAll(i.getCartDtos());
@@ -595,13 +643,8 @@ public class OrderServiceImpl implements OrderService {
 							orderTable.setBillingAndDeliveryAddress(billing.getId());
 							orderTable.setOrderRecive(false);
 							orderTable.setOrderAccepted(false);
-							
+
 							for (FoodDtoProps cartDto : cartDtos) {
-//								FoodTable foodTable = foodRepo.findByPublicId(cartDto.getFoodId()).block();
-//								if (foodTable != null) {
-//									OrderFoodInfromation info = modelMapper.map(cartDto, OrderFoodInfromation.class);
-//									foodsInfo.add(info);
-//								}
 								OrderFoodInfromation info = modelMapper.map(cartDto, OrderFoodInfromation.class);
 								foodsInfo.add(info);
 							}
@@ -622,14 +665,14 @@ public class OrderServiceImpl implements OrderService {
 							trackingDetailsTable.setUserId(email);
 							trackingDetailsTable.setOrderId(d.getPublicId());
 							trackingDetailsTable.setDeliveryStatus("Not Delivered");
-							
+
 							trackingDetailsTable.setId(d.getBillingAndDeliveryAddress());
 							trackingDetailsRepo.save(trackingDetailsTable).subscribe();
 							Runnable orderInformation = () -> Send_OrderInformation_Email_And_PDF(Mono.just(d),
 									d.getUserName(), d.getPublicId());
 							new Thread(orderInformation).start();
 						}).mapNotNull(__ -> true);
-			}).flatMap(__->__);
-		}).flatMap(__->__).switchIfEmpty(Mono.just(false));
+			}).flatMap(__ -> __);
+		}).flatMap(__ -> __).switchIfEmpty(Mono.just(false));
 	}
 }

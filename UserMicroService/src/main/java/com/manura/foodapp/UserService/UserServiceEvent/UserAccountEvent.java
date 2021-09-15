@@ -6,13 +6,13 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 import java.io.IOException;
 
-public class UserEvent implements Runnable {
+public class UserAccountEvent implements Runnable {
 
     private final UserDto createdUser;
     private final RabbitTemplate rabbitTemplate;
     private final String action;
 
-    public UserEvent(UserDto createdUser, RabbitTemplate rabbitTemplate, String action) {
+    public UserAccountEvent(UserDto createdUser, RabbitTemplate rabbitTemplate, String action) {
         this.rabbitTemplate = rabbitTemplate;
         this.createdUser = createdUser;
         this.action = action;
@@ -36,9 +36,9 @@ public class UserEvent implements Runnable {
         try {
             event();
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            
         } catch (IOException e) {
-            System.out.println(e.getMessage());
+           
         }
     }
 }

@@ -36,7 +36,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.manura.foodapp.UserService.Ui.Errors.ErrorMessages;
 import com.manura.foodapp.UserService.Ui.Errors.Exception.UserServiceException;
-import com.manura.foodapp.UserService.UserServiceEvent.UserEvent;
+import com.manura.foodapp.UserService.UserServiceEvent.UserAccountEvent;
 import com.manura.foodapp.UserService.entity.UserEntity;
 import com.manura.foodapp.UserService.repository.UserRepo;
 import com.manura.foodapp.UserService.shared.AmazonSES;
@@ -57,10 +57,10 @@ class UserSecurityController{
 public class UserController {
 
 	@Autowired
-    UserServiceImpl userService;
+	private UserServiceImpl userService;
 
 	@Autowired
-	Utils util;
+	private Utils util;
 
 	@Autowired
 	private AmazonSES amazonSES;
@@ -134,7 +134,7 @@ public class UserController {
 		
 		UserRes userRes = modelMapper.map(createdUser, UserRes.class);
 
-		UserEvent userEvent = new UserEvent(createdUser, rabbitTemplate, "userCreated");
+		UserAccountEvent userEvent = new UserAccountEvent(createdUser, rabbitTemplate, "userCreated");
 		Thread thread = new Thread(userEvent);
 		thread.start();
 
@@ -180,7 +180,7 @@ public class UserController {
 		
 		UserRes userRes = modelMapper.map(createdUser, UserRes.class);
 
-		UserEvent userEvent = new UserEvent(createdUser, rabbitTemplate, "userCreated");
+		UserAccountEvent userEvent = new UserAccountEvent(createdUser, rabbitTemplate, "userCreated");
 		Thread thread = new Thread(userEvent);
 		thread.start();
 
@@ -210,7 +210,7 @@ public class UserController {
 			UserDto updateUser = userService.updateUser(email, userDto);
 			UserRes returnValue = modelMapper.map(updateUser, UserRes.class);
 
-			UserEvent userEvent = new UserEvent(updateUser, rabbitTemplate, "userUpdated");
+			UserAccountEvent userEvent = new UserAccountEvent(updateUser, rabbitTemplate, "userUpdated");
 			Thread thread = new Thread(userEvent);
 			thread.start();
 
