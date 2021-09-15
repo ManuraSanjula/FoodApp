@@ -132,7 +132,6 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
 	private Boolean isValidToken(String token) {
 		try {
 			String decryptUserToken = decryptToken(token);
-			if(decryptUserToken == null) return false;
 			SignedJWT signedJWT = SignedJWT.parse(decryptUserToken);
 			JWTClaimsSet claimsSet = signedJWT.getJWTClaimsSet();
 			final Date expiration = claimsSet.getExpirationTime();

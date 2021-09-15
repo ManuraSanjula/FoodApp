@@ -16,7 +16,7 @@ public class NotificationMessagesController {
 	@Autowired
 	private Flux<NotificationMessages> notificationBroadcast;
 	
-	@RequestMapping(value="{user}/notification",produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+	@RequestMapping(value="/{user}/notification",produces = MediaType.TEXT_EVENT_STREAM_VALUE)
 	Flux<NotificationMessages> getAllNotificationBroadcasts(@PathVariable String user){
 		return notificationBroadcast.filter(i->i.getUser().equals(user));
 	}
