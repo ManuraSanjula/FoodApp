@@ -24,7 +24,7 @@ public class OtherUserEventsOperations implements Runnable {
 			if (action == "user_password_reset_success") {
 				ObjectMapper oMapper = new ObjectMapper();
 				String json = oMapper.writeValueAsString(otherUserEventsdata);
-				rabbitTemplate.convertAndSend("user_password_success", "", json);
+				rabbitTemplate.convertAndSend("user_password_reset_success", "", json);
 			}
 			if (action == "user_security") {
 				ObjectMapper oMapper = new ObjectMapper();
@@ -32,7 +32,6 @@ public class OtherUserEventsOperations implements Runnable {
 				rabbitTemplate.convertAndSend("user_security", "", json);
 			}
 		} catch (Exception e) {
-			// TODO: handle exception
 		}
 	}
 

@@ -257,10 +257,13 @@ public class UserServiceImpl implements UserService {
 				userEntity.setEmailVerificationToken(null);
 				UserEntity updatedUserDetails = userRepo.save(userEntity);
 				returnValue = true;
+				
 				OtherUserEvents otherUserEventsdata = new OtherUserEvents();
 				otherUserEventsdata.setDate(new Date());
-				otherUserEventsdata.setMessage("PassWordReset Complete " + updatedUserDetails.getEmail());
-				new Thread(new OtherUserEventsOperations(otherUserEventsdata,rabbitTemplate,"user_verify_email")).start();;
+				otherUserEventsdata.setMessage("Email Verification Okay " + updatedUserDetails.getEmail());
+				OtherUserEventsOperations eventsOperations = new OtherUserEventsOperations(otherUserEventsdata,rabbitTemplate,"user_verify_email");
+				Thread thread = new Thread(eventsOperations);
+				thread.start();
 			}
 		} else {
 			throw new UsernameNotFoundException(ErrorMessages.NO_RECORD_FOUND.getErrorMessage());
@@ -309,10 +312,15 @@ public class UserServiceImpl implements UserService {
 		UserEntity updatedUserDetails = userRepo.save(user);
 		if (updatedUserDetails == null)
 			return false;
+	
 		OtherUserEvents otherUserEventsdata = new OtherUserEvents();
 		otherUserEventsdata.setDate(new Date());
 		otherUserEventsdata.setMessage("PassWordReset Complete " + updatedUserDetails.getEmail());
-		new Thread(new OtherUserEventsOperations(otherUserEventsdata,rabbitTemplate,"user_password_reset_success")).start();;
+		OtherUserEventsOperations eventsOperations = 
+				new OtherUserEventsOperations(otherUserEventsdata,rabbitTemplate,"user_password_reset_success");
+		Thread thread = new Thread(eventsOperations);
+		thread.start();
+		
 		return true;
 	}
 
