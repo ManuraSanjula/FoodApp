@@ -1,4 +1,4 @@
-package com.manura.foodapp.OrderService.controller.Req;
+package com.manura.foodapp.OrderService.Controller.Req;
 
 import java.io.Serializable;
 

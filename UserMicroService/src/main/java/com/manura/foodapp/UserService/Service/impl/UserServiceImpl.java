@@ -11,6 +11,7 @@ import javax.imageio.ImageIO;
 
 import org.imgscalr.Scalr;
 import org.modelmapper.ModelMapper;
+import org.redisson.api.RedissonReactiveClient;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -60,6 +61,9 @@ public class UserServiceImpl implements UserService {
 	private UserRepo userRepo;
 
 	private final RSocketRequester requester;
+	
+	 @Autowired
+	 private RedissonReactiveClient client;
 
 	public UserServiceImpl(RSocketRequester.Builder builder, RSocketConnectorConfigurer connectorConfigurer,
 			@Value("${user.service.host}") String host, @Value("${user.service.port}") int port) {
@@ -261,7 +265,7 @@ public class UserServiceImpl implements UserService {
 				OtherUserEvents otherUserEventsdata = new OtherUserEvents();
 				otherUserEventsdata.setDate(new Date());
 				otherUserEventsdata.setMessage("Email Verification Okay " + updatedUserDetails.getEmail());
-				OtherUserEventsOperations eventsOperations = new OtherUserEventsOperations(otherUserEventsdata,rabbitTemplate,"user_verify_email");
+				OtherUserEventsOperations eventsOperations = new OtherUserEventsOperations(otherUserEventsdata,rabbitTemplate,"user_verify_email",client);
 				Thread thread = new Thread(eventsOperations);
 				thread.start();
 			}
@@ -317,7 +321,7 @@ public class UserServiceImpl implements UserService {
 		otherUserEventsdata.setDate(new Date());
 		otherUserEventsdata.setMessage("PassWordReset Complete " + updatedUserDetails.getEmail());
 		OtherUserEventsOperations eventsOperations = 
-				new OtherUserEventsOperations(otherUserEventsdata,rabbitTemplate,"user_password_reset_success");
+				new OtherUserEventsOperations(otherUserEventsdata,rabbitTemplate,"user_password_reset_success",client);
 		Thread thread = new Thread(eventsOperations);
 		thread.start();
 		

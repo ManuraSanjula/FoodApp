@@ -1,8 +1,8 @@
 package com.manura.foodapp.UserService.UserServiceEvent;
 
+import org.redisson.api.RTopicReactive;
+import org.redisson.api.RedissonReactiveClient;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -10,26 +10,25 @@ import lombok.Data;
 @AllArgsConstructor
 @Data
 public class OtherUserEventsOperations implements Runnable {
+	
 	private final OtherUserEvents otherUserEventsdata;
 	private final RabbitTemplate rabbitTemplate;
 	private final String action;
-
+	private final RedissonReactiveClient client;
+	
 	private void event() {
 		try {
 			if (action == "user_verify_email") {
-				ObjectMapper oMapper = new ObjectMapper();
-				String json = oMapper.writeValueAsString(otherUserEventsdata);
-				rabbitTemplate.convertAndSend("user_verify_email", "", json);
+		        RTopicReactive topic = this.client.getTopic("user_verify_email");
+		        topic.publish(otherUserEventsdata).subscribe();
 			}
 			if (action == "user_password_reset_success") {
-				ObjectMapper oMapper = new ObjectMapper();
-				String json = oMapper.writeValueAsString(otherUserEventsdata);
-				rabbitTemplate.convertAndSend("user_password_reset_success", "", json);
-			}
+				 RTopicReactive topic = this.client.getTopic("user_password_reset_success");
+			     topic.publish(otherUserEventsdata).subscribe();	
+			     }
 			if (action == "user_security") {
-				ObjectMapper oMapper = new ObjectMapper();
-				String json = oMapper.writeValueAsString(otherUserEventsdata);
-				rabbitTemplate.convertAndSend("user_security", "", json);
+				 RTopicReactive topic = this.client.getTopic("user_security");
+			     topic.publish(otherUserEventsdata).subscribe();
 			}
 		} catch (Exception e) {
 		}
