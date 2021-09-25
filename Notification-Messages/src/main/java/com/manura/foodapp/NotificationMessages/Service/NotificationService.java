@@ -54,7 +54,7 @@ public class NotificationService implements WebSocketHandler {
 		
 		
 
-		return webSocketSession.send(Flux.empty());
+		return webSocketSession.send(Flux.empty());//
 	}
 
 	private String getChatRoomName(WebSocketSession socketSession) {
