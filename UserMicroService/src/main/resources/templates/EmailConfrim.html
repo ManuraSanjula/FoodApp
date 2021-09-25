@@ -409,7 +409,10 @@ $(document).ready(function () {
             }
 
         }).fail(function() {
-            alert( "error" );
+            const element = document.querySelector('.trigger-btn');
+                 const success = document.querySelector('.trigger-btn-success');
+                 success.style.display = "none";
+                element.click();
         });
     }
 

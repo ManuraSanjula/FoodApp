@@ -17,7 +17,7 @@ public class UserAccountSecurityOperationEvent {
 			 amazonSES.verifyEmail(email, token);
 			 return token;
 		 }catch (Exception e) {
-			return null;
+			return "error";
 		}
 	 }
 	 

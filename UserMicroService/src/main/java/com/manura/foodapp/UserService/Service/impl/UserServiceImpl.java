@@ -11,7 +11,6 @@ import javax.imageio.ImageIO;
 
 import org.imgscalr.Scalr;
 import org.modelmapper.ModelMapper;
-import org.redisson.api.RedissonReactiveClient;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -62,9 +61,6 @@ public class UserServiceImpl implements UserService {
 
 	private final RSocketRequester requester;
 	
-	 @Autowired
-	 private RedissonReactiveClient client;
-
 	public UserServiceImpl(RSocketRequester.Builder builder, RSocketConnectorConfigurer connectorConfigurer,
 			@Value("${user.service.host}") String host, @Value("${user.service.port}") int port) {
 
@@ -263,9 +259,10 @@ public class UserServiceImpl implements UserService {
 				returnValue = true;
 				
 				OtherUserEvents otherUserEventsdata = new OtherUserEvents();
-				otherUserEventsdata.setDate(new Date());
+				otherUserEventsdata.setDate(new Date().toString());
 				otherUserEventsdata.setMessage("Email Verification Okay " + updatedUserDetails.getEmail());
-				OtherUserEventsOperations eventsOperations = new OtherUserEventsOperations(otherUserEventsdata,rabbitTemplate,"user_verify_email",client);
+				otherUserEventsdata.setUser(updatedUserDetails.getEmail());
+				OtherUserEventsOperations eventsOperations = new OtherUserEventsOperations(otherUserEventsdata,rabbitTemplate,"user_verify_email");
 				Thread thread = new Thread(eventsOperations);
 				thread.start();
 			}
@@ -318,10 +315,10 @@ public class UserServiceImpl implements UserService {
 			return false;
 	
 		OtherUserEvents otherUserEventsdata = new OtherUserEvents();
-		otherUserEventsdata.setDate(new Date());
+		otherUserEventsdata.setDate(new Date().toString());
 		otherUserEventsdata.setMessage("PassWordReset Complete " + updatedUserDetails.getEmail());
 		OtherUserEventsOperations eventsOperations = 
-				new OtherUserEventsOperations(otherUserEventsdata,rabbitTemplate,"user_password_reset_success",client);
+				new OtherUserEventsOperations(otherUserEventsdata,rabbitTemplate,"user_password_reset_success");
 		Thread thread = new Thread(eventsOperations);
 		thread.start();
 		
