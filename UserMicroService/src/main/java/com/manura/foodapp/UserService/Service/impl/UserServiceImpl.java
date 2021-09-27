@@ -11,7 +11,6 @@ import javax.imageio.ImageIO;
 
 import org.imgscalr.Scalr;
 import org.modelmapper.ModelMapper;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.buffer.DataBuffer;
@@ -93,10 +92,6 @@ public class UserServiceImpl implements UserService {
 	@Autowired
 	private HashOperations<String, String, UserEntity> hashOps;
 	
-	@Autowired
-	private RabbitTemplate rabbitTemplate;
-
-
 	@SuppressWarnings("static-access")
 	@Override
 	public UserDto createUser(UserDto user, String roleName) {
@@ -262,7 +257,7 @@ public class UserServiceImpl implements UserService {
 				otherUserEventsdata.setDate(new Date().toString());
 				otherUserEventsdata.setMessage("Email Verification Okay " + updatedUserDetails.getEmail());
 				otherUserEventsdata.setUser(updatedUserDetails.getEmail());
-				OtherUserEventsOperations eventsOperations = new OtherUserEventsOperations(otherUserEventsdata,rabbitTemplate,"user_verify_email");
+				OtherUserEventsOperations eventsOperations = new OtherUserEventsOperations(otherUserEventsdata,"user_verify_email");
 				Thread thread = new Thread(eventsOperations);
 				thread.start();
 			}
@@ -315,10 +310,11 @@ public class UserServiceImpl implements UserService {
 			return false;
 	
 		OtherUserEvents otherUserEventsdata = new OtherUserEvents();
+		otherUserEventsdata.setUser(updatedUserDetails.getEmail());
 		otherUserEventsdata.setDate(new Date().toString());
 		otherUserEventsdata.setMessage("PassWordReset Complete " + updatedUserDetails.getEmail());
 		OtherUserEventsOperations eventsOperations = 
-				new OtherUserEventsOperations(otherUserEventsdata,rabbitTemplate,"user_password_reset_success");
+				new OtherUserEventsOperations(otherUserEventsdata,"user_password_reset_success");
 		Thread thread = new Thread(eventsOperations);
 		thread.start();
 		

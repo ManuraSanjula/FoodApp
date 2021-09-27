@@ -4,7 +4,6 @@ import org.redisson.Redisson;
 import org.redisson.api.RTopic;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -16,7 +15,6 @@ import lombok.Data;
 public class OtherUserEventsOperations implements Runnable {
 
 	private final OtherUserEvents otherUserEventsdata;
-	private final RabbitTemplate rabbitTemplate;
 	private final String action;
 
 	private RedissonClient getClient() {

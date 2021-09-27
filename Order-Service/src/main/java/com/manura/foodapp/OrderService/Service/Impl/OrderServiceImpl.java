@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.modelmapper.ModelMapper;
+import org.redisson.api.RTopicReactive;
+import org.redisson.api.RedissonReactiveClient;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.codec.multipart.FilePart;
@@ -43,6 +45,7 @@ import com.manura.foodapp.OrderService.dto.FoodInfoDto;
 import com.manura.foodapp.OrderService.dto.FullOrderDto;
 import com.manura.foodapp.OrderService.dto.NotificationMessages;
 import com.manura.foodapp.OrderService.dto.OrderDto;
+import com.manura.foodapp.OrderService.dto.OtherUserEvents;
 import com.manura.foodapp.OrderService.dto.RefundDto;
 import com.manura.foodapp.OrderService.dto.TrackingDetailsDto;
 import com.manura.foodapp.OrderService.dto.UserDto;
@@ -73,6 +76,8 @@ public class OrderServiceImpl implements OrderService {
 	@Autowired
 	private UserRepo userRepo;
 	@Autowired
+	private RedissonReactiveClient client;
+	@Autowired
 	private FoodRepo foodRepo;
 	@Autowired
 	private TrackingDetailsRepo trackingDetailsRepo;
@@ -94,6 +99,24 @@ public class OrderServiceImpl implements OrderService {
 	private TokenCreator tokenCreator;
 	@Autowired
 	private RabbitTemplate rabbitTemplate;
+	
+	private void event(String rabbitMq,String userId,String text,String type) {
+		ObjectMapper oMapper = new ObjectMapper();
+		try {
+			String json = oMapper.writeValueAsString(rabbitMq);
+			rabbitTemplate.convertAndSend(type, "", json);
+			
+			OtherUserEvents otherUserEventsdata = new OtherUserEvents();
+			otherUserEventsdata.setUser(userId);
+			otherUserEventsdata.setDate(new Date().toString());
+			otherUserEventsdata.setMessage(text);
+			
+			RTopicReactive order_confirm = client.getTopic(type);
+			order_confirm.publish(oMapper.writeValueAsString(otherUserEventsdata)).subscribe(__->{});
+		}catch (Exception e) {
+			// TODO: handle exception
+		}
+	}
 
 	@Override
 	public Mono<UserTable> saveUser(Mono<UserTable> user) {
@@ -286,10 +309,10 @@ public class OrderServiceImpl implements OrderService {
 								Context thymeleafContext = new Context();
 								String text = "Your" + " " + i.getPublicId() + "order is successfully confirm Thank You !";
 								messages.setMessage(text);
-								ObjectMapper oMapper = new ObjectMapper();
 								try {
+									ObjectMapper oMapper = new ObjectMapper();
 									String json = oMapper.writeValueAsString(messages);
-									rabbitTemplate.convertAndSend("order_confirm", "", json);
+									event(json,userId,text,"order_confirm");
 								} catch (Exception e) {
 									// TODO: handle exception
 								}
@@ -561,11 +584,10 @@ public class OrderServiceImpl implements OrderService {
 								data.put("url", uri);
 								String text = "Your" + " " + i.getOrderId() + "order is completed!";
 								messages.setMessage(text);
-
-								ObjectMapper oMapper = new ObjectMapper();
 								try {
+									ObjectMapper oMapper = new ObjectMapper();
 									String json = oMapper.writeValueAsString(messages);
-									rabbitTemplate.convertAndSend("order_completed", "", json);
+									event(json,userId,text,"order_completed");
 								} catch (Exception e) {
 									// TODO: handle exception
 								}
@@ -601,11 +623,10 @@ public class OrderServiceImpl implements OrderService {
 								Map<String, Object> data = new HashMap<>();
 								String text = "Your" + " " + i.getPublicId() + "order is Accepted!";
 								messages.setMessage(text);
-
-								ObjectMapper oMapper = new ObjectMapper();
 								try {
-									String json = oMapper.writeValueAsString(messages);
-									rabbitTemplate.convertAndSend("order_accepted", "", json);
+									ObjectMapper oMapper = new ObjectMapper();
+									String json = oMapper.writeValueAsString(messages);		
+									event(json,userId,text,"order_accepted");
 								} catch (Exception e) {
 									// TODO: handle exception
 								}

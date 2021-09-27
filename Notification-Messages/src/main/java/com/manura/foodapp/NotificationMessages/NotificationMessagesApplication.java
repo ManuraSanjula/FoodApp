@@ -51,6 +51,18 @@ public class NotificationMessagesApplication implements CommandLineRunner {
 		user_password_reset_success.getMessages(String.class).subscribe(msg->{
 			publish(msg);
 		});
+		RTopicReactive order_accepted = client.getTopic("order_accepted");
+		order_accepted.getMessages(String.class).subscribe(msg->{
+			publish(msg);
+		});
+		RTopicReactive order_completed = client.getTopic("order_completed");
+		order_completed.getMessages(String.class).subscribe(msg->{
+			publish(msg);
+		});
+		RTopicReactive order_confirm = client.getTopic("order_confirm");
+		order_confirm.getMessages(String.class).subscribe(msg->{
+			publish(msg);
+		});
 	}
 
 }
