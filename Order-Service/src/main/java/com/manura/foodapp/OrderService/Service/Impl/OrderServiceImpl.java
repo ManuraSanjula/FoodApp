@@ -510,7 +510,7 @@ public class OrderServiceImpl implements OrderService {
 							data.put("deliveryAddress", billing.getDeliveryAdress());
 							data.put("billingAddress", billing.getBillingAdress());
 							try {
-								data.put("imgUrl", ("http://" + InetAddress.getLocalHost().getHostAddress() + ":8081"
+								data.put("imgUrl", ("http://" +   InetAddress.getLocalHost().getCanonicalHostName()
 										+ d.getCoverImage()));
 							} catch (Exception e) {
 								data.put("order.imgUrl", d.getCoverImage());
@@ -579,26 +579,32 @@ public class OrderServiceImpl implements OrderService {
 
 								}
 								Map<String, Object> data = new HashMap<>();
-								String uri = ("http://localhost:8085/orders/order-confrim-web?token=" + token + "&user="
-										+ userId + "&orderId=" + orderId);
-								data.put("url", uri);
-								String text = "Your" + " " + i.getOrderId() + "order is completed!";
-								messages.setMessage(text);
-								try {
-									ObjectMapper oMapper = new ObjectMapper();
-									String json = oMapper.writeValueAsString(messages);
-									event(json,userId,text,"order_completed");
-								} catch (Exception e) {
-									// TODO: handle exception
-								}
 								
-								data.put("emailText", text);
-								Context thymeleafContext = new Context();
-								thymeleafContext.setVariables(data);
-								String htmlBody = thymeleafTemplateEngine.process("ShopOrderCompleted",
-										thymeleafContext);
-								sendMail(user.getEmail(), htmlBody);
-								return true;
+								try {
+									String canonicalHostName   = InetAddress.getLocalHost().getCanonicalHostName();
+									String uri = ("http://" + canonicalHostName + "/orders/order-confrim-web?token=" + token + "&user="
+											+ userId + "&orderId=" + orderId);
+									data.put("url", uri);
+									String text = "Your" + " " + i.getOrderId() + "order is completed!";
+									messages.setMessage(text);
+									try {
+										ObjectMapper oMapper = new ObjectMapper();
+										String json = oMapper.writeValueAsString(messages);
+										event(json,userId,text,"order_completed");
+									} catch (Exception e) {
+										// TODO: handle exception
+									}
+									
+									data.put("emailText", text);
+									Context thymeleafContext = new Context();
+									thymeleafContext.setVariables(data);
+									String htmlBody = thymeleafTemplateEngine.process("ShopOrderCompleted",
+											thymeleafContext);
+									sendMail(user.getEmail(), htmlBody);
+									return true;
+								}catch (Exception e) {
+									return false;
+								}
 							});
 				}).switchIfEmpty(Mono.just(false));
 	}

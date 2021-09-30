@@ -33,7 +33,7 @@ public class NotificationService implements WebSocketHandler {
 		RSetReactive<String> list = client.getSet("notification:" + room);
 	
 		Flux<WebSocketMessage> flatMap = list.readAll().map(i->{
-			return topic.getMessages(String.class).doOnNext(msg->System.out.println(msg))
+			return topic.getMessages(String.class)
 			.startWith(Flux.fromIterable(i))
 			.map(webSocketSession::textMessage).doOnError(System.out::println);
 		}).flux().flatMap(__->__);
