@@ -18,8 +18,11 @@ ext {
 
 
 dependencies {
- implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
-  testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+        implementation group: 'org.springframework.cloud', name: 'spring-cloud-starter-bus-amqp', version: '3.0.3
+    implementation group: 'org.springframework.cloud', name: 'spring-cloud-starter-config', version: '3.0.5'
+    implementation group: 'org.springframework.cloud', name: 'spring-cloud-starter-bootstrap', version: '3.0.4'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
     implementation group: 'org.springframework.boot', name: 'spring-boot-starter-data-redis-reactive', version: '2.5.3'
     implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
     implementation group: 'com.nimbusds', name: 'nimbus-jose-jwt', version: '9.11.3'
