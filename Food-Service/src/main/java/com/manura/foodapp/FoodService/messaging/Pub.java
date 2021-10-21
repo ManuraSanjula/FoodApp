@@ -26,11 +26,11 @@ public class Pub {
         	foodDtoForMessaging.setPublicId(data.getId());
             try {
                 if (action == "created") {
-                    var json = objectMapper.writeValueAsString(foodDtoForMessaging);
+                    String json = objectMapper.writeValueAsString(foodDtoForMessaging);
                     rabbitTemplate.convertAndSend("food-app-foodCreated", "", json);
                 }
                 if (action == "update") {
-                    var json = objectMapper.writeValueAsString(foodDtoForMessaging);
+                	String json = objectMapper.writeValueAsString(foodDtoForMessaging);
                 	rabbitTemplate.convertAndSend("food-app-foodUpdated", "", json);
                 }
                 

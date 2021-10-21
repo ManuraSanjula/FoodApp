@@ -16,6 +16,7 @@ import java.nio.file.StandardOpenOption;
 
 import javax.imageio.ImageIO;
 
+import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -41,7 +42,7 @@ public class FileStorageServiceImpl implements FileStorageService {
 
 	@Value("${foodHut-file.upload-dir}")
 	private Path foodHutFileStorageLocation;
-	
+
 	@Value("${refund-file.upload-dir}")
 	private Path refundFileStorageLocation;
 
@@ -171,9 +172,9 @@ public class FileStorageServiceImpl implements FileStorageService {
 			filePath = this.userFileStorageLocation.resolve(fileName).normalize();
 		} else if (type.equals("FoodHut")) {
 			filePath = this.foodHutFileStorageLocation.resolve(fileName).normalize();
-		} else if(type.equals("Refund")) {
+		} else if (type.equals("Refund")) {
 			filePath = this.refundFileStorageLocation.resolve(fileName).normalize();
-		}else {
+		} else {
 			filePath = this.foodFileStorageLocation.resolve(fileName).normalize();
 		}
 		try {
@@ -181,7 +182,7 @@ public class FileStorageServiceImpl implements FileStorageService {
 			Resource resource = new UrlResource(filePath.toUri());
 			if (resource.exists()) {
 				try {
-					redisService.ifCacheEmpty(fileName, resource.getInputStream().readAllBytes())
+					redisService.ifCacheEmpty(fileName, IOUtils.toByteArray(resource.getInputStream()))
 							.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 				} catch (Exception e) {
 
@@ -207,7 +208,7 @@ public class FileStorageServiceImpl implements FileStorageService {
 		} else if (type.equals("Refund")) {
 			return redisService.getResource(fileName).switchIfEmpty(loadFileAsResourceIfCacheNotPresent(fileName, type))
 					.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
-		}else {
+		} else {
 			return redisService.getResource(fileName).switchIfEmpty(loadFileAsResourceIfCacheNotPresent(fileName, type))
 					.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 		}

@@ -26,7 +26,7 @@ public class Sub {
 	@RabbitListener(queues = "user_created-foodHut",concurrency = "20")
 	public void user_created_foodHut(String message) {
 		try {
-			var user = objectMapper.readValue(message, UserNode.class);
+			UserNode user = objectMapper.readValue(message, UserNode.class);
 			foodHutServiceImpl.addUser(Mono.just(user)).subscribe();
 		
 		} catch (Exception e) {
@@ -37,7 +37,7 @@ public class Sub {
 	@RabbitListener(queues = "user_updated-foodHut",concurrency = "20")
 	public void user_updated_foodHut(String message) {
 		try {
-			var user = objectMapper.readValue(message, UserNode.class);
+			UserNode user = objectMapper.readValue(message, UserNode.class);
 			foodHutServiceImpl.updateUser(user.getPublicId(),Mono.just(user)).subscribe();
 			
 		} catch (Exception e) {
@@ -48,7 +48,7 @@ public class Sub {
 	@RabbitListener(queues = "food_created-foodHut",concurrency = "20")
 	public void food_created_foodHut(String message) {
 		try {
-			var food = objectMapper.readValue(message, FoodNode.class);
+			FoodNode food = objectMapper.readValue(message, FoodNode.class);
 			foodHutServiceImpl.addFood(Mono.just(food)).subscribe();
 		} catch (Exception e) {
 			LOG.info("Error is {}", e.getMessage());
@@ -58,7 +58,7 @@ public class Sub {
 	@RabbitListener(queues = "food_updated-foodHut",concurrency = "20")
 	public void food_updated_foodHut(String message) {
 		try {
-			var food = objectMapper.readValue(message, FoodNode.class);
+			FoodNode food = objectMapper.readValue(message, FoodNode.class);
 			foodHutServiceImpl.updateFood(food.getPublicId(),Mono.just(food)).subscribe();
 		} catch (Exception e) {
 			System.out.println(e.getMessage());

@@ -31,7 +31,7 @@ public class Sub {
 	@RabbitListener(queues = "user_created-food",concurrency = "20")
 	public void user_created_food(String message) {
 		try {
-			var user = objectMapper.readValue(message, UserDto.class);
+			UserDto user = objectMapper.readValue(message, UserDto.class);
 			serviceImpl.saveUser(Mono.just(user)).subscribe();	
 		} catch (Exception e) {
 			LOG.info("Error is {}", e.getMessage());
@@ -41,7 +41,7 @@ public class Sub {
 	@RabbitListener(queues = "user_updated-food",concurrency = "20")
 	public void user_updated_food(String message) {
 		try {
-			var user = objectMapper.readValue(message, UserDto.class);
+			UserDto user = objectMapper.readValue(message, UserDto.class);
 			serviceImpl.updateUser(user.getPublicId(),Mono.just(user)).subscribe(i->{
 			});
 		} catch (Exception e) {
@@ -52,7 +52,7 @@ public class Sub {
 	@RabbitListener(queues = "foodHut_created-food",concurrency = "20")
 	public void foodHut_created_food(String message) {
 		try {
-			var foodHut = objectMapper.readValue(message, FoodHutDtoForMessaging.class);
+			FoodHutDtoForMessaging foodHut = objectMapper.readValue(message, FoodHutDtoForMessaging.class);
 			Double latitude = foodHut.getLatitude();
 			Double longitude = foodHut.getLongitude();
 			GeoJsonPoint locationPoint = new GeoJsonPoint(longitude,latitude);
@@ -70,7 +70,7 @@ public class Sub {
 	@RabbitListener(queues = "foodHut_updated-food",concurrency = "20")
 	public void foodHut_updated_food(String message) {
 		try {
-			var foodHut = objectMapper.readValue(message, FoodHutDtoForMessaging.class);
+			FoodHutDtoForMessaging foodHut = objectMapper.readValue(message, FoodHutDtoForMessaging.class);
 			Double latitude = foodHut.getLatitude();
 			Double longitude = foodHut.getLongitude();
 			GeoJsonPoint locationPoint = new GeoJsonPoint(longitude,latitude);

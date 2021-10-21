@@ -20,7 +20,7 @@ public class AuthenticationManager implements ReactiveAuthenticationManager {
 
     @Override
     public Mono<Authentication> authenticate(Authentication authentication) {
-        var principal = (UserPrincipal) authentication.getPrincipal();
+    	UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
         return userService.getUser(principal.getId())
                 .filter(user -> user.getActive())
                 .switchIfEmpty(Mono.error(new UnauthorizedException("User account is disabled.")))

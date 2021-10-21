@@ -15,7 +15,7 @@
 	<name>Cart-Service</name>
 	<description>Cart-Service</description>
 	<properties>
-		<java.version>11</java.version>
+		<java.version>1.8</java.version>
 		<spring-cloud.version>2020.0.3</spring-cloud.version>
 
 	</properties>

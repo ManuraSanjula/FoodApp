@@ -26,32 +26,28 @@ public class RSocketController {
 	@MessageMapping("file.upload.user")
 	public Flux<String> userUpload(@Payload Flux<DataBuffer> content) {
 		String fileName = ("User" + utils.generateName(30));
-		var path = Paths.get(fileName + ".jpeg");
-		return fileStorageService.uploadFileUser(path, content, fileName)
+		return fileStorageService.uploadFileUser( Paths.get(fileName + ".jpeg"), content, fileName)
 				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
 
 	@MessageMapping("file.upload.food")
 	public Flux<String> foodUploadCoverImage(@Payload Flux<DataBuffer> content)  {
 		String fileName = ("Food" + utils.generateName(30));
-		var path = Paths.get(fileName + ".jpeg");
-		return fileStorageService.uploadFileFood(path, content, fileName)
+		return fileStorageService.uploadFileFood(Paths.get(fileName + ".jpeg"), content, fileName)
 				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
 	
 	@MessageMapping("file.upload.foodHut")
 	public Flux<String> foodHutUploadCoverImage(@Payload Flux<DataBuffer> content)  {
 		String fileName = ("FoodHut" + utils.generateName(30));
-		var path = Paths.get(fileName + ".jpeg");
-		return fileStorageService.uploadFileFoodHut(path, content, fileName)
+		return fileStorageService.uploadFileFoodHut(Paths.get(fileName + ".jpeg"), content, fileName)
 				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
 	
 	@MessageMapping("file.upload.refund")
 	public Flux<String> refundUploadCoverImage(@Payload Flux<DataBuffer> content)  {
 		String fileName = ("Refund" + utils.generateName(30));
-		var path = Paths.get(fileName + ".jpeg");
-		return fileStorageService.uploadFileRefund(path, content, fileName)
+		return fileStorageService.uploadFileRefund(Paths.get(fileName + ".jpeg"), content, fileName)
 				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
 }

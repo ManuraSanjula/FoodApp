@@ -64,7 +64,7 @@ public class CartServiceImpl implements CartService {
 		return cartReq.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
 				.switchIfEmpty(Mono.error(new CartSerivceError(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage())))
 				.mapNotNull(i -> {
-					if (email == null || email.isBlank()) {
+					if (email == null || email.isEmpty()) {
 						throw new CartSerivceError("Unauthorized");
 					}
 					if (i.getFood() == null) {

@@ -38,7 +38,7 @@ public class ServerHttpBearerAuthenticationConverter implements Function<ServerW
 					List<GrantedAuthority> authorities = new ArrayList<>();
 					authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
 					return tokenConverter.validateTokenSignature(user).map(u -> {
-						var principal = new UserPrincipal(u.getPublicId(), u.getEmail());
+						UserPrincipal principal = new UserPrincipal(u.getPublicId(), u.getEmail());
 						return Mono.justOrEmpty(new UsernamePasswordAuthenticationToken(principal, null, authorities));
 					}).flatMap(i -> i);
 				});

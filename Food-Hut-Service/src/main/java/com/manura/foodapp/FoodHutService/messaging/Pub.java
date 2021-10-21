@@ -30,12 +30,12 @@ public class Pub {
 			foodHutDtoForMessaging.setLongitude(longitude);
             try {
                 if (action == "created") {
-                    var json = objectMapper.writeValueAsString(foodHutDtoForMessaging);
+                    String json = objectMapper.writeValueAsString(foodHutDtoForMessaging);
 
                     rabbitTemplate.convertAndSend("food-app-foodHutCreated", "", json);
                 }
                 if (action == "update") {
-                    var json = objectMapper.writeValueAsString(foodHutDtoForMessaging);
+                	String json = objectMapper.writeValueAsString(foodHutDtoForMessaging);
 
                     rabbitTemplate.convertAndSend("food-app-foodHutUpdated", "", json);
                 }

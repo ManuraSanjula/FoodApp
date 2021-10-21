@@ -37,7 +37,7 @@ public class ServerHttpBearerAuthenticationConverter implements Function<ServerW
 				.filter(matchBearerLength).flatMap(isolateBearerValue).flatMap(user -> {
 					List<GrantedAuthority> authorities = new ArrayList<>();
 					return tokenConverter.validateTokenSignature(user).map(u -> {
-						var principal = new UserPrincipal(u.getId(), u.getEmail());
+						UserPrincipal principal = new UserPrincipal(u.getId(), u.getEmail());
 						u.getRoles().forEach(role -> {
 							authorities.add(new SimpleGrantedAuthority(role));
 						});
