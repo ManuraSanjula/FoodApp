@@ -1,5 +1,6 @@
 package com.manura.foodapp.UserService.shared;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.amazonaws.regions.Regions;
@@ -14,6 +15,11 @@ import com.amazonaws.services.simpleemail.model.SendEmailResult;
 
 @Service
 public class AmazonSES {
+	
+	@Value("${aws.user}")
+	private String awsE;
+	@Value("${aws.pass}")
+	private String awsP;
 	// This address must be verified with Amazon SES.
 	final String FROM = "w.m.manurasanjula12345@gmail.com";
 
@@ -60,8 +66,8 @@ public class AmazonSES {
 	public void verifyEmail(String email, String token) {
 
 		// You can also set your keys this way. And it will work!
-		// System.setProperty("aws.accessKeyId", "<YOUR KEY ID HERE>");
-		// System.setProperty("aws.secretKey", "<SECRET KEY HERE>");
+		 System.setProperty("aws.accessKeyId", awsE);
+		 System.setProperty("aws.secretKey",awsP);
 
 		AmazonSimpleEmailService client = AmazonSimpleEmailServiceClientBuilder.standard()
 				.withRegion(Regions.AP_SOUTH_1).build();

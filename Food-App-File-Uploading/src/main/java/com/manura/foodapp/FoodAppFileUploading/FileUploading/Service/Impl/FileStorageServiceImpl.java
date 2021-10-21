@@ -34,16 +34,16 @@ import reactor.core.scheduler.Schedulers;
 @Service
 public class FileStorageServiceImpl implements FileStorageService {
 
-	@Value("${user-file.upload-dir}")
+	@Value("C:\\FoodApp\\Users")
 	private Path userFileStorageLocation;
 
-	@Value("${food-file.upload-dir}")
+	@Value("C:\\FoodApp\\Food")
 	private Path foodFileStorageLocation;
 
-	@Value("${foodHut-file.upload-dir}")
+	@Value("C:\\FoodApp\\Food-Hut")
 	private Path foodHutFileStorageLocation;
 
-	@Value("${refund-file.upload-dir}")
+	@Value("C:\\FoodApp\\Refund")
 	private Path refundFileStorageLocation;
 
 	@Autowired
