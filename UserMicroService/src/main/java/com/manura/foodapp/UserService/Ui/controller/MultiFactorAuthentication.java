@@ -7,6 +7,8 @@ import com.warrenstrange.googleauth.GoogleAuthenticator;
 import com.warrenstrange.googleauth.GoogleAuthenticatorQRGenerator;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -34,15 +36,15 @@ public class MultiFactorAuthentication {
 	}
 
 	@PostMapping("/register2fa")
-	public MultiFactorAuthenticationRes confirm2Fa(@RequestParam Integer verifyCode) {
+	public ResponseEntity<MultiFactorAuthenticationRes> confirm2Fa(@RequestParam Integer verifyCode) {
 		UserEntity user = getUser();
 		if (googleAuthenticator.authorizeUser(user.getEmail(), verifyCode)) {
 			UserEntity savedUser = userRepository.findByEmail(user.getEmail());
 			savedUser.setUseGoogle2f(true);
 			userRepository.save(savedUser);
-			return new MultiFactorAuthenticationRes(true);
+			return new ResponseEntity<>(new MultiFactorAuthenticationRes(true),HttpStatus.OK);
 		} else {
-			return new MultiFactorAuthenticationRes(false);
+			return new ResponseEntity<>(new MultiFactorAuthenticationRes(false),HttpStatus.OK);
 		}
 	}
 
@@ -52,14 +54,14 @@ public class MultiFactorAuthentication {
 	}
 
 	@PostMapping("/verify2fa")
-	public MultiFactorAuthenticationRes verifyPostOf2Fa(@RequestParam Integer verifyCode) {
+	public ResponseEntity<MultiFactorAuthenticationRes> verifyPostOf2Fa(@RequestParam Integer verifyCode) {
 		UserEntity user = getUser();
 		if (googleAuthenticator.authorizeUser(user.getEmail(), verifyCode)) {
 			((UserEntity) SecurityContextHolder.getContext().getAuthentication().getPrincipal())
 					.setGoogle2faRequired(false);
-			return new MultiFactorAuthenticationRes(true);
+			return new ResponseEntity<>(new MultiFactorAuthenticationRes(true),HttpStatus.OK);
 		} else {
-			return new MultiFactorAuthenticationRes(false);
+			return new ResponseEntity<>(new MultiFactorAuthenticationRes(false),HttpStatus.OK);
 		}
 	}
 

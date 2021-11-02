@@ -1,6 +1,7 @@
 package com.manura.foodapp.UserService.security;
 
 import com.manura.foodapp.UserService.Service.impl.UserServiceImpl;
+import com.manura.foodapp.UserService.security.google.Google2faFilter;
 import com.manura.foodapp.UserService.shared.Utils.JWT.security.token.creator.TokenCreator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +12,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.web.session.SessionManagementFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -23,6 +25,7 @@ public class WebSecurity extends WebSecurityConfigurerAdapter {
     private final UserServiceImpl userDetailsService;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final TokenCreator tokenCreator;
+    private final Google2faFilter google2faFilter;
     
     @Value("${app.public.routes}")
     private String [] publicRoutes;
@@ -32,6 +35,7 @@ public class WebSecurity extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
+    	http.addFilterBefore(google2faFilter, SessionManagementFilter.class);
     	http.headers().httpStrictTransportSecurity().disable();
         http
                 .cors().and()
