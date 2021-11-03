@@ -19,6 +19,7 @@ public class AuthenticationSuccessListener {
 
     @EventListener
     public void listen(AuthenticationSuccessEvent event){
+    	System.out.println("=========");
         if (event.getSource() instanceof UsernamePasswordAuthenticationToken) {
             LoginSuccess.LoginSuccessBuilder builder = LoginSuccess.builder();
 

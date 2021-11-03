@@ -226,6 +226,8 @@ public class UserServiceImpl implements UserService {
 		if (userEntity == null)
 			throw new UsernameNotFoundException(ErrorMessages.NO_RECORD_FOUND.getErrorMessage());
 		userEntity.setActive(false);
+		saveUserIntoCache(userEntity);
+		userRepo.save( userEntity);
 		UserDto returnValue = modelMapper.map(userEntity, UserDto.class);
 		return returnValue;
 	}

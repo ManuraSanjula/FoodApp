@@ -1,18 +1,16 @@
 package com.manura.foodapp.UserService.security.Listener;
 
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.context.event.EventListener;
+import org.springframework.data.redis.core.HashOperations;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authentication.event.AuthenticationFailureBadCredentialsEvent;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import org.springframework.stereotype.Component;
-
 import com.manura.foodapp.UserService.entity.LoginFailure;
 import com.manura.foodapp.UserService.entity.UserEntity;
 import com.manura.foodapp.UserService.repository.LoginFailureRepo;
 import com.manura.foodapp.UserService.repository.UserRepo;
-
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,6 +22,9 @@ public class AuthenticationFailureListener {
 
     private final LoginFailureRepo loginFailureRepo;
     private final UserRepo userRepository;
+  
+    private final String REDIS_HASH_KEY = "UserHash-UserService";
+	private HashOperations<String, String, UserEntity> hashOps;
 
     @EventListener
     public void listen(AuthenticationFailureBadCredentialsEvent event) {
@@ -57,13 +58,7 @@ public class AuthenticationFailureListener {
         if(failures.size() > 3){
             user.setAccountNonLocked(false);
             userRepository.save(user);
+            hashOps.delete(REDIS_HASH_KEY, user.getEmail());
         }
     }
-
-
-
-
-
-
-
 }
