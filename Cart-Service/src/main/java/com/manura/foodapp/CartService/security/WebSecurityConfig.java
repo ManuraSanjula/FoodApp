@@ -1,5 +1,7 @@
 package com.manura.foodapp.CartService.security;
 
+import java.util.Arrays;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +15,9 @@ import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.authentication.AuthenticationWebFilter;
 import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatchers;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.manura.foodapp.CartService.security.support.ServerHttpBearerAuthenticationConverter;
 import com.manura.foodapp.CartService.utils.TokenConverter;
@@ -26,14 +31,12 @@ import reactor.core.publisher.Mono;
 public class WebSecurityConfig {
 	private final Logger logger = LoggerFactory.getLogger(WebSecurityConfig.class);
 	private final TokenConverter tokenConverter;
-	
+
 	@Bean
 	public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http, AuthenticationManager authManager) {
-		return http.authorizeExchange().pathMatchers(HttpMethod.OPTIONS).permitAll()
-				.pathMatchers("/carts/**").hasAnyAuthority("ROLE_USER")
-					.and().csrf()
-				.disable().httpBasic().disable().formLogin().disable().exceptionHandling()
-				.authenticationEntryPoint((swe, e) -> {
+		return http.authorizeExchange().pathMatchers(HttpMethod.OPTIONS).permitAll().pathMatchers("/carts/**")
+				.hasAnyAuthority("ROLE_USER").and().csrf().disable().httpBasic().disable().formLogin().disable()
+				.exceptionHandling().authenticationEntryPoint((swe, e) -> {
 					logger.info("[1] Authentication error: Unauthorized[401]: " + e.getMessage());
 
 					return Mono.fromRunnable(() -> swe.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED));
@@ -45,9 +48,25 @@ public class WebSecurityConfig {
 				.build();
 	}
 
+	@Bean
+	public CorsConfigurationSource corsConfigurationSource() {
+		final CorsConfiguration configuration = new CorsConfiguration();
+
+		configuration.setAllowedOrigins(Arrays.asList("*"));
+		configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+		configuration.setAllowCredentials(false);
+		configuration.setAllowedHeaders(Arrays.asList("*"));
+
+		final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+		source.registerCorsConfiguration("/**", configuration);
+
+		return source;
+	}
+
 	AuthenticationWebFilter bearerAuthenticationFilter(AuthenticationManager authManager) {
 		AuthenticationWebFilter bearerAuthenticationFilter = new AuthenticationWebFilter(authManager);
-		bearerAuthenticationFilter.setAuthenticationConverter(new ServerHttpBearerAuthenticationConverter(tokenConverter));
+		bearerAuthenticationFilter
+				.setAuthenticationConverter(new ServerHttpBearerAuthenticationConverter(tokenConverter));
 		bearerAuthenticationFilter.setRequiresAuthenticationMatcher(ServerWebExchangeMatchers.pathMatchers("/**"));
 
 		return bearerAuthenticationFilter;

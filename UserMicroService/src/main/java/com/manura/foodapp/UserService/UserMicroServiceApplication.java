@@ -19,6 +19,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 @EnableCaching
 @EnableDiscoveryClient
 public class UserMicroServiceApplication implements CommandLineRunner {
+	
 	public static void main(String[] args) {
 		SpringApplication.run(UserMicroServiceApplication.class, args);
 	}
@@ -39,5 +40,6 @@ public class UserMicroServiceApplication implements CommandLineRunner {
 	}
 	@Override
 	public void run(String... args) throws Exception {
+		
 	}
 }

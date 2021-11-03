@@ -90,7 +90,7 @@
         outline: none;
     }
     .trigger-btn {
-
+       
     }
         @media screen {
             @font-face {
@@ -260,45 +260,6 @@
 </head>
 
 <body style="background-color: #f4f4f4; margin: 0 !important; padding: 0 !important;">
-<div id="myModal" class="modal fade">
-    <div class="modal-dialog modal-confirm">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div class="icon-box">
-                    <i class="material-icons">&#xE5CD;</i>
-                </div>
-                <h4 class="modal-title w-100">Sorry!</h4>
-            </div>
-            <div class="modal-body">
-                <p class="text-center">Your Email Verification has failed. Please go back and try again.</p>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-danger btn-block" data-dismiss="modal">OK</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-
-<div id="myModal-success" class="modal fade">
-    <div class="modal-dialog modal-confirm-done">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div class="icon-box">
-                    <i class="material-icons">&#xE876;</i>
-                </div>
-                <h4 class="modal-title w-100">Awesome!</h4>
-            </div>
-            <div class="modal-body">
-                <p class="text-center">Your Email Verification has been confirmed. Thank You !! </p>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-success btn-block" data-dismiss="modal">OK</button>
-            </div>
-        </div>
-    </div>
-</div>
-
 
 <!-- HIDDEN PREHEADER TEXT -->
 <div style="display: none; font-size: 1px; color: #fefefe; line-height: 1px; font-family: 'Lato', Helvetica, Arial, sans-serif; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden;">
@@ -336,7 +297,7 @@
                     <td bgcolor="#ffffff" align="left"
                         style="padding: 20px 30px 40px 30px; color: #666666; font-family: 'Lato', Helvetica, Arial, sans-serif; font-size: 18px; font-weight: 400; line-height: 25px;">
                         <p style="margin: 0;">We're excited to have you get started. First, you need to confirm your
-                            account. Just press the button below.</p>
+                            account.</p>
                     </td>
                 </tr>
                 <tr>
@@ -347,17 +308,7 @@
                                     <table border="0" cellspacing="0" cellpadding="0">
                                         <tr>
                                             <td align="center" style="border-radius: 3px;" bgcolor="#FFA73B">
-                                                <a href="#myModal"
-                                                   class="trigger-btn" data-toggle="modal"
-                                                   target="_blank"
-                                                   style="font-size: 20px; font-family: Helvetica, Arial, sans-serif; color: #ffffff; text-decoration: none; color: #ffffff; text-decoration: none; padding: 15px 25px; border-radius: 2px; border: 1px solid #FFA73B; display: inline-block;">
-                                                    Confirm Account</a></td>
-
-                                            <a href="#myModal-success"
-                                               class="trigger-btn-success" data-toggle="modal"
-                                               target="_blank"
-                                               style="font-size: 20px; font-family: Helvetica, Arial, sans-serif; color: #ffffff; text-decoration: none; color: #ffffff; text-decoration: none; padding: 15px 25px; border-radius: 2px; border: 1px solid #FFA73B; display: inline-block;">
-                                                Confirm Account</a></td>
+                                              
                                         </tr>
                                     </table>
                                 </td>
@@ -382,37 +333,25 @@ $(document).ready(function () {
     var urlParams = new URLSearchParams(location.search);
     if (urlParams.has('token'))
     {
-     	verifyToken(urlParams.get('token'));
+       verifyToken(urlParams.get('token'));
     }else{
-        const element = document.querySelector('.trigger-btn');
-        const success = document.querySelector('.trigger-btn-success');
-        success.style.display = "none";
-        element.click();
+       
     }
 
     function verifyToken(tokenValue="")
     {
-        $.get('http://localhost:8080/users/email-verification', {token: tokenValue})
+        $.get('http://localhost/users/email-verification', {token: tokenValue})
         .done(function (response) {
 
             if (response["operationResult"] === "SUCCESS")
             {
-                const element = document.querySelector('.trigger-btn-success');
-                element.style.display = "none";
-                element.click();
+               alert("Email Verification SUCCESS")
             } else {
-                const element = document.querySelector('.trigger-btn');
-                 const success = document.querySelector('.trigger-btn-success');
-                 success.style.display = "none";
-                element.click();
-
+                alert("Email Verification Failure")
             }
 
         }).fail(function() {
-            const element = document.querySelector('.trigger-btn');
-                 const success = document.querySelector('.trigger-btn-success');
-                 success.style.display = "none";
-                element.click();
+            alert("Email Verification Failure")
         });
     }
 

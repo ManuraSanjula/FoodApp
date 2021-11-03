@@ -17,8 +17,6 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
-import javax.persistence.Transient;
-
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.security.core.CredentialsContainer;
@@ -46,14 +44,6 @@ public class UserEntity implements Serializable, UserDetails, CredentialsContain
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	private Long id;
-
-	@Builder.Default
-    private Boolean useGoogle2f = false;
-	
-	@Transient
-	private Boolean google2faRequired = true;
-	
-    private String google2FaSecret;
 
 	@Builder.Default
 	private Boolean accountNonLocked = true;
