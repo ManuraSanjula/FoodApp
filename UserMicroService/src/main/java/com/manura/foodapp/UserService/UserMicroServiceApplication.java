@@ -1,10 +1,6 @@
 package com.manura.foodapp.UserService;
 
 import com.manura.foodapp.UserService.security.AppProperties;
-import com.warrenstrange.googleauth.GoogleAuthenticator;
-import com.warrenstrange.googleauth.GoogleAuthenticatorConfig;
-import com.warrenstrange.googleauth.ICredentialRepository;
-import java.util.concurrent.TimeUnit;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -41,17 +37,6 @@ public class UserMicroServiceApplication implements CommandLineRunner {
 	public AuthenticationEventPublisher authenticationEventPublisher(ApplicationEventPublisher publisher) {
 		return new DefaultAuthenticationEventPublisher(publisher);
 	}
-
-	@Bean
-	public GoogleAuthenticator googleAuthenticator(ICredentialRepository credentialRepository) {
-		GoogleAuthenticatorConfig.GoogleAuthenticatorConfigBuilder configBuilder = new GoogleAuthenticatorConfig.GoogleAuthenticatorConfigBuilder();
-		configBuilder.setTimeStepSizeInMillis(TimeUnit.SECONDS.toMillis(60)).setWindowSize(10)
-				.setNumberOfScratchCodes(0);
-		GoogleAuthenticator googleAuthenticator = new GoogleAuthenticator(configBuilder.build());
-		googleAuthenticator.setCredentialRepository(credentialRepository);
-		return googleAuthenticator;
-	}
-
 	@Override
 	public void run(String... args) throws Exception {
 	}
