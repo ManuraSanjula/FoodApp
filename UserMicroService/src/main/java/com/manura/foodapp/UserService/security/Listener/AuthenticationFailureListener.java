@@ -1,4 +1,4 @@
-package com.manura.foodapp.UserService.security.listener;
+package com.manura.foodapp.UserService.security.Listener;
 
 import lombok.RequiredArgsConstructor;
 
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 
 import com.manura.foodapp.UserService.entity.LoginFailure;
 import com.manura.foodapp.UserService.entity.UserEntity;
-import com.manura.foodapp.UserService.repository.LoginFailureRepository;
+import com.manura.foodapp.UserService.repository.LoginFailureRepo;
 import com.manura.foodapp.UserService.repository.UserRepo;
 
 import java.sql.Timestamp;
@@ -22,7 +22,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AuthenticationFailureListener {
 
-    private final LoginFailureRepository loginFailureRepository;
+    private final LoginFailureRepo loginFailureRepo;
     private final UserRepo userRepository;
 
     @EventListener
@@ -41,7 +41,7 @@ public class AuthenticationFailureListener {
                 WebAuthenticationDetails details = (WebAuthenticationDetails) token.getDetails();                
                 builder.sourceIp(details.getRemoteAddress());
             }
-            LoginFailure failure = loginFailureRepository.save(builder.build());
+            LoginFailure failure = loginFailureRepo.save(builder.build());
             if (failure.getUser() != null) {
                 lockUserAccount(failure.getUser());
             }
@@ -51,7 +51,7 @@ public class AuthenticationFailureListener {
     }
 
     private void lockUserAccount(UserEntity user) {
-        List<LoginFailure> failures = loginFailureRepository.findAllByUserAndCreatedDateIsAfter(user,
+        List<LoginFailure> failures = loginFailureRepo.findAllByUserAndCreatedDateIsAfter(user,
                 Timestamp.valueOf(LocalDateTime.now().minusDays(1)));
 
         if(failures.size() > 3){

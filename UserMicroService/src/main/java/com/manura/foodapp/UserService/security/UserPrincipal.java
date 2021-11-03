@@ -14,10 +14,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 public class UserPrincipal implements UserDetails {
 
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
 	UserEntity userEntity;
 
 	public UserPrincipal(UserEntity userEntity) {
@@ -57,22 +53,22 @@ public class UserPrincipal implements UserDetails {
 
 	@Override
 	public boolean isAccountNonExpired() {
-		return userEntity.isAccountNonExpired();
+		return true;
 	}
 
 	@Override
 	public boolean isAccountNonLocked() {
-		return userEntity.isAccountNonLocked();
+		return true;
 	}
 
 	@Override
 	public boolean isCredentialsNonExpired() {
-		return userEntity.isCredentialsNonExpired();
+		return true;
 	}
 
 	@Override
 	public boolean isEnabled() {
-		return userEntity.getActive();
+		return true;
 	}
 
 }

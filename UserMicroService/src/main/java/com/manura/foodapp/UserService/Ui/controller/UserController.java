@@ -50,11 +50,6 @@ class UserSecurityController{
 	String emailVerifyWebPage(){
 		return "EmailConfrim";
 	}
-	
-	@RequestMapping("/users/passwordReset-WebPage")
-	String passwordResetWebPage(){
-		return "PasswordReset";
-	}
 }
 
 @RestController

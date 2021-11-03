@@ -1,4 +1,4 @@
-package com.manura.foodapp.UserService.security.listener;
+package com.manura.foodapp.UserService.security.Listener;
 
 import org.springframework.context.event.EventListener;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -8,14 +8,14 @@ import org.springframework.stereotype.Component;
 
 import com.manura.foodapp.UserService.entity.LoginSuccess;
 import com.manura.foodapp.UserService.entity.UserEntity;
-import com.manura.foodapp.UserService.repository.LoginSuccessRepository;
+import com.manura.foodapp.UserService.repository.LoginSuccessRepo;
 
 import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Component
 public class AuthenticationSuccessListener {
 
-    private final LoginSuccessRepository loginSuccessRepository;
+    private final LoginSuccessRepo loginSuccessRepo;
 
     @EventListener
     public void listen(AuthenticationSuccessEvent event){
@@ -32,7 +32,7 @@ public class AuthenticationSuccessListener {
                 WebAuthenticationDetails details = (WebAuthenticationDetails) token.getDetails();
                 builder.sourceIp(details.getRemoteAddress());
             }
-            LoginSuccess loginSuccess = loginSuccessRepository.save(builder.build());
+            LoginSuccess loginSuccess = loginSuccessRepo.save(builder.build());
         }
     }
 }

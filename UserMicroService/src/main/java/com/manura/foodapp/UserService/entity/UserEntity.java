@@ -40,108 +40,108 @@ import lombok.ToString;
 @ToString
 public class UserEntity implements Serializable, UserDetails, CredentialsContainer {
 
-	private static final long serialVersionUID = 6994849949494494L;
-	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
-	private Long id;
+    private static final long serialVersionUID = 6994849949494494L;
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private Long id;
 
-	@Builder.Default
-	private Boolean accountNonLocked = true;
+    @Builder.Default
+    private Boolean accountNonLocked = true;
 
-	@Builder.Default
-	private Boolean accountNonExpired = true;
+    @Builder.Default
+    private Boolean accountNonExpired = true;
 
-	@Column(unique = true, nullable = false)
-	private String publicId;
+    @Column(unique = true, nullable = false)
+    private String publicId;
 
-	@Column(nullable = false)
-	private String firstName;
+    @Column(nullable = false)
+    private String firstName;
 
-	@Column(nullable = false)
-	private String lastName;
+    @Column(nullable = false)
+    private String lastName;
 
-	@Column(unique = true)
-	private String email;
+    @Column(unique = true)
+    private String email;
 
-	@Column(nullable = false)
-	private String password;
+    @Column(nullable = false)
+    private String password;
 
-	private Boolean active;
-	private Boolean emailVerify;
+    private Boolean active;
+    private Boolean emailVerify;
 
-	@Column(nullable = false)
-	private String address;
+    @Column(nullable = false)
+    private String address;
 
-	private String emailVerificationToken;
+    private String emailVerificationToken;
 
-	@Column(length = 2000)
-	private String passwordResetToken;
+    @Column(length = 2000)
+    private String passwordResetToken;
 
-	private Date passwordChangedAt;
+    private Date passwordChangedAt;
 
-	private String pic;
+    private String pic;
 
-	@CreationTimestamp
+    @CreationTimestamp
     @Column(updatable = false)
     private Timestamp createdDate;
 
     @UpdateTimestamp
     private Timestamp lastModifiedDate;
-    
-	@ManyToMany(cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
-	@JoinTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id"))
-	private Collection<RoleEntity> role;
 
-	@Override
-	public void eraseCredentials() {
-		// TODO Auto-generated method stub
+    @ManyToMany(cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
+    @JoinTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id"))
+    private Collection<RoleEntity> role;
 
-	}
+    @Override
+    public void eraseCredentials() {
+        // TODO Auto-generated method stub
 
-	@Override
-	public Collection<? extends GrantedAuthority> getAuthorities() {
-		List<GrantedAuthority> authorities = new ArrayList<>();
+    }
 
-		Collection<AuthorityEntity> authorityEntities = new ArrayList<>();
-		Collection<RoleEntity> roles  = this.getRole();
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        List<GrantedAuthority> authorities = new ArrayList<>();
 
-		if(roles == null){
-			return  authorities;
-		}
-		roles.forEach(role->{
-			authorities.add(new SimpleGrantedAuthority(role.getRole()));
-			authorityEntities.addAll(role.getAuthorities());
-		});
-		authorityEntities.forEach(authority->{
-			authorities.add(new SimpleGrantedAuthority(authority.getName()));
-		});
-		return  authorities;
-	}
+        Collection<AuthorityEntity> authorityEntities = new ArrayList<>();
+        Collection<RoleEntity> roles  = this.getRole();
 
-	@Override
-	public String getUsername() {
-		// TODO Auto-generated method stub
-		return this.email;
-	}
+        if(roles == null){
+            return  authorities;
+        }
+        roles.forEach(role->{
+            authorities.add(new SimpleGrantedAuthority(role.getRole()));
+            authorityEntities.addAll(role.getAuthorities());
+        });
+        authorityEntities.forEach(authority->{
+            authorities.add(new SimpleGrantedAuthority(authority.getName()));
+        });
+        return  authorities;
+    }
 
-	@Override
-	public boolean isAccountNonExpired() {
-		return this.accountNonExpired;
-	}
+    @Override
+    public String getUsername() {
+        // TODO Auto-generated method stub
+        return this.email;
+    }
 
-	@Override
-	public boolean isAccountNonLocked() {
-		return this.accountNonLocked;
-	}
+    @Override
+    public boolean isAccountNonExpired() {
+        return this.accountNonExpired;
+    }
 
-	@Override
-	public boolean isCredentialsNonExpired() {
-		return this.emailVerify;
-	}
+    @Override
+    public boolean isAccountNonLocked() {
+        return this.accountNonLocked;
+    }
 
-	@Override
-	public boolean isEnabled() {
-		// TODO Auto-generated method stub
-		return this.active;
-	}
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return this.emailVerify;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        // TODO Auto-generated method stub
+        return this.active;
+    }
 }

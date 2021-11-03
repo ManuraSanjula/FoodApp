@@ -23,6 +23,8 @@ public class SecurityCredentialsConfig extends WebSecurity {
         this.tokenConverter = tokenConverter;
         this.jwtConfiguration = jwtConfiguration;
     }
+
+
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.addFilterAfter(new JwtTokenAuthorizationFilter(jwtConfiguration, tokenConverter), UsernamePasswordAuthenticationFilter.class);
