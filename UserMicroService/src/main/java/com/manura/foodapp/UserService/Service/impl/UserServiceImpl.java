@@ -11,6 +11,7 @@ import javax.imageio.ImageIO;
 
 import org.imgscalr.Scalr;
 import org.modelmapper.ModelMapper;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.buffer.DataBuffer;
@@ -26,12 +27,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.manura.foodapp.UserService.Service.UserService;
 import com.manura.foodapp.UserService.Ui.Errors.ErrorMessages;
 import com.manura.foodapp.UserService.Ui.Errors.Exception.UserServiceException;
 import com.manura.foodapp.UserService.Ui.controller.Models.Response.UserRes;
-import com.manura.foodapp.UserService.UserServiceEvent.OtherUserEvents;
-import com.manura.foodapp.UserService.UserServiceEvent.OtherUserEventsOperations;
 import com.manura.foodapp.UserService.UserServiceEvent.UserAccountSecurityOperationEvent;
 import com.manura.foodapp.UserService.entity.AuthorityEntity;
 import com.manura.foodapp.UserService.entity.RoleEntity;
@@ -59,7 +59,7 @@ public class UserServiceImpl implements UserService {
 	private UserRepo userRepo;
 
 	private final RSocketRequester requester;
-	
+
 	public UserServiceImpl(RSocketRequester.Builder builder, RSocketConnectorConfigurer connectorConfigurer,
 			@Value("${user.service.host}") String host, @Value("${user.service.port}") int port) {
 
@@ -91,7 +91,12 @@ public class UserServiceImpl implements UserService {
 
 	@Autowired
 	private HashOperations<String, String, UserEntity> hashOps;
+
+	private ObjectMapper oMapper = new ObjectMapper();
 	
+	@Autowired
+	private RabbitTemplate rabbitTemplate;
+
 	@SuppressWarnings("static-access")
 	@Override
 	public UserDto createUser(UserDto user, String roleName) {
@@ -227,7 +232,7 @@ public class UserServiceImpl implements UserService {
 			throw new UsernameNotFoundException(ErrorMessages.NO_RECORD_FOUND.getErrorMessage());
 		userEntity.setActive(false);
 		saveUserIntoCache(userEntity);
-		userRepo.save( userEntity);
+		userRepo.save(userEntity);
 		UserDto returnValue = modelMapper.map(userEntity, UserDto.class);
 		return returnValue;
 	}
@@ -254,14 +259,12 @@ public class UserServiceImpl implements UserService {
 				userEntity.setEmailVerificationToken(null);
 				UserEntity updatedUserDetails = userRepo.save(userEntity);
 				returnValue = true;
-				
-				OtherUserEvents otherUserEventsdata = new OtherUserEvents();
-				otherUserEventsdata.setDate(new Date().toString());
-				otherUserEventsdata.setMessage("Email Verification Okay " + updatedUserDetails.getEmail());
-				otherUserEventsdata.setUser(updatedUserDetails.getEmail());
-				OtherUserEventsOperations eventsOperations = new OtherUserEventsOperations(otherUserEventsdata,"user_verify_email");
-				Thread thread = new Thread(eventsOperations);
-				thread.start();
+				try {
+					String json = oMapper.writeValueAsString(updatedUserDetails);
+					rabbitTemplate.convertAndSend("food-app-user-security", "", json);
+				} catch (Exception e) {
+					// TODO: handle exception
+				}
 			}
 		} else {
 			throw new UsernameNotFoundException(ErrorMessages.NO_RECORD_FOUND.getErrorMessage());
@@ -310,16 +313,6 @@ public class UserServiceImpl implements UserService {
 		UserEntity updatedUserDetails = userRepo.save(user);
 		if (updatedUserDetails == null)
 			return false;
-	
-		OtherUserEvents otherUserEventsdata = new OtherUserEvents();
-		otherUserEventsdata.setUser(updatedUserDetails.getEmail());
-		otherUserEventsdata.setDate(new Date().toString());
-		otherUserEventsdata.setMessage("PassWordReset Complete " + updatedUserDetails.getEmail());
-		OtherUserEventsOperations eventsOperations = 
-				new OtherUserEventsOperations(otherUserEventsdata,"user_password_reset_success");
-		Thread thread = new Thread(eventsOperations);
-		thread.start();
-		
 		return true;
 	}
 

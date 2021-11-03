@@ -1,7 +1,5 @@
 package com.manura.foodapp.OrderService.security.support;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -9,12 +7,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.web.server.ServerWebExchange;
-import com.manura.foodapp.OrderService.Utils.TokenConverter;
-import com.manura.foodapp.OrderService.security.auth.UserPrincipal;
 
+import com.manura.foodapp.OrderService.Utils.TokenConverter;
 import reactor.core.publisher.Mono;
 
 public class ServerHttpBearerAuthenticationConverter implements Function<ServerWebExchange, Mono<Authentication>> {
@@ -35,16 +30,9 @@ public class ServerHttpBearerAuthenticationConverter implements Function<ServerW
 	public Mono<Authentication> apply(ServerWebExchange serverWebExchange) {
 		return Mono.justOrEmpty(serverWebExchange).flatMap(ServerHttpBearerAuthenticationConverter::extractToken)
 				.filter(matchBearerLength).flatMap(isolateBearerValue).flatMap(user -> {
-					List<GrantedAuthority> authorities = new ArrayList<>();
 					return tokenConverter.validateTokenSignature(user).map(u -> {
-						UserPrincipal principal = new UserPrincipal(u.getPublicId(), u.getEmail());
-						u.getRoles().forEach(role -> {
-							authorities.add(new SimpleGrantedAuthority(role));
-						});
-						u.getAuthorities().forEach(aut -> {
-							authorities.add(new SimpleGrantedAuthority(aut));
-						});
-						return Mono.justOrEmpty(new UsernamePasswordAuthenticationToken(principal, null, authorities));
+						return Mono.justOrEmpty(new UsernamePasswordAuthenticationToken(u, null, 
+								u.getAuthorities()));
 					}).flatMap(i -> i);
 				});
 	}

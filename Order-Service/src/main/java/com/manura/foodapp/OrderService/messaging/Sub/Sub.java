@@ -43,6 +43,16 @@ public class Sub {
 		}
 	}
 	
+	@RabbitListener(queues = "user_security-order",concurrency = "20")
+	public void user_security_order(String message) {
+		try {
+			UserTable user = objectMapper.readValue(message, UserTable.class);
+			orderServiceImpl.updateUser(user.getPublicId(),Mono.just(user)).subscribe();
+		} catch (Exception e) {
+			LOG.info("Error is {}", e.getMessage());
+		}
+	}
+	
 	@RabbitListener(queues = "food_created-order",concurrency = "20")
 	public void food_created_order(String message) {
 		try {

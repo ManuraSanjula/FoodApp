@@ -1,15 +1,11 @@
 package com.manura.foodapp.FoodService.security.support;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.web.server.ServerWebExchange;
 
 import com.manura.foodapp.FoodService.security.auth.UserPrincipal;
@@ -35,16 +31,10 @@ public class ServerHttpBearerAuthenticationConverter implements Function<ServerW
 	public Mono<Authentication> apply(ServerWebExchange serverWebExchange) {
 		return Mono.justOrEmpty(serverWebExchange).flatMap(ServerHttpBearerAuthenticationConverter::extract)
 				.filter(matchBearerLength).flatMap(isolateBearerValue).flatMap(user -> {
-					List<GrantedAuthority> authorities = new ArrayList<>();
 					return tokenConverter.validateTokenSignature(user).map(u -> {
 						UserPrincipal principal = new UserPrincipal(u.getId(), u.getEmail());
-						u.getRoles().forEach(role -> {
-							authorities.add(new SimpleGrantedAuthority(role));
-						});
-						u.getAuthorities().forEach(aut -> {
-							authorities.add(new SimpleGrantedAuthority(aut));
-						});
-						return Mono.justOrEmpty(new UsernamePasswordAuthenticationToken(principal, null, authorities));
+						return Mono.justOrEmpty(new UsernamePasswordAuthenticationToken(principal, null, 
+								u.getAuthorities()));
 					}).flatMap(i -> i);
 				});
 	}

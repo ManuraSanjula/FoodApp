@@ -74,7 +74,7 @@ public class RedisServiceImpl implements RedisService {
 						System.out.println(i);
 					});
 		} catch (Exception e) {
-			System.out.println("====");
+			
 		}
 	}
 	
@@ -103,5 +103,4 @@ public class RedisServiceImpl implements RedisService {
 			return Mono.empty();
 		}
 	}
-
 }

@@ -1,12 +1,16 @@
 package com.manura.foodapp.UserService.security.Listener;
 
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authentication.event.AuthenticationFailureBadCredentialsEvent;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import org.springframework.stereotype.Component;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.manura.foodapp.UserService.entity.LoginFailure;
 import com.manura.foodapp.UserService.entity.UserEntity;
 import com.manura.foodapp.UserService.repository.LoginFailureRepo;
@@ -15,14 +19,13 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 
-
 @Component
 @RequiredArgsConstructor
 public class AuthenticationFailureListener {
 
     private final LoginFailureRepo loginFailureRepo;
     private final UserRepo userRepository;
-  
+    private final RabbitTemplate rabbitTemplate;
     private final String REDIS_HASH_KEY = "UserHash-UserService";
 	private HashOperations<String, String, UserEntity> hashOps;
 
@@ -56,8 +59,15 @@ public class AuthenticationFailureListener {
                 Timestamp.valueOf(LocalDateTime.now().minusDays(1)));
 
         if(failures.size() > 3){
+            ObjectMapper oMapper = new ObjectMapper();
             user.setAccountNonLocked(false);
             userRepository.save(user);
+            try {
+            	String json = oMapper.writeValueAsString(user);
+                rabbitTemplate.convertAndSend("food-app-user-security", "" ,json);
+            }catch (Exception e) {
+				// TODO: handle exception
+			}
             hashOps.delete(REDIS_HASH_KEY, user.getEmail());
         }
     }
