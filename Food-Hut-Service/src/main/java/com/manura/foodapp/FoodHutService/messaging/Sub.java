@@ -33,6 +33,15 @@ public class Sub {
 			LOG.info("Error is {}", e.getMessage());
 		}
 	}
+	@RabbitListener(queues = "user_security-foodHut",concurrency = "20")
+	public void user_security_foodHut(String message) {
+		try {
+			UserNode user = objectMapper.readValue(message, UserNode.class);
+			foodHutServiceImpl.updateUser(user.getPublicId(),Mono.just(user)).subscribe();		
+		} catch (Exception e) {
+			LOG.info("Error is {}", e.getMessage());
+		}
+	}
 	
 	@RabbitListener(queues = "user_updated-foodHut",concurrency = "20")
 	public void user_updated_foodHut(String message) {

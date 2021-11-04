@@ -38,7 +38,7 @@ public class RedisServiceImpl implements RedisService {
 	private ReactiveValueOperations<String, CommentCachingRedis> reactiveRedisTemplateOpsComment;
 
 	@Autowired
-	ReactiveRedisTemplate<String, UserEntity> reactiveRedisTemplateUser;
+	private ReactiveRedisTemplate<String, UserEntity> reactiveRedisTemplateUser;
 	private ReactiveValueOperations<String, UserEntity> reactiveRedisTemplateOpsUser;
 
 	@PostConstruct

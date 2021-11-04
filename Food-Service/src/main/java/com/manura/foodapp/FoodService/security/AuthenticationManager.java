@@ -5,8 +5,8 @@ import org.springframework.security.authentication.ReactiveAuthenticationManager
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
+import com.manura.foodapp.FoodService.entity.UserEntity;
 import com.manura.foodapp.FoodService.security.auth.UnauthorizedException;
-import com.manura.foodapp.FoodService.security.auth.UserPrincipal;
 import com.manura.foodapp.FoodService.service.impl.FoodServiceImpl;
 
 import reactor.core.publisher.Mono;
@@ -22,9 +22,10 @@ public class AuthenticationManager implements ReactiveAuthenticationManager {
 
     @Override
     public Mono<Authentication> authenticate(Authentication authentication) {
-    	UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
+    	UserEntity principal = (UserEntity) authentication.getPrincipal();
         return userService.getUser(principal.getId())
-                .filter(user -> user.getActive())
+        		  .filter(user -> user.getActive() && user.getEmailVerify() && user.getAccountNonExpired()
+                  		&& user.getAccountNonLocked())
                 .switchIfEmpty(Mono.error(new UnauthorizedException("User account is disabled.")))
                 .map(user -> authentication);
     }

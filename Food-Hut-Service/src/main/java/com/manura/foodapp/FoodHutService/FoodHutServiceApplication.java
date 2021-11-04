@@ -1,5 +1,7 @@
 package com.manura.foodapp.FoodHutService;
 
+import java.sql.Timestamp;
+
 import org.neo4j.driver.Driver;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -18,6 +20,8 @@ import com.manura.foodapp.FoodHutService.Node.CommentNode;
 import com.manura.foodapp.FoodHutService.Node.FoodHutNode;
 import com.manura.foodapp.FoodHutService.Node.FoodNode;
 import com.manura.foodapp.FoodHutService.Node.UserNode;
+
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @SpringBootApplication(proxyBeanMethods = false)
@@ -66,6 +70,7 @@ public class FoodHutServiceApplication {
 	public interface UserRepo extends ReactiveNeo4jRepository<UserNode, Long> {
 		Mono<UserNode> findByPublicId(String publicId);
 		Mono<UserNode> findByEmail(String emial);
+		Flux<UserNode>  findAllByAccountNonLockedAndLastModifiedDateIsBefore(Boolean locked, Timestamp timestamp);
 	}
 
 }

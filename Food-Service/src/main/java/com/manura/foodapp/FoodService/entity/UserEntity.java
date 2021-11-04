@@ -1,6 +1,7 @@
 package com.manura.foodapp.FoodService.entity;
 
 import java.io.Serializable;
+import java.security.Principal;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -26,7 +27,7 @@ import lombok.ToString;
 @NoArgsConstructor
 @ToString
 @Document
-public class UserEntity implements Serializable,UserDetails, CredentialsContainer  {
+public class UserEntity implements Serializable,UserDetails, CredentialsContainer,Principal  {
     private static final long serialVersionUID = 89984844849448L;
     @Id
     private String id;
@@ -90,5 +91,10 @@ public class UserEntity implements Serializable,UserDetails, CredentialsContaine
         	user_authorities.add(new SimpleGrantedAuthority(auth));
         });
 		return user_authorities;
+	}
+	@Override
+	public String getName() {
+		// TODO Auto-generated method stub
+		return this.email;
 	}
 }

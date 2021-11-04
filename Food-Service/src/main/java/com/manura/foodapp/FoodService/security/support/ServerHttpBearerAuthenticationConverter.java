@@ -7,8 +7,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.server.ServerWebExchange;
-
-import com.manura.foodapp.FoodService.security.auth.UserPrincipal;
 import com.manura.foodapp.FoodService.util.TokenConverter;
 
 import reactor.core.publisher.Mono;
@@ -32,8 +30,7 @@ public class ServerHttpBearerAuthenticationConverter implements Function<ServerW
 		return Mono.justOrEmpty(serverWebExchange).flatMap(ServerHttpBearerAuthenticationConverter::extract)
 				.filter(matchBearerLength).flatMap(isolateBearerValue).flatMap(user -> {
 					return tokenConverter.validateTokenSignature(user).map(u -> {
-						UserPrincipal principal = new UserPrincipal(u.getId(), u.getEmail());
-						return Mono.justOrEmpty(new UsernamePasswordAuthenticationToken(principal, null, 
+						return Mono.justOrEmpty(new UsernamePasswordAuthenticationToken(user, null, 
 								u.getAuthorities()));
 					}).flatMap(i -> i);
 				});

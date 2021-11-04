@@ -31,17 +31,6 @@ public class RabbitMQ_for_Security {
 		return BindingBuilder.bind(user_security_food()).to(food_app_user_security_Ex());
 	}
 	@Bean
-	public Binding binding_user_security_4() {
-		return BindingBuilder.bind(user_security_Cart()).to(food_app_user_security_Ex());
-	}
-	
-	@Bean
-	public Queue user_security_Cart() {
-		Map<String, Object> args = new HashMap<String, Object>();
-		args.put("x-dead-letter-exchange", "food_Error");
-		return new Queue("user_security-Cart", false, false, false, args);
-	}
-	@Bean
 	public Queue user_security_food() {
 		Map<String, Object> args = new HashMap<String, Object>();
 		args.put("x-dead-letter-exchange", "food_Error");
