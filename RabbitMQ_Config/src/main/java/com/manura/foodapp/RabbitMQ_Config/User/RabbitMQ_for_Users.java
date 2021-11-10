@@ -44,6 +44,11 @@ public class RabbitMQ_for_Users {
 	}
 	
 	@Bean
+	public Binding binding_user_created_5() {
+		return BindingBuilder.bind(user_created_foodapp_review()).to(food_app_userCreated_Ex());
+	}
+	
+	@Bean
 	public Binding binding_user_updated_1() {
 		return BindingBuilder.bind(user_updated_food()).to(food_app_userUpdated_Ex());
 	}
@@ -61,6 +66,11 @@ public class RabbitMQ_for_Users {
 	@Bean
 	public Binding binding_user_updated_4() {
 		return BindingBuilder.bind(user_updated_order()).to(food_app_userUpdated_Ex());
+	}
+	
+	@Bean
+	public Binding binding_user_updated_5() {
+		return BindingBuilder.bind(user_updated_foodapp_review()).to(food_app_userUpdated_Ex());
 	}
 	
 	@Bean
@@ -119,6 +129,18 @@ public class RabbitMQ_for_Users {
 		Map<String, Object> args = new HashMap<String, Object>();
 		args.put("x-dead-letter-exchange", "food_Error");
 		return new Queue("user_updated-foodHut", false, false, false, args);
+	}
+	@Bean
+	public Queue user_created_foodapp_review() {
+		Map<String, Object> args = new HashMap<String, Object>();
+		args.put("x-dead-letter-exchange", "food_Error");
+		return new Queue("user_created_foodapp_review", false, false, false, args);
+	}
+	@Bean
+	public Queue user_updated_foodapp_review() {
+		Map<String, Object> args = new HashMap<String, Object>();
+		args.put("x-dead-letter-exchange", "food_Error");
+		return new Queue("user_updated_foodapp_review", false, false, false, args);
 	}
 
 }
