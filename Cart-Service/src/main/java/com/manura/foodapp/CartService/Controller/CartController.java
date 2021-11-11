@@ -3,6 +3,7 @@ package com.manura.foodapp.CartService.Controller;
 import java.security.Principal;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,7 +30,11 @@ public class CartController {
 	@Autowired
 	private CartServiceImpl cartServiceImpl;
 
-	@PostMapping("/{user}")
+	@PostMapping(path="/{user}",
+			produces = { MediaType.APPLICATION_JSON_VALUE,
+			MediaType.APPLICATION_XML_VALUE }, 
+			consumes = { MediaType.APPLICATION_JSON_VALUE,
+					MediaType.APPLICATION_XML_VALUE })
 	Mono<ResponseEntity<String>> insertCart(@PathVariable String user,@RequestBody Mono<CartReq> foodReq, Mono<Principal> principal) {
 
 		return principal.map(Principal::getName).switchIfEmpty(Mono.just("Unauthorized"))
@@ -42,13 +47,21 @@ public class CartController {
 				}).flatMap(i -> i);
 	}
 
-	@GetMapping("/{user}")
+	@GetMapping(path="/{user}",
+			produces = { MediaType.APPLICATION_JSON_VALUE,
+			MediaType.APPLICATION_XML_VALUE }, 
+			consumes = { MediaType.APPLICATION_JSON_VALUE,
+					MediaType.APPLICATION_XML_VALUE })
 	Flux<CartDto> getOneCart(@PathVariable String user,Mono<Principal> principal) {
 		return cartServiceImpl.getCart(user).publishOn(Schedulers.boundedElastic())
 				.subscribeOn(Schedulers.boundedElastic());
 	}
 
-	@DeleteMapping("/{user}/{id}")
+	@DeleteMapping(path="/{user}/{id}",
+			produces = { MediaType.APPLICATION_JSON_VALUE,
+			MediaType.APPLICATION_XML_VALUE }, 
+			consumes = { MediaType.APPLICATION_JSON_VALUE,
+					MediaType.APPLICATION_XML_VALUE })
 	Mono<ResponseEntity<Void>> deleteCart(@PathVariable String user, @PathVariable String id,Mono<Principal> principal) {
 		return principal.map(Principal::getName).map(i->{
 			 if(!i.equals(user)) {
@@ -59,7 +72,11 @@ public class CartController {
 		 }).flatMap(__->__);
 	}
 
-	@GetMapping("/{user}/check-out-all")
+	@GetMapping(path="/{user}/check-out-all",
+			produces = { MediaType.APPLICATION_JSON_VALUE,
+			MediaType.APPLICATION_XML_VALUE }, 
+			consumes = { MediaType.APPLICATION_JSON_VALUE,
+					MediaType.APPLICATION_XML_VALUE })
 	public Mono<OperationStatusModel> checkOutAll(@PathVariable String user,Mono<Principal> principal) {
 		return principal.map(Principal::getName).map(u->{
 			 if(!u.equals(user)) {

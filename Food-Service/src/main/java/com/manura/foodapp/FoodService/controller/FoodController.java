@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.geo.Distance;
 import org.springframework.data.geo.Metrics;
 import org.springframework.data.geo.Point;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -42,15 +43,17 @@ public class FoodController {
 	FoodServiceImpl foodServiceImpl;
 
 	ModelMapper modelMapper = new ModelMapper();
-	
-	@GetMapping("/search")
-	Flux<HalfFoodRes> serachFoods(@RequestParam(required = false, defaultValue = "") String regex){
-		return foodServiceImpl.search(regex)
-				.publishOn(Schedulers.boundedElastic())
+
+	@GetMapping(path = "/search", produces = { MediaType.APPLICATION_JSON_VALUE,
+			MediaType.APPLICATION_XML_VALUE }, consumes = { MediaType.APPLICATION_JSON_VALUE,
+					MediaType.APPLICATION_XML_VALUE })
+	Flux<HalfFoodRes> serachFoods(@RequestParam(required = false, defaultValue = "") String regex) {
+		return foodServiceImpl.search(regex).publishOn(Schedulers.boundedElastic())
 				.subscribeOn(Schedulers.boundedElastic());
 	}
 
-	@GetMapping
+	@GetMapping(produces = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE }, consumes = {
+			MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE })
 	Flux<HalfFoodRes> getAllFoods(@RequestParam(required = false) String type,
 			@RequestParam(required = false) String name, @RequestParam(required = false) Boolean sort,
 			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "3") int size) {
@@ -72,14 +75,18 @@ public class FoodController {
 					.subscribeOn(Schedulers.boundedElastic()).sort();
 	}
 
-	@GetMapping("/{id}")
+	@GetMapping(path = "/{id}", produces = { MediaType.APPLICATION_JSON_VALUE,
+			MediaType.APPLICATION_XML_VALUE }, consumes = { MediaType.APPLICATION_JSON_VALUE,
+					MediaType.APPLICATION_XML_VALUE })
 	Mono<FoodDto> getOneFood(@PathVariable String id) {
 		return foodServiceImpl.findById(id).publishOn(Schedulers.boundedElastic())
 				.subscribeOn(Schedulers.boundedElastic())
 				.switchIfEmpty(Mono.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())));
 	}
 
-	@PutMapping("/{id}/coverImage")
+	@PutMapping(path = "/{id}/coverImage", produces = { MediaType.APPLICATION_JSON_VALUE,
+			MediaType.APPLICATION_XML_VALUE }, consumes = { MediaType.APPLICATION_JSON_VALUE,
+					MediaType.APPLICATION_XML_VALUE })
 	Mono<ResponseEntity<FoodDto>> uploadCoverImage(@PathVariable String id,
 			@RequestPart(name = "coverImg", required = false) Mono<FilePart> fileParts) {
 		return foodServiceImpl.uploadCoverImage(id, fileParts)
@@ -89,7 +96,9 @@ public class FoodController {
 				.switchIfEmpty(Mono.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())));
 	}
 
-	@PutMapping("/{id}/images")
+	@PutMapping(path = "/{id}/images", produces = { MediaType.APPLICATION_JSON_VALUE,
+			MediaType.APPLICATION_XML_VALUE }, consumes = { MediaType.APPLICATION_JSON_VALUE,
+					MediaType.APPLICATION_XML_VALUE })
 	Mono<ResponseEntity<FoodDto>> uploadImages(@PathVariable String id,
 			@RequestPart(name = "images", required = false) Flux<FilePart> fileParts) {
 		return foodServiceImpl.uploadImages(id, fileParts)
@@ -100,14 +109,18 @@ public class FoodController {
 				.switchIfEmpty(Mono.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())));
 	}
 
-	@GetMapping("/{id}/comments")
+	@GetMapping(path = "/{id}/comments", produces = { MediaType.APPLICATION_JSON_VALUE,
+			MediaType.APPLICATION_XML_VALUE }, consumes = { MediaType.APPLICATION_JSON_VALUE,
+					MediaType.APPLICATION_XML_VALUE })
 	Flux<CommentsDto> getAllComment(@PathVariable String id) {
 		return foodServiceImpl.findAllComment(id).publishOn(Schedulers.boundedElastic())
 				.subscribeOn(Schedulers.boundedElastic())
 				.switchIfEmpty(Mono.error(new FoodNotFoundError(ErrorMessages.NO_RECORD_FOUND.getErrorMessage())));
 	}
 
-	@PutMapping("/{id}/comments/{commenId}")
+	@PutMapping(path = "/{id}/comments/{commenId}", produces = { MediaType.APPLICATION_JSON_VALUE,
+			MediaType.APPLICATION_XML_VALUE }, consumes = { MediaType.APPLICATION_JSON_VALUE,
+					MediaType.APPLICATION_XML_VALUE })
 	Mono<ResponseEntity<CommentsDto>> commentUpdate(@PathVariable String id, @PathVariable String commenId,
 			@RequestParam(required = false, defaultValue = "") String desc) {
 		return foodServiceImpl.updateComment(commenId, id, desc).map(ResponseEntity::ok)
@@ -115,13 +128,16 @@ public class FoodController {
 				.defaultIfEmpty(ResponseEntity.internalServerError().build());
 	}
 
-	@DeleteMapping("/{id}/comments/{commenId}")
+	@DeleteMapping(path = "/{id}/comments/{commenId}", produces = { MediaType.APPLICATION_JSON_VALUE,
+			MediaType.APPLICATION_XML_VALUE }, consumes = { MediaType.APPLICATION_JSON_VALUE,
+					MediaType.APPLICATION_XML_VALUE })
 	Mono<ResponseEntity<Void>> commentDelete(@PathVariable String id, @PathVariable String commenId) {
 		return foodServiceImpl.deleteComment(id, commenId).map(ResponseEntity::ok)
 				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
 
-	@PostMapping
+	@PostMapping(produces = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE }, consumes = {
+			MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE })
 	Mono<ResponseEntity<FoodDto>> insertFood(@RequestBody(required = false) Mono<FoodReq> foodReq) {
 		return foodReq.publishOn(Schedulers.boundedElastic())
 				.switchIfEmpty(Mono.error(new FoodError(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage())))
@@ -137,7 +153,9 @@ public class FoodController {
 				.subscribeOn(Schedulers.boundedElastic()).defaultIfEmpty(ResponseEntity.internalServerError().build());
 	}
 
-	@PutMapping("/{id}")
+	@PutMapping(path = "/{id}", produces = { MediaType.APPLICATION_JSON_VALUE,
+			MediaType.APPLICATION_XML_VALUE }, consumes = { MediaType.APPLICATION_JSON_VALUE,
+					MediaType.APPLICATION_XML_VALUE })
 	Mono<ResponseEntity<FoodDto>> updateFood(@PathVariable String id,
 			@RequestBody(required = false) Mono<FoodReq> foodReq) {
 		return foodReq.publishOn(Schedulers.boundedElastic())
@@ -150,7 +168,9 @@ public class FoodController {
 				.subscribeOn(Schedulers.boundedElastic()).defaultIfEmpty(ResponseEntity.internalServerError().build());
 	}
 
-	@PostMapping("/{id}/comments")
+	@PostMapping(path = "/{id}/comments", produces = { MediaType.APPLICATION_JSON_VALUE,
+			MediaType.APPLICATION_XML_VALUE }, consumes = { MediaType.APPLICATION_JSON_VALUE,
+					MediaType.APPLICATION_XML_VALUE })
 	Mono<ResponseEntity<CommentsDto>> addComment(@PathVariable String id,
 			@RequestBody(required = false) Mono<CommentReq> commentReq, Mono<Principal> principal) {
 		return commentReq.publishOn(Schedulers.boundedElastic())
@@ -170,7 +190,9 @@ public class FoodController {
 				.subscribeOn(Schedulers.boundedElastic()).defaultIfEmpty(ResponseEntity.internalServerError().build());
 	}
 
-	@GetMapping("/location-near")
+	@GetMapping(path = "/location-near", produces = { MediaType.APPLICATION_JSON_VALUE,
+			MediaType.APPLICATION_XML_VALUE }, consumes = { MediaType.APPLICATION_JSON_VALUE,
+					MediaType.APPLICATION_XML_VALUE })
 	public Flux<HalfFoodRes> getLocations(@RequestParam("lat") Double latitude, @RequestParam("long") Double longitude,
 			@RequestParam("d") double distance) {
 

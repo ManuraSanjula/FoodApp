@@ -36,44 +36,43 @@ import org.springframework.http.HttpHeaders;
 
 @Controller
 @RequestMapping("/orders")
-class PdfController{
-	
+class PdfController {
+
 	@SuppressWarnings("unused")
-	private class  PdfControllerException extends RuntimeException{
+	private class PdfControllerException extends RuntimeException {
 
 		private static final long serialVersionUID = 3588856919244065687L;
+
 		public PdfControllerException(String message) {
-	        super(message);
-	    }
+			super(message);
+		}
 	}
 
 	@Autowired
 	private RedisServiceImpl redisServiceImpl;
-	
-	
+
 	@GetMapping(path = "/pdf/{orderId}", produces = "application/pdf")
 	Mono<HttpEntity<byte[]>> getPDF(@PathVariable String orderId) {
-		
-	return redisServiceImpl.getPdfAsByteArray(orderId).map(i->{
+
+		return redisServiceImpl.getPdfAsByteArray(orderId).map(i -> {
 			HttpHeaders header = new HttpHeaders();
-		    header.setContentType(MediaType.APPLICATION_PDF);
-		    header.setContentLength(i.length);
-		    return  new HttpEntity<byte[]>(i, header);
+			header.setContentType(MediaType.APPLICATION_PDF);
+			header.setContentLength(i.length);
+			return new HttpEntity<byte[]>(i, header);
 		});
 	}
-	
+
 	@GetMapping("/order-confrim-web")
-	Mono<String> orderConfrimWeb(@RequestParam(value = "token" , defaultValue = "") String token,
-			@RequestParam(value = "user" , defaultValue = "") String user,
-			@RequestParam(value = "orderId" , defaultValue = "") String orderId){
-		return Mono.just("OrderConfirmWeb")
-				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+	Mono<String> orderConfrimWeb(@RequestParam(value = "token", defaultValue = "") String token,
+			@RequestParam(value = "user", defaultValue = "") String user,
+			@RequestParam(value = "orderId", defaultValue = "") String orderId) {
+		return Mono.just("OrderConfirmWeb").publishOn(Schedulers.boundedElastic())
+				.subscribeOn(Schedulers.boundedElastic());
 	}
-	
+
 	@ExceptionHandler(PdfControllerException.class)
-	Mono<String> pdfControllerException(PdfControllerException ex){
-		return Mono.just("notFound")
-				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+	Mono<String> pdfControllerException(PdfControllerException ex) {
+		return Mono.just("notFound").publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
 }
 
@@ -85,33 +84,37 @@ public class OrderController {
 	private OrderServiceImpl orderServiceImpl;
 
 	@PostMapping
-	public Mono<ResponseEntity<OperationStatusModel>> saveOrder(@RequestBody Mono<OrderReq> req, Mono<Principal> principal) {
-		return principal.map(Principal::getName)
-				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic()).map(usr -> {
+	public Mono<ResponseEntity<OperationStatusModel>> saveOrder(@RequestBody Mono<OrderReq> req,
+			Mono<Principal> principal) {
+		return principal.map(Principal::getName).publishOn(Schedulers.boundedElastic())
+				.subscribeOn(Schedulers.boundedElastic()).map(usr -> {
 					return req
-							.switchIfEmpty(Mono.error(new OrderSerivceError(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage())))
-							.map(i->{
-						return orderServiceImpl.saveOrder(Mono.just(i), usr).publishOn(Schedulers.boundedElastic())
-								.subscribeOn(Schedulers.boundedElastic())
-								.map(j->{
-									if(j) {
-										OperationStatusModel returnValue = new OperationStatusModel();
-										returnValue.setOperationName("ORDER_SAVE");
-										returnValue.setOperationResult("SUCCESS");
-										return returnValue;
-									}else {
-										OperationStatusModel returnValue = new OperationStatusModel();
-										returnValue.setOperationName("ORDER_SAVE");
-										returnValue.setOperationResult("FAIL");
-										return returnValue;
-									}
-								})
-								.map(ResponseEntity::ok);
-					});
-				}).flatMap(__ -> __).flatMap(__ -> __).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+							.switchIfEmpty(Mono.error(
+									new OrderSerivceError(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage())))
+							.map(i -> {
+								return orderServiceImpl.saveOrder(Mono.just(i), usr)
+										.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
+										.map(j -> {
+											if (j) {
+												OperationStatusModel returnValue = new OperationStatusModel();
+												returnValue.setOperationName("ORDER_SAVE");
+												returnValue.setOperationResult("SUCCESS");
+												return returnValue;
+											} else {
+												OperationStatusModel returnValue = new OperationStatusModel();
+												returnValue.setOperationName("ORDER_SAVE");
+												returnValue.setOperationResult("FAIL");
+												return returnValue;
+											}
+										}).map(ResponseEntity::ok);
+							});
+				}).flatMap(__ -> __).flatMap(__ -> __).publishOn(Schedulers.boundedElastic())
+				.subscribeOn(Schedulers.boundedElastic());
 	}
-	
-	@GetMapping("/{email}")
+
+	@GetMapping(path = "/{email}", produces = { MediaType.APPLICATION_JSON_VALUE,
+			MediaType.APPLICATION_XML_VALUE }, consumes = { MediaType.APPLICATION_JSON_VALUE,
+					MediaType.APPLICATION_XML_VALUE })
 	public Flux<OrderDto> allOrders(@PathVariable String email, Mono<Principal> principal) {
 		return principal.map(Principal::getName).map(user -> {
 			if (!user.equals(email)) {
@@ -123,7 +126,9 @@ public class OrderController {
 
 	}
 
-	@GetMapping("/{email}/{orderId}")
+	@GetMapping(path = "/{email}/{orderId}", produces = { MediaType.APPLICATION_JSON_VALUE,
+			MediaType.APPLICATION_XML_VALUE }, consumes = { MediaType.APPLICATION_JSON_VALUE,
+					MediaType.APPLICATION_XML_VALUE })
 	public Mono<FullOrderDto> getOneOrder(@PathVariable String email, @PathVariable String orderId,
 			Mono<Principal> principal) {
 		return principal.map(Principal::getName).map(user -> {
@@ -134,48 +139,24 @@ public class OrderController {
 					.subscribeOn(Schedulers.boundedElastic());
 		}).flatMap(__ -> __).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
-	
-	@GetMapping("/order-completed/{deliveryGuyEmail}/{email}/{orderId}")
-	public Mono<OperationStatusModel> orderCompleted(@PathVariable String deliveryGuyEmail,@PathVariable String email, @PathVariable String orderId,
-			Mono<Principal> principal) {
+
+	@GetMapping(path = "/order-completed/{deliveryGuyEmail}/{email}/{orderId}", produces = {
+			MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE }, consumes = {
+					MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE })
+	public Mono<OperationStatusModel> orderCompleted(@PathVariable String deliveryGuyEmail, @PathVariable String email,
+			@PathVariable String orderId, Mono<Principal> principal) {
 		return principal.map(Principal::getName).map(user -> {
 			if (!user.equals(deliveryGuyEmail)) {
 				throw new OrderSerivceError(ErrorMessages.AUTHENTICATION_FAILED.getErrorMessage());
 			}
 			return orderServiceImpl.orderCompleted(email, orderId).publishOn(Schedulers.boundedElastic())
-					.subscribeOn(Schedulers.boundedElastic())
-					.map(i->{
-						if(i) {
+					.subscribeOn(Schedulers.boundedElastic()).map(i -> {
+						if (i) {
 							OperationStatusModel returnValue = new OperationStatusModel();
 							returnValue.setOperationName("ORDER_COMPLETED");
 							returnValue.setOperationResult("SUCCESS");
 							return returnValue;
-						}else {
-							OperationStatusModel returnValue = new OperationStatusModel();
-							returnValue.setOperationName("ORDER_COMPLETED");
-							returnValue.setOperationResult("FAIL");
-							return returnValue;
-						}
-					});
-		}).flatMap(__ -> __).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
-	}
-	
-	@GetMapping("/order-accepted/{deliveryGuyEmail}/{email}/{orderId}")
-	public Mono<OperationStatusModel> orderAccepted(@PathVariable String deliveryGuyEmail,@PathVariable String email, @PathVariable String orderId,
-			Mono<Principal> principal) {
-		return principal.map(Principal::getName).map(user -> {
-			if (!user.equals(deliveryGuyEmail)) {
-				throw new OrderSerivceError(ErrorMessages.AUTHENTICATION_FAILED.getErrorMessage());
-			}
-			return orderServiceImpl.orderAccepted(email, orderId).publishOn(Schedulers.boundedElastic())
-					.subscribeOn(Schedulers.boundedElastic())
-					.map(i->{
-						if(i) {
-							OperationStatusModel returnValue = new OperationStatusModel();
-							returnValue.setOperationName("ORDER_COMPLETED");
-							returnValue.setOperationResult("SUCCESS");
-							return returnValue;
-						}else {
+						} else {
 							OperationStatusModel returnValue = new OperationStatusModel();
 							returnValue.setOperationName("ORDER_COMPLETED");
 							returnValue.setOperationResult("FAIL");
@@ -185,7 +166,35 @@ public class OrderController {
 		}).flatMap(__ -> __).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
 
-	@GetMapping("/{email}/{orderId}/confirmOrder")
+	@GetMapping(path = "/order-accepted/{deliveryGuyEmail}/{email}/{orderId}", produces = {
+			MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE }, consumes = {
+					MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE })
+	public Mono<OperationStatusModel> orderAccepted(@PathVariable String deliveryGuyEmail, @PathVariable String email,
+			@PathVariable String orderId, Mono<Principal> principal) {
+		return principal.map(Principal::getName).map(user -> {
+			if (!user.equals(deliveryGuyEmail)) {
+				throw new OrderSerivceError(ErrorMessages.AUTHENTICATION_FAILED.getErrorMessage());
+			}
+			return orderServiceImpl.orderAccepted(email, orderId).publishOn(Schedulers.boundedElastic())
+					.subscribeOn(Schedulers.boundedElastic()).map(i -> {
+						if (i) {
+							OperationStatusModel returnValue = new OperationStatusModel();
+							returnValue.setOperationName("ORDER_COMPLETED");
+							returnValue.setOperationResult("SUCCESS");
+							return returnValue;
+						} else {
+							OperationStatusModel returnValue = new OperationStatusModel();
+							returnValue.setOperationName("ORDER_COMPLETED");
+							returnValue.setOperationResult("FAIL");
+							return returnValue;
+						}
+					});
+		}).flatMap(__ -> __).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
+	}
+
+	@GetMapping(path = "/{email}/{orderId}/confirmOrder", produces = { MediaType.APPLICATION_JSON_VALUE,
+			MediaType.APPLICATION_XML_VALUE }, consumes = { MediaType.APPLICATION_JSON_VALUE,
+					MediaType.APPLICATION_XML_VALUE })
 	public Mono<OperationStatusModel> confirmOrder(@PathVariable String email, @PathVariable String orderId,
 			Mono<Principal> principal) {
 		return principal.map(Principal::getName).map(user -> {
@@ -193,13 +202,13 @@ public class OrderController {
 				throw new OrderSerivceError(ErrorMessages.AUTHENTICATION_FAILED.getErrorMessage());
 			}
 			return orderServiceImpl.confirmOrder(email, orderId).publishOn(Schedulers.boundedElastic())
-					.subscribeOn(Schedulers.boundedElastic()).map(i->{
-						if(i) {
+					.subscribeOn(Schedulers.boundedElastic()).map(i -> {
+						if (i) {
 							OperationStatusModel returnValue = new OperationStatusModel();
 							returnValue.setOperationName("ORDER_CONFRIM");
 							returnValue.setOperationResult("SUCCESS");
 							return returnValue;
-						}else {
+						} else {
 							OperationStatusModel returnValue = new OperationStatusModel();
 							returnValue.setOperationName("ORDER_CONFRIM");
 							returnValue.setOperationResult("FAIL");
@@ -209,7 +218,9 @@ public class OrderController {
 		}).flatMap(__ -> __).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
 
-	@GetMapping("/{email}/refund")
+	@GetMapping(path = "/{email}/refund", produces = { MediaType.APPLICATION_JSON_VALUE,
+			MediaType.APPLICATION_XML_VALUE }, consumes = { MediaType.APPLICATION_JSON_VALUE,
+					MediaType.APPLICATION_XML_VALUE })
 	public Flux<RefundDto> getAllRefund(@PathVariable String email, Mono<Principal> principal) {
 		return principal.map(Principal::getName).map(user -> {
 			if (!user.equals(email)) {
@@ -220,25 +231,29 @@ public class OrderController {
 		}).flatMapMany(__ -> __).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
 
-	@PostMapping("/{email}/setNewBillingAndDeliveryAddress")
+	@PostMapping(path = "/{email}/setNewBillingAndDeliveryAddress", produces = { MediaType.APPLICATION_JSON_VALUE,
+			MediaType.APPLICATION_XML_VALUE }, consumes = { MediaType.APPLICATION_JSON_VALUE,
+					MediaType.APPLICATION_XML_VALUE })
 	Mono<OperationStatusModel> setNewBillingAndDeliveryAddress(@PathVariable String email,
 			@RequestBody Mono<BillingAndDeliveryAddressReq> req, Mono<Principal> principal) {
 		return principal.map(Principal::getName).map(user -> {
 			if (!user.equals(email)) {
 				throw new OrderSerivceError(ErrorMessages.AUTHENTICATION_FAILED.getErrorMessage());
 			}
-			return req.switchIfEmpty(Mono.error(new OrderSerivceError(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage()))).map(i->{
-				return orderServiceImpl.setNewBillingAndDeliveryAddress(Mono.just(i),email);
-			});
-		}).flatMap(__ -> __).flatMap(__ -> __)
-				.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
-				.map(i->{
-					if(i) {
+			return req
+					.switchIfEmpty(
+							Mono.error(new OrderSerivceError(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage())))
+					.map(i -> {
+						return orderServiceImpl.setNewBillingAndDeliveryAddress(Mono.just(i), email);
+					});
+		}).flatMap(__ -> __).flatMap(__ -> __).publishOn(Schedulers.boundedElastic())
+				.subscribeOn(Schedulers.boundedElastic()).map(i -> {
+					if (i) {
 						OperationStatusModel returnValue = new OperationStatusModel();
 						returnValue.setOperationName("SET_NEW_BILLING_AND_DELIVERY_ADDRESS");
 						returnValue.setOperationResult("SUCCESS");
 						return returnValue;
-					}else {
+					} else {
 						OperationStatusModel returnValue = new OperationStatusModel();
 						returnValue.setOperationName("SET_NEW_BILLING_AND_DELIVERY_ADDRESS");
 						returnValue.setOperationResult("FAIL");
@@ -246,8 +261,10 @@ public class OrderController {
 					}
 				});
 	}
-	
-	@GetMapping("/{email}/changeBillingAndDeliveryAddress/{id}")
+
+	@GetMapping(path = "/{email}/changeBillingAndDeliveryAddress/{id}", produces = { MediaType.APPLICATION_JSON_VALUE,
+			MediaType.APPLICATION_XML_VALUE }, consumes = { MediaType.APPLICATION_JSON_VALUE,
+					MediaType.APPLICATION_XML_VALUE })
 	Mono<OperationStatusModel> changeBillingAndDeliveryAddress(@PathVariable String email, @PathVariable Long id,
 			Mono<Principal> principal) {
 		return principal.map(Principal::getName).map(user -> {
@@ -256,23 +273,24 @@ public class OrderController {
 			}
 			return orderServiceImpl.changeBillingAndDeliveryAddress(user, id).publishOn(Schedulers.boundedElastic())
 					.subscribeOn(Schedulers.boundedElastic());
-		}).flatMap(__ -> __).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
-				.map(i->{
-					if(i) {
-						OperationStatusModel returnValue = new OperationStatusModel();
-						returnValue.setOperationName("CHANGE_BILLING_AND_DELIVERY_ADDRESS");
-						returnValue.setOperationResult("SUCCESS");
-						return returnValue;
-					}else {
-						OperationStatusModel returnValue = new OperationStatusModel();
-						returnValue.setOperationName("CHANGE_BILLING_AND_DELIVERY_ADDRESS");
-						returnValue.setOperationResult("FAIL");
-						return returnValue;
-					}
-				});
+		}).flatMap(__ -> __).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic()).map(i -> {
+			if (i) {
+				OperationStatusModel returnValue = new OperationStatusModel();
+				returnValue.setOperationName("CHANGE_BILLING_AND_DELIVERY_ADDRESS");
+				returnValue.setOperationResult("SUCCESS");
+				return returnValue;
+			} else {
+				OperationStatusModel returnValue = new OperationStatusModel();
+				returnValue.setOperationName("CHANGE_BILLING_AND_DELIVERY_ADDRESS");
+				returnValue.setOperationResult("FAIL");
+				return returnValue;
+			}
+		});
 	}
 
-	@GetMapping("/{email}/allBillingAndDeliveryAddress")
+	@GetMapping(path = "/{email}/allBillingAndDeliveryAddress", produces = { MediaType.APPLICATION_JSON_VALUE,
+			MediaType.APPLICATION_XML_VALUE }, consumes = { MediaType.APPLICATION_JSON_VALUE,
+					MediaType.APPLICATION_XML_VALUE })
 	Flux<BillingAndDeliveryAddressDto> getAllBillingAndDeliveryAddress(@PathVariable String email,
 			Mono<Principal> principal) {
 		return principal.map(Principal::getName).map(user -> {
@@ -283,9 +301,11 @@ public class OrderController {
 		}).flatMapMany(__ -> __).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
 
-	@PostMapping("/{email}/{orderId}/refund")
-	public Mono<OperationStatusModel> requestARefund(@PathVariable("email") String email, @RequestPart("reason") String reason,
-			@PathVariable("orderId") String orderId,
+	@PostMapping(path = "/{email}/{orderId}/refund", produces = { MediaType.APPLICATION_JSON_VALUE,
+			MediaType.APPLICATION_XML_VALUE }, consumes = { MediaType.APPLICATION_JSON_VALUE,
+					MediaType.APPLICATION_XML_VALUE })
+	public Mono<OperationStatusModel> requestARefund(@PathVariable("email") String email,
+			@RequestPart("reason") String reason, @PathVariable("orderId") String orderId,
 			@RequestPart(name = "images", required = false) Flux<FilePart> fileParts, Mono<Principal> principal) {
 
 		return principal.map(Principal::getName).map(user -> {
@@ -293,14 +313,13 @@ public class OrderController {
 				throw new OrderSerivceError(ErrorMessages.AUTHENTICATION_FAILED.getErrorMessage());
 			}
 			return orderServiceImpl.requestARefund(fileParts, email, reason, orderId)
-					.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic())
-					.map(i->{
-						if(i) {
+					.publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic()).map(i -> {
+						if (i) {
 							OperationStatusModel returnValue = new OperationStatusModel();
 							returnValue.setOperationName("REFUND_COMPLETED");
 							returnValue.setOperationResult("SUCCESS");
 							return returnValue;
-						}else {
+						} else {
 							OperationStatusModel returnValue = new OperationStatusModel();
 							returnValue.setOperationName("REFUND_COMPLETED");
 							returnValue.setOperationResult("FAIL");

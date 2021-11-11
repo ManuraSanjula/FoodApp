@@ -18,6 +18,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.Authentication;
@@ -44,10 +45,10 @@ import com.manura.foodapp.UserService.shared.DTO.UserDto;
 import com.manura.foodapp.UserService.shared.Utils.Utils;
 
 @Controller
-class UserSecurityController{
-	
+class UserSecurityController {
+
 	@RequestMapping("/users/emailVerify-WebPage")
-	String emailVerifyWebPage(){
+	String emailVerifyWebPage() {
 		return "EmailConfrim";
 	}
 }
@@ -71,7 +72,9 @@ public class UserController {
 	@Autowired
 	private UserRepo userRepo;
 
-	@GetMapping(path = "/{email}")
+	@GetMapping(path = "/{email}", produces = { MediaType.APPLICATION_JSON_VALUE,
+			MediaType.APPLICATION_XML_VALUE }, consumes = { MediaType.APPLICATION_JSON_VALUE,
+					MediaType.APPLICATION_XML_VALUE })
 	public UserRes getUser(@PathVariable String email, HttpServletResponse res, Authentication authentication) {
 		UserEntity userDetails = (UserEntity) authentication.getPrincipal();
 		ModelMapper modelMapper = new ModelMapper();
@@ -85,7 +88,9 @@ public class UserController {
 
 	}
 
-	@PutMapping(path = "/{email}/profilePic")
+	@PutMapping(path = "/{email}/profilePic", produces = { MediaType.APPLICATION_JSON_VALUE,
+			MediaType.APPLICATION_XML_VALUE }, consumes = { MediaType.APPLICATION_JSON_VALUE,
+					MediaType.APPLICATION_XML_VALUE })
 	public UserRes uploadUserPic(@PathVariable String email, @RequestParam("pic") MultipartFile file,
 			Authentication authentication) {
 		UserEntity userDetails = (UserEntity) authentication.getPrincipal();
@@ -130,8 +135,8 @@ public class UserController {
 
 		UserDto userDto = modelMapper.map(userSignupReq, UserDto.class);
 
-		UserDto createdUser = userService.createUser(userDto,"");
-		
+		UserDto createdUser = userService.createUser(userDto, "");
+
 		UserRes userRes = modelMapper.map(createdUser, UserRes.class);
 
 		UserAccountEvent userEvent = new UserAccountEvent(createdUser, rabbitTemplate, "userCreated");
@@ -141,11 +146,11 @@ public class UserController {
 		return userRes;
 
 	}
-	
+
 	@PostMapping("/signup/Admin")
 	@ResponseStatus(HttpStatus.CREATED)
-	public UserRes createSpecialUser(@RequestBody(required = false) UserSignupReq userSignupReq, HttpServletResponse res
-			,@RequestParam(value = "role" , defaultValue = "") String role)
+	public UserRes createSpecialUser(@RequestBody(required = false) UserSignupReq userSignupReq,
+			HttpServletResponse res, @RequestParam(value = "role", defaultValue = "") String role)
 			throws IOException, InterruptedException {
 
 		ModelMapper modelMapper = new ModelMapper();
@@ -176,8 +181,8 @@ public class UserController {
 
 		UserDto userDto = modelMapper.map(userSignupReq, UserDto.class);
 
-		UserDto createdUser = userService.createUser(userDto,role);
-		
+		UserDto createdUser = userService.createUser(userDto, role);
+
 		UserRes userRes = modelMapper.map(createdUser, UserRes.class);
 
 		UserAccountEvent userEvent = new UserAccountEvent(createdUser, rabbitTemplate, "userCreated");
@@ -188,8 +193,9 @@ public class UserController {
 
 	}
 
-
-	@PutMapping(path = "/{email}")
+	@PutMapping(path = "/{email}", produces = { MediaType.APPLICATION_JSON_VALUE,
+			MediaType.APPLICATION_XML_VALUE }, consumes = { MediaType.APPLICATION_JSON_VALUE,
+					MediaType.APPLICATION_XML_VALUE })
 	@Secured({ "ROLE_ADMIN", "ROLE_USER", "ROLE_CHEF" })
 	public UserRes updateUser(@PathVariable String email, @RequestBody(required = false) UserUpdateReq userUpdateReq,
 			Authentication authentication) {
@@ -220,7 +226,9 @@ public class UserController {
 		}
 	}
 
-	@GetMapping(path = "/email-verification")
+	@GetMapping(path = "/email-verification", produces = { MediaType.APPLICATION_JSON_VALUE,
+			MediaType.APPLICATION_XML_VALUE }, consumes = { MediaType.APPLICATION_JSON_VALUE,
+					MediaType.APPLICATION_XML_VALUE })
 	public OperationStatusModel verifyEmailToken(@RequestParam(value = "token") String token) {
 
 		OperationStatusModel returnValue = new OperationStatusModel();
@@ -243,7 +251,9 @@ public class UserController {
 
 	}
 
-	@PostMapping(path = "/password-reset-request")
+	@PostMapping(path = "/password-reset-request", produces = { MediaType.APPLICATION_JSON_VALUE,
+			MediaType.APPLICATION_XML_VALUE }, consumes = { MediaType.APPLICATION_JSON_VALUE,
+					MediaType.APPLICATION_XML_VALUE })
 	public OperationStatusModel requestResetPassword(
 			@RequestBody(required = false) PasswordResetRequestModel passwordResetRequestModel) {
 
@@ -261,7 +271,9 @@ public class UserController {
 		return returnValue;
 	}
 
-	@PostMapping(path = "/password-reset")
+	@PostMapping(path = "/password-reset", produces = { MediaType.APPLICATION_JSON_VALUE,
+			MediaType.APPLICATION_XML_VALUE }, consumes = { MediaType.APPLICATION_JSON_VALUE,
+					MediaType.APPLICATION_XML_VALUE })
 	public OperationStatusModel resetPassword(@RequestBody(required = false) PasswordResetModel passwordResetModel) {
 
 		OperationStatusModel returnValue = new OperationStatusModel();
@@ -279,7 +291,9 @@ public class UserController {
 	}
 
 	@SuppressWarnings("static-access")
-	@GetMapping("/email-verification-request/{email}")
+	@GetMapping(path = "/email-verification-request/{email}", produces = { MediaType.APPLICATION_JSON_VALUE,
+			MediaType.APPLICATION_XML_VALUE }, consumes = { MediaType.APPLICATION_JSON_VALUE,
+					MediaType.APPLICATION_XML_VALUE })
 	public ResponseEntity<String> emailVerificationRequest(@PathVariable String email) {
 		try {
 
@@ -288,7 +302,7 @@ public class UserController {
 				throw new UserServiceException("User Not Found");
 
 			@SuppressWarnings("static-access")
-            UserAccountSecurityOperationEvent emailVerification = new UserAccountSecurityOperationEvent(email,
+			UserAccountSecurityOperationEvent emailVerification = new UserAccountSecurityOperationEvent(email,
 					amazonSES);
 
 			String verification = emailVerification.emailVerification(util.generateVerificationToken(email));
@@ -304,7 +318,9 @@ public class UserController {
 		return new ResponseEntity<>("success", HttpStatus.OK);
 	}
 
-	@DeleteMapping("/{email}")
+	@DeleteMapping(path = "/{email}", produces = { MediaType.APPLICATION_JSON_VALUE,
+			MediaType.APPLICATION_XML_VALUE }, consumes = { MediaType.APPLICATION_JSON_VALUE,
+					MediaType.APPLICATION_XML_VALUE })
 	public ResponseEntity<String> deleteUser(@PathVariable String id) {
 		userService.deleteUser(id);
 		return new ResponseEntity<>("success", HttpStatus.OK);

@@ -16,8 +16,8 @@ import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.authentication.AuthenticationWebFilter;
 import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatchers;
 import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.cors.reactive.CorsWebFilter;
+import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 
 import com.manura.foodapp.CartService.security.support.ServerHttpBearerAuthenticationConverter;
 import com.manura.foodapp.CartService.utils.TokenConverter;
@@ -31,6 +31,20 @@ import reactor.core.publisher.Mono;
 public class WebSecurityConfig {
 	private final Logger logger = LoggerFactory.getLogger(WebSecurityConfig.class);
 	private final TokenConverter tokenConverter;
+	
+	@Bean
+	CorsWebFilter corsWebFilter() {
+	    CorsConfiguration corsConfig = new CorsConfiguration();
+	    corsConfig.setAllowedOrigins(Arrays.asList("*"));
+	    corsConfig.setMaxAge(8000L);
+	    corsConfig.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+	    corsConfig.setAllowedHeaders(Arrays.asList("*"));
+        corsConfig.setAllowCredentials(false);
+	    UrlBasedCorsConfigurationSource source =
+	      new UrlBasedCorsConfigurationSource();
+	    source.registerCorsConfiguration("/**", corsConfig);
+	    return new CorsWebFilter(source);
+	}
 
 	@Bean
 	public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http, AuthenticationManager authManager) {
@@ -47,22 +61,6 @@ public class WebSecurityConfig {
 				}).and().addFilterAt(bearerAuthenticationFilter(authManager), SecurityWebFiltersOrder.AUTHENTICATION)
 				.build();
 	}
-
-	@Bean
-	public CorsConfigurationSource corsConfigurationSource() {
-		final CorsConfiguration configuration = new CorsConfiguration();
-
-		configuration.setAllowedOrigins(Arrays.asList("*"));
-		configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-		configuration.setAllowCredentials(false);
-		configuration.setAllowedHeaders(Arrays.asList("*"));
-
-		final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-		source.registerCorsConfiguration("/**", configuration);
-
-		return source;
-	}
-
 	AuthenticationWebFilter bearerAuthenticationFilter(AuthenticationManager authManager) {
 		AuthenticationWebFilter bearerAuthenticationFilter = new AuthenticationWebFilter(authManager);
 		bearerAuthenticationFilter
