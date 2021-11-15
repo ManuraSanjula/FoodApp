@@ -21,7 +21,7 @@ public class ReviewEntity implements Serializable {
 	private Long id;
 	private String comment;
 	@ManyToOne
-	private UserEntity userEntity;
+	private UserEntity user;
 
 	public Long getId() {
 		return id;
@@ -40,11 +40,11 @@ public class ReviewEntity implements Serializable {
 	}
 
 	public UserEntity getUserEntity() {
-		return userEntity;
+		return user;
 	}
 
 	public void setUserEntity(UserEntity userEntity) {
-		this.userEntity = userEntity;
+		this.user = userEntity;
 	}
 
 }

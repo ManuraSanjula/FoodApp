@@ -1,8 +1,8 @@
 package com.manura.foodapp.entity;
 
 import java.io.Serializable;
-import java.util.Date;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -18,10 +18,12 @@ public class UserEntity implements Serializable{
     private Long id;
     private String email;
     private String pic;
-    private Date passwordChangedAt;
     private Boolean active;
+    @Column(name = "emailverify")
     private Boolean emailVerify;
+    @Column(name = "accountnolocked")
     private Boolean accountNonLocked = true;
+    @Column(name = "accountnonexpired")
     private Boolean accountNonExpired = true;
 	public Long getId() {
 		return id;
@@ -40,12 +42,6 @@ public class UserEntity implements Serializable{
 	}
 	public void setPic(String pic) {
 		this.pic = pic;
-	}
-	public Date getPasswordChangedAt() {
-		return passwordChangedAt;
-	}
-	public void setPasswordChangedAt(Date passwordChangedAt) {
-		this.passwordChangedAt = passwordChangedAt;
 	}
 	public Boolean getActive() {
 		return active;
