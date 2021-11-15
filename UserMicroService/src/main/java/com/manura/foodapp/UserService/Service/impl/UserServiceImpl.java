@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Date;
 
+import javax.annotation.PostConstruct;
 import javax.imageio.ImageIO;
 
 import org.imgscalr.Scalr;
@@ -57,12 +58,21 @@ public class UserServiceImpl implements UserService {
 
 	@Autowired
 	private UserRepo userRepo;
+	
+	private RSocketRequester requester;
+	@Autowired
+	RSocketRequester.Builder builder;
+	@Autowired
+	RSocketConnectorConfigurer connectorConfigurer;
 
-	private final RSocketRequester requester;
+	@Value("${user.service.host}")
+	String host;
 
-	public UserServiceImpl(RSocketRequester.Builder builder, RSocketConnectorConfigurer connectorConfigurer,
-			@Value("${user.service.host}") String host, @Value("${user.service.port}") int port) {
+	@Value("${user.service.port}")
+	int port;
 
+	@PostConstruct
+	private void init() {
 		this.requester = builder.rsocketConnector(connectorConfigurer).transport(TcpClientTransport.create(host, port));
 	}
 
@@ -93,7 +103,7 @@ public class UserServiceImpl implements UserService {
 	private HashOperations<String, String, UserEntity> hashOps;
 
 	private ObjectMapper oMapper = new ObjectMapper();
-	
+
 	@Autowired
 	private RabbitTemplate rabbitTemplate;
 

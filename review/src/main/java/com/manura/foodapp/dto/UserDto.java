@@ -9,8 +9,8 @@ public class UserDto implements Serializable{
     /**
 	 * 
 	 */
-	private static final long serialVersionUID = 3583491748880254458L;
-	private String email;
+    private static final long serialVersionUID = 3583491748880254458L;
+    private String email;
     private String pic;
     private Date passwordChangedAt;
     private Boolean active;

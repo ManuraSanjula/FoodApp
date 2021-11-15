@@ -112,9 +112,7 @@ public class OrderController {
 				.subscribeOn(Schedulers.boundedElastic());
 	}
 
-	@GetMapping(path = "/{email}", produces = { MediaType.APPLICATION_JSON_VALUE,
-			MediaType.APPLICATION_XML_VALUE }, consumes = { MediaType.APPLICATION_JSON_VALUE,
-					MediaType.APPLICATION_XML_VALUE })
+	@GetMapping(path = "/{email}")
 	public Flux<OrderDto> allOrders(@PathVariable String email, Mono<Principal> principal) {
 		return principal.map(Principal::getName).map(user -> {
 			if (!user.equals(email)) {
@@ -126,9 +124,7 @@ public class OrderController {
 
 	}
 
-	@GetMapping(path = "/{email}/{orderId}", produces = { MediaType.APPLICATION_JSON_VALUE,
-			MediaType.APPLICATION_XML_VALUE }, consumes = { MediaType.APPLICATION_JSON_VALUE,
-					MediaType.APPLICATION_XML_VALUE })
+	@GetMapping(path = "/{email}/{orderId}")
 	public Mono<FullOrderDto> getOneOrder(@PathVariable String email, @PathVariable String orderId,
 			Mono<Principal> principal) {
 		return principal.map(Principal::getName).map(user -> {
@@ -140,9 +136,7 @@ public class OrderController {
 		}).flatMap(__ -> __).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
 
-	@GetMapping(path = "/order-completed/{deliveryGuyEmail}/{email}/{orderId}", produces = {
-			MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE }, consumes = {
-					MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE })
+	@GetMapping(path = "/order-completed/{deliveryGuyEmail}/{email}/{orderId}")
 	public Mono<OperationStatusModel> orderCompleted(@PathVariable String deliveryGuyEmail, @PathVariable String email,
 			@PathVariable String orderId, Mono<Principal> principal) {
 		return principal.map(Principal::getName).map(user -> {
@@ -166,9 +160,7 @@ public class OrderController {
 		}).flatMap(__ -> __).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
 
-	@GetMapping(path = "/order-accepted/{deliveryGuyEmail}/{email}/{orderId}", produces = {
-			MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE }, consumes = {
-					MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE })
+	@GetMapping(path = "/order-accepted/{deliveryGuyEmail}/{email}/{orderId}")
 	public Mono<OperationStatusModel> orderAccepted(@PathVariable String deliveryGuyEmail, @PathVariable String email,
 			@PathVariable String orderId, Mono<Principal> principal) {
 		return principal.map(Principal::getName).map(user -> {
@@ -192,9 +184,7 @@ public class OrderController {
 		}).flatMap(__ -> __).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
 
-	@GetMapping(path = "/{email}/{orderId}/confirmOrder", produces = { MediaType.APPLICATION_JSON_VALUE,
-			MediaType.APPLICATION_XML_VALUE }, consumes = { MediaType.APPLICATION_JSON_VALUE,
-					MediaType.APPLICATION_XML_VALUE })
+	@GetMapping(path = "/{email}/{orderId}/confirmOrder")
 	public Mono<OperationStatusModel> confirmOrder(@PathVariable String email, @PathVariable String orderId,
 			Mono<Principal> principal) {
 		return principal.map(Principal::getName).map(user -> {
@@ -218,9 +208,7 @@ public class OrderController {
 		}).flatMap(__ -> __).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
 
-	@GetMapping(path = "/{email}/refund", produces = { MediaType.APPLICATION_JSON_VALUE,
-			MediaType.APPLICATION_XML_VALUE }, consumes = { MediaType.APPLICATION_JSON_VALUE,
-					MediaType.APPLICATION_XML_VALUE })
+	@GetMapping(path = "/{email}/refund")
 	public Flux<RefundDto> getAllRefund(@PathVariable String email, Mono<Principal> principal) {
 		return principal.map(Principal::getName).map(user -> {
 			if (!user.equals(email)) {
@@ -231,9 +219,7 @@ public class OrderController {
 		}).flatMapMany(__ -> __).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
 
-	@PostMapping(path = "/{email}/setNewBillingAndDeliveryAddress", produces = { MediaType.APPLICATION_JSON_VALUE,
-			MediaType.APPLICATION_XML_VALUE }, consumes = { MediaType.APPLICATION_JSON_VALUE,
-					MediaType.APPLICATION_XML_VALUE })
+	@PostMapping(path = "/{email}/setNewBillingAndDeliveryAddress")
 	Mono<OperationStatusModel> setNewBillingAndDeliveryAddress(@PathVariable String email,
 			@RequestBody Mono<BillingAndDeliveryAddressReq> req, Mono<Principal> principal) {
 		return principal.map(Principal::getName).map(user -> {
@@ -262,9 +248,7 @@ public class OrderController {
 				});
 	}
 
-	@GetMapping(path = "/{email}/changeBillingAndDeliveryAddress/{id}", produces = { MediaType.APPLICATION_JSON_VALUE,
-			MediaType.APPLICATION_XML_VALUE }, consumes = { MediaType.APPLICATION_JSON_VALUE,
-					MediaType.APPLICATION_XML_VALUE })
+	@GetMapping(path = "/{email}/changeBillingAndDeliveryAddress/{id}")
 	Mono<OperationStatusModel> changeBillingAndDeliveryAddress(@PathVariable String email, @PathVariable Long id,
 			Mono<Principal> principal) {
 		return principal.map(Principal::getName).map(user -> {
@@ -288,9 +272,7 @@ public class OrderController {
 		});
 	}
 
-	@GetMapping(path = "/{email}/allBillingAndDeliveryAddress", produces = { MediaType.APPLICATION_JSON_VALUE,
-			MediaType.APPLICATION_XML_VALUE }, consumes = { MediaType.APPLICATION_JSON_VALUE,
-					MediaType.APPLICATION_XML_VALUE })
+	@GetMapping(path = "/{email}/allBillingAndDeliveryAddress")
 	Flux<BillingAndDeliveryAddressDto> getAllBillingAndDeliveryAddress(@PathVariable String email,
 			Mono<Principal> principal) {
 		return principal.map(Principal::getName).map(user -> {
@@ -301,9 +283,7 @@ public class OrderController {
 		}).flatMapMany(__ -> __).publishOn(Schedulers.boundedElastic()).subscribeOn(Schedulers.boundedElastic());
 	}
 
-	@PostMapping(path = "/{email}/{orderId}/refund", produces = { MediaType.APPLICATION_JSON_VALUE,
-			MediaType.APPLICATION_XML_VALUE }, consumes = { MediaType.APPLICATION_JSON_VALUE,
-					MediaType.APPLICATION_XML_VALUE })
+	@PostMapping(path = "/{email}/{orderId}/refund")
 	public Mono<OperationStatusModel> requestARefund(@PathVariable("email") String email,
 			@RequestPart("reason") String reason, @PathVariable("orderId") String orderId,
 			@RequestPart(name = "images", required = false) Flux<FilePart> fileParts, Mono<Principal> principal) {

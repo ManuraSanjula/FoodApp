@@ -11,14 +11,16 @@ import com.manura.foodapp.entity.UserEntity;
 
 @Singleton
 public class ReviewService {
-	@Inject
-	private EntityManager entityManager;
 
-	private ModelMapper modelMapper = new ModelMapper();
+    @Inject
+    private EntityManager entityManager;
 
-	public UserEntity saveUser(UserDto dto) {
-		UserEntity user = modelMapper.map(dto, UserEntity.class);
-		entityManager.persist(user);
-		return user;
-	}
+    private ModelMapper modelMapper = new ModelMapper();
+
+    public UserEntity saveUser(UserDto dto) {
+        UserEntity user = modelMapper.map(dto, UserEntity.class);
+        entityManager.persist(user);
+        return user;
+    }
+
 }

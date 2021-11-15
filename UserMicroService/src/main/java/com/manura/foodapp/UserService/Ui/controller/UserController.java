@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -72,9 +73,8 @@ public class UserController {
 	@Autowired
 	private UserRepo userRepo;
 
-	@GetMapping(path = "/{email}", produces = { MediaType.APPLICATION_JSON_VALUE,
-			MediaType.APPLICATION_XML_VALUE }, consumes = { MediaType.APPLICATION_JSON_VALUE,
-					MediaType.APPLICATION_XML_VALUE })
+	@GetMapping(path = "/{email}")
+	@ResponseBody
 	public UserRes getUser(@PathVariable String email, HttpServletResponse res, Authentication authentication) {
 		UserEntity userDetails = (UserEntity) authentication.getPrincipal();
 		ModelMapper modelMapper = new ModelMapper();
@@ -88,9 +88,7 @@ public class UserController {
 
 	}
 
-	@PutMapping(path = "/{email}/profilePic", produces = { MediaType.APPLICATION_JSON_VALUE,
-			MediaType.APPLICATION_XML_VALUE }, consumes = { MediaType.APPLICATION_JSON_VALUE,
-					MediaType.APPLICATION_XML_VALUE })
+	@PutMapping(path = "/{email}/profilePic")
 	public UserRes uploadUserPic(@PathVariable String email, @RequestParam("pic") MultipartFile file,
 			Authentication authentication) {
 		UserEntity userDetails = (UserEntity) authentication.getPrincipal();
@@ -193,9 +191,7 @@ public class UserController {
 
 	}
 
-	@PutMapping(path = "/{email}", produces = { MediaType.APPLICATION_JSON_VALUE,
-			MediaType.APPLICATION_XML_VALUE }, consumes = { MediaType.APPLICATION_JSON_VALUE,
-					MediaType.APPLICATION_XML_VALUE })
+	@PutMapping(path = "/{email}")
 	@Secured({ "ROLE_ADMIN", "ROLE_USER", "ROLE_CHEF" })
 	public UserRes updateUser(@PathVariable String email, @RequestBody(required = false) UserUpdateReq userUpdateReq,
 			Authentication authentication) {
@@ -226,9 +222,7 @@ public class UserController {
 		}
 	}
 
-	@GetMapping(path = "/email-verification", produces = { MediaType.APPLICATION_JSON_VALUE,
-			MediaType.APPLICATION_XML_VALUE }, consumes = { MediaType.APPLICATION_JSON_VALUE,
-					MediaType.APPLICATION_XML_VALUE })
+	@GetMapping(path = "/email-verification")
 	public OperationStatusModel verifyEmailToken(@RequestParam(value = "token") String token) {
 
 		OperationStatusModel returnValue = new OperationStatusModel();
@@ -271,9 +265,7 @@ public class UserController {
 		return returnValue;
 	}
 
-	@PostMapping(path = "/password-reset", produces = { MediaType.APPLICATION_JSON_VALUE,
-			MediaType.APPLICATION_XML_VALUE }, consumes = { MediaType.APPLICATION_JSON_VALUE,
-					MediaType.APPLICATION_XML_VALUE })
+	@PostMapping(path = "/password-reset")
 	public OperationStatusModel resetPassword(@RequestBody(required = false) PasswordResetModel passwordResetModel) {
 
 		OperationStatusModel returnValue = new OperationStatusModel();
@@ -291,9 +283,7 @@ public class UserController {
 	}
 
 	@SuppressWarnings("static-access")
-	@GetMapping(path = "/email-verification-request/{email}", produces = { MediaType.APPLICATION_JSON_VALUE,
-			MediaType.APPLICATION_XML_VALUE }, consumes = { MediaType.APPLICATION_JSON_VALUE,
-					MediaType.APPLICATION_XML_VALUE })
+	@GetMapping(path = "/email-verification-request/{email}")
 	public ResponseEntity<String> emailVerificationRequest(@PathVariable String email) {
 		try {
 
@@ -318,9 +308,7 @@ public class UserController {
 		return new ResponseEntity<>("success", HttpStatus.OK);
 	}
 
-	@DeleteMapping(path = "/{email}", produces = { MediaType.APPLICATION_JSON_VALUE,
-			MediaType.APPLICATION_XML_VALUE }, consumes = { MediaType.APPLICATION_JSON_VALUE,
-					MediaType.APPLICATION_XML_VALUE })
+	@DeleteMapping(path = "/{email}")
 	public ResponseEntity<String> deleteUser(@PathVariable String id) {
 		userService.deleteUser(id);
 		return new ResponseEntity<>("success", HttpStatus.OK);
