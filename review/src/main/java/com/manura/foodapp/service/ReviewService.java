@@ -1,26 +1,21 @@
 package com.manura.foodapp.service;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import javax.persistence.EntityManager;
-
-import org.modelmapper.ModelMapper;
-
-import com.manura.foodapp.dto.UserDto;
 import com.manura.foodapp.entity.UserEntity;
+import javax.ejb.Stateless;
+import javax.inject.Inject;
+import org.redisson.api.RBucket;
+import org.redisson.api.RedissonClient;
 
-@Singleton
+@Stateless
 public class ReviewService {
-
+    
     @Inject
-    private EntityManager entityManager;
-
-    private ModelMapper modelMapper = new ModelMapper();
-
-    public UserEntity saveUser(UserDto dto) {
-        UserEntity user = modelMapper.map(dto, UserEntity.class);
-        entityManager.persist(user);
-        return user;
+    RedissonClient client;
+   
+    public UserEntity saveUser(UserEntity dto) {
+        RBucket<Object> bucket = client.getBucket(dto.getEmail());
+        bucket.set(dto);
+        return dto;
     }
 
 }

@@ -5,41 +5,42 @@
  */
 package com.manura.foodapp.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.concurrent.CompletionStage;
-import javax.ws.rs.core.Response;
-import com.manura.foodapp.dto.UserDto;
+import com.manura.foodapp.entity.UserEntity;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import javax.enterprise.context.RequestScoped;
+import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.WebTarget;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import javax.json.JsonValue;
+import javax.json.JsonObject;
+import javax.ws.rs.core.MediaType;
+import org.modelmapper.ModelMapper;
 
 /**
  *
  * @author Manura Sanjula
  */
-@RequestScoped
+@Stateless
 public class UserManagementService {
 
     @Inject
     @ConfigProperty(name = "userserviceurl")
     private String userserviceurl;
-    private ObjectMapper objectMapper = new ObjectMapper();
     private Client client;
     private WebTarget webTarget;
-    private UserDto userDto = new UserDto();
-    private String user = "Hi";
+    private ModelMapper modelMapper = new ModelMapper();
+    @Inject
+    private ReviewService reviewService;
+
     @PostConstruct
     private void init() {
         System.out.println("com.manura.foodapp.service.UserManagementService.init() = " + userserviceurl);
         client = ClientBuilder.newBuilder().connectTimeout(7, TimeUnit.SECONDS)
-                .readTimeout(3, TimeUnit.SECONDS).build();
+                .readTimeout(20, TimeUnit.SECONDS).build();
         webTarget = client.target(userserviceurl);
     }
 
@@ -51,22 +52,23 @@ public class UserManagementService {
 
     }
 
-    public String getUseDataFromUserService(String email,String token) {
-        CompletionStage<Response> responseCompletionStage = webTarget.path("{email}")
-                .resolveTemplate("email", email).request()
-                .header("Authorization", token).rx().get();
-        responseCompletionStage.thenApply(response -> response.readEntity(JsonValue.class)).thenAccept(this::action);
-        return user;
+    public UserEntity getUseDataFromUserService(String email, String token) {
+        JsonValue jsonValue = webTarget.path("{email}")
+                .resolveTemplate("email", email).request(MediaType.APPLICATION_JSON)
+                .header("Authorization", token).get(JsonValue.class);
+        JsonObject jsonObject = jsonValue.asJsonObject();
+        UserEntity userDto = new UserEntity();
+        String firstName = jsonObject.getString("firstName");
+        String lastName = jsonObject.getString("lastName");
+        String useremail = jsonObject.getString("email");
+        String pic = jsonObject.getString("pic");
+
+        userDto.setFirstName(firstName);
+        userDto.setLastName(lastName);
+        userDto.setEmail(useremail);
+
+        userDto.setPic(pic);
+        reviewService.saveUser(userDto);
+        return userDto;
     }
-
-    private void action(JsonValue json) {
-        try {
-            System.out.println("com.manura.foodapp.service.UserManagementService.action() = " + json.toString());
-            user = json.toString();
-            //userDto = objectMapper.readValue(userJson, UserDto.class);
-        } catch (Exception e) {
-
-        }
-    }
-
 }
