@@ -5,8 +5,6 @@ import com.manura.foodapp.RedissonConfig;
 import com.manura.foodapp.entity.ReviewEntity;
 import com.manura.foodapp.entity.UserEntity;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.PostConstruct;
@@ -110,11 +108,7 @@ public class ReviewService {
         ReviewEntity entity = new ReviewEntity();
         entity.setComment(comment);
         entity.setUserEntity(user);
-        Date date = new Date();
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(date);
-        long dayOfYear = calendar.get(Calendar.DAY_OF_YEAR);
-        entity.setId(dayOfYear);
+       
         RList<ReviewEntity> list = redisClient.getList("comments");
         list.add(entity);
         return entity;
