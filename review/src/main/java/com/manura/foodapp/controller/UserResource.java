@@ -1,21 +1,35 @@
 package com.manura.foodapp.controller;
 
-import com.manura.foodapp.entity.UserEntity;
-import com.manura.foodapp.service.UserManagementService;
-import javax.enterprise.context.RequestScoped;
+import com.manura.foodapp.Secure;
+import com.manura.foodapp.entity.ReviewEntity;
+import com.manura.foodapp.service.ReviewService;
+import java.util.List;
 import javax.ws.rs.*;
 import javax.inject.Inject;
 
 @Path("")
-@RequestScoped
-public class UserResource { 
-   @Inject
-    UserManagementService managementService;
-    @GET
+public class UserResource {
+
+    @Inject
+    ReviewService managementService;
+
+    @Secure
+    @POST
     @Path("/{user}")
-    public UserEntity user(@PathParam("user") String user, @HeaderParam("Authorization") String token) {
-        UserEntity useDataFromUserService = managementService.getUseDataFromUserService(user, token);
-        return useDataFromUserService;
+    public ReviewEntity saveUser(@PathParam("user") String user, @HeaderParam("Authorization") String token, @QueryParam("comment") String comment) {
+        ReviewEntity saveComment = managementService.saveComment(comment, user, token);
+        return saveComment;
+    }
+
+    @GET
+    @Path("/all")
+    public List<ReviewEntity> getAllComments() {
+        return managementService.getAllComments();
+    }
+
+    @GET
+    public String user() {
+        return "HI Welcome Review Service";
     }
 
 }

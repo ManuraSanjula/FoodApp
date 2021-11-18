@@ -14,13 +14,11 @@ import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
 
 import java.util.Objects;
-import javax.enterprise.inject.Produces;
 
 public class RedissonConfig {
 
     private RedissonClient redissonClient;
 
-    @Produces
     public RedissonClient getClient(){
         if(Objects.isNull(this.redissonClient)){
             Config config = new Config();
