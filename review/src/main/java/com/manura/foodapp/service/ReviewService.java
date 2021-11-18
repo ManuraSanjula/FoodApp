@@ -1,5 +1,6 @@
 package com.manura.foodapp.service;
 
+import com.manura.foodapp.BadReqError;
 import com.manura.foodapp.RedissonConfig;
 import com.manura.foodapp.entity.ReviewEntity;
 import com.manura.foodapp.entity.UserEntity;
@@ -85,7 +86,7 @@ public class ReviewService {
         RBucket<Object> bucket = redisClient.getBucket(email);
         UserEntity user = (UserEntity) bucket.get();
         if(user == null){
-            user = getUserCacheEmpty(email, token);
+            return getUserCacheEmpty(email, token);
         }
         return user;
     }
@@ -100,7 +101,9 @@ public class ReviewService {
     }
 
     public ReviewEntity saveComment(String comment, String email,String token) {
-        UserEntity user = getUser(email,token);
+        UserEntity user = null;
+       if(token !=null){
+            user = getUser(email,token);
         if(user == null){
           user = this.getUserCacheEmpty(email, token);
         }
@@ -115,6 +118,9 @@ public class ReviewService {
         RList<ReviewEntity> list = redisClient.getList("comments");
         list.add(entity);
         return entity;
+       }else{
+           throw new BadReqError("No Token Found");
+       }
     }
 
 }

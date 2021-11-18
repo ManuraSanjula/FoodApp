@@ -1,4 +1,4 @@
-package com.manura.foodapp;
+package com.manura.foodapp.ExceptionMapper;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;

@@ -1,4 +1,4 @@
-package com.manura.foodapp;
+package com.manura.foodapp.secure;
 
 import javax.ws.rs.NameBinding;
 import java.lang.annotation.Retention;

@@ -1,6 +1,6 @@
 package com.manura.foodapp.controller;
 
-import com.manura.foodapp.Secure;
+import com.manura.foodapp.secure.Secure;
 import com.manura.foodapp.entity.ReviewEntity;
 import com.manura.foodapp.service.ReviewService;
 import java.util.List;

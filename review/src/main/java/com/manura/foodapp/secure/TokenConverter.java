@@ -1,4 +1,4 @@
-package com.manura.foodapp;
+package com.manura.foodapp.secure;
 
 import com.manura.foodapp.entity.UserEntity;
 import com.manura.foodapp.service.ReviewService;
@@ -31,6 +31,8 @@ public class TokenConverter {
     
     @Inject
     ReviewService managementService;
+    
+    private static final String BEARER = "Bearer";
 
     public String decryptToken(String encryptedToken) throws ParseException, JOSEException {
         JWEObject jweObject = JWEObject.parse(encryptedToken);
@@ -40,9 +42,9 @@ public class TokenConverter {
     }
 
     public UserEntity validateTokenSignature(String token) {
-
         try {
-            String decryptUserToken = decryptToken(token);
+           
+            String decryptUserToken = decryptToken(token.substring(BEARER.length()).trim());
             SignedJWT signedJWT = SignedJWT.parse(decryptUserToken);
             JWTClaimsSet claimsSet = signedJWT.getJWTClaimsSet();
             final Date expiration = claimsSet.getExpirationTime();
