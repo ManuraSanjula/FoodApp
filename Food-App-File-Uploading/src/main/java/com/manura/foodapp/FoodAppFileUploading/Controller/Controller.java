@@ -17,6 +17,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 @org.springframework.stereotype.Controller
+@RequestMapping("file")
 public class Controller {
 
 	@Autowired

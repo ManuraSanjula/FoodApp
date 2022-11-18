@@ -16,11 +16,21 @@ ext {
   set('springCloudVersion', "2020.0.3")
 }
 
+task fatJar(type: Jar) {
+	manifest {
+        attributes 'Implementation-Title': 'Gradle Jar File Example',  
+        	'Implementation-Version': version,
+        	'Main-Class': 'com.manura.foodapp.FoodService.FoodServiceApplication'
+    }
+    baseName = project.name + '-all'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
 
 dependencies {
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
     implementation group: 'org.springframework.boot', name: 'spring-boot-starter-actuator', version: '2.5.5'
-    implementation group: 'org.springframework.cloud', name: 'spring-cloud-starter-bus-amqp', version: '3.0.3
+    implementation group: 'org.springframework.cloud', name: 'spring-cloud-starter-bus-amqp', version: '3.1.2'
     implementation group: 'org.springframework.cloud', name: 'spring-cloud-starter-config', version: '3.0.5'
     implementation group: 'org.springframework.cloud', name: 'spring-cloud-starter-bootstrap', version: '3.0.4'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
